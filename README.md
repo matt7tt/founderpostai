@@ -1,16 +1,41 @@
 # FounderPostAI
 
-Generate LinkedIn posts that actually get engagement. Built specifically for founders.
+A store for the **AI Suite** WordPress plugin family:
 
-## Features
+- **AI Suite Core** (Free, WordPress.org) — connection, credits, brand context, job queue
+- **AI Suite SEO** (Free, WordPress.org) — suggestions + review queue, batches of ten, block-aware internal links
+- **AI Suite SEO Pro** ($79/yr, this store) — bulk runs, scheduling, auto-apply
+- **Agency** ($199/yr) — Pro on unlimited client sites, BYOK flat fee
 
-- 🚀 Generate 5 LinkedIn post variations in seconds
-- 🎛️ Control tone, post type, and length
-- 📊 Usage tracking (free: 2/month, pro: 50/month)
-- 💳 Stripe subscription for Pro plan ($9/month)
-- 📋 Copy to clipboard
-- 📁 Post history
-- 🔐 Email/password auth via NextAuth
+Billing modes: managed credits ("actions") or BYOK (customer's own provider key, never stored in WordPress). 30-day refunds, GPL-licensed.
+
+## A/B testing
+
+The homepage is split 50/50 between two designs via `src/middleware.ts` (cookie `ab_design`,
+30 days). Variants live in `src/designs/Editorial.tsx` and `src/designs/Studio.tsx`.
+Force one with `/?v=studio` or `/?v=editorial`. Conversion events (`landing_view`,
+`checkout_click`) go to Vercel Analytics via `@vercel/analytics`.
+
+## Payments
+
+Stripe Payment Links — no custom checkout code. Set:
+
+```env
+NEXT_PUBLIC_STRIPE_PAYMENT_LINK_PRO="https://buy.stripe.com/..."
+NEXT_PUBLIC_STRIPE_PAYMENT_LINK_AGENCY="https://buy.stripe.com/..."
+```
+
+Set each link's after-payment redirect to `/thanks`.
+
+## Design direction
+
+Editorial / indie-plugin-shop aesthetic (deliberately anti-"AI SaaS" slop): warm paper background
+(`#F7F4EE`), ink text (`#1B1712`), single WordPress-blue accent (`#00749C`), serif display type
+(Charter/Cambria stack), monospace micro-labels, hard borders and offset shadows instead of
+gradients and glow.
+
+The landing page (`src/pages/index.tsx`) is self-contained Tailwind; the legacy SaaS dashboard,
+auth, and Stripe checkout are still present but unlinked from the homepage except the login link.
 
 ## Setup
 

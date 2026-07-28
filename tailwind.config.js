@@ -3,6 +3,7 @@ module.exports = {
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/designs/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
@@ -11,6 +12,9 @@ module.exports = {
         linkedin: '#0A66C2',
         success: '#16a34a',
         warning: '#ea580c',
+      },
+      fontFamily: {
+        geist: ['Geist', 'sans-serif'],
       },
     },
   },
