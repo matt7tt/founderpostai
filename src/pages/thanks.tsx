@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 
 const card: React.CSSProperties = {
   background: '#ffffff',
@@ -20,7 +22,36 @@ const downloadBtn: React.CSSProperties = {
   textDecoration: 'none',
 };
 
+interface LicenseData {
+  planLabel: string;
+  licenseKey: string;
+  email?: string;
+}
+
 export default function Thanks() {
+  const router = useRouter();
+  const [license, setLicense] = useState<LicenseData | null>(null);
+  const [licenseError, setLicenseError] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    const sessionId = router.query.session_id as string;
+    if (!sessionId) return;
+
+    fetch(`/api/license?session_id=${encodeURIComponent(sessionId)}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then(setLicense)
+      .catch(() => setLicenseError(true));
+  }, [router.isReady, router.query.session_id]);
+
+  const copyKey = () => {
+    if (!license) return;
+    navigator.clipboard.writeText(license.licenseKey);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <>
       <Head>
@@ -60,12 +91,50 @@ export default function Thanks() {
             textAlign: 'center',
           }}
         >
-          You’re in. Here’s your plugin.
+          You’re in. Here’s your license.
         </h1>
-        <p style={{ fontSize: '16px', lineHeight: 1.5, color: '#6b6b6b', maxWidth: '480px', margin: '0 0 40px', textAlign: 'center' }}>
-          Download below, then in wp-admin: <strong>Plugins → Add New → Upload Plugin</strong>.
-          Install in this order — each one needs the previous.
+        <p style={{ fontSize: '16px', lineHeight: 1.5, color: '#6b6b6b', maxWidth: '480px', margin: '0 0 32px', textAlign: 'center' }}>
+          Activate it in wp-admin under <strong>AI Suite → Connection</strong>, then install the
+          plugins below in order.
         </p>
+
+        {/* License key box */}
+        {license && (
+          <div
+            style={{
+              ...card,
+              border: '2px solid #0a0a0a',
+              maxWidth: '520px',
+              width: '100%',
+              marginBottom: '32px',
+              textAlign: 'center',
+            }}
+          >
+            <p style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: 600, letterSpacing: '0.08em', color: '#6b6b6b' }}>
+              YOUR {license.planLabel.toUpperCase()} LICENSE KEY
+            </p>
+            <p
+              style={{
+                margin: '0 0 16px',
+                fontFamily: 'ui-monospace, Menlo, monospace',
+                fontSize: 'clamp(18px, 4vw, 24px)',
+                letterSpacing: '0.06em',
+                fontWeight: 600,
+              }}
+            >
+              {license.licenseKey}
+            </p>
+            <button onClick={copyKey} style={{ ...downloadBtn, border: 'none', cursor: 'pointer' }}>
+              {copied ? 'Copied ✓' : 'Copy key'}
+            </button>
+          </div>
+        )}
+        {licenseError && (
+          <p style={{ fontSize: '14px', color: '#6b6b6b', maxWidth: '440px', margin: '0 0 32px', textAlign: 'center', lineHeight: 1.6 }}>
+            We couldn’t load your license key automatically — don’t worry, your payment went
+            through. Reply to your Stripe receipt and we’ll send it over.
+          </p>
+        )}
 
         <div style={{ display: 'grid', gap: '16px', maxWidth: '520px', width: '100%' }}>
           <div style={card}>
@@ -86,19 +155,18 @@ export default function Thanks() {
             <a href="/downloads/aisuite-seo.zip" style={downloadBtn}>Download SEO ↓</a>
           </div>
 
-          <div style={{ ...card, border: '2px solid #0a0a0a' }}>
-            <p style={{ margin: '0 0 4px', fontSize: '12px', fontWeight: 600, letterSpacing: '0.08em', color: '#0a0a0a' }}>STEP 3 · YOUR PURCHASE</p>
+          <div style={card}>
+            <p style={{ margin: '0 0 4px', fontSize: '12px', fontWeight: 600, letterSpacing: '0.08em', color: '#6b6b6b' }}>STEP 3 · YOUR PURCHASE</p>
             <h2 style={{ margin: '0 0 6px', fontSize: '20px', fontWeight: 600, letterSpacing: '-0.02em' }}>AI Suite SEO Pro</h2>
             <p style={{ margin: '0 0 16px', fontSize: '14px', color: '#6b6b6b', lineHeight: 1.5 }}>
-              Bulk runs, scheduling, and auto-apply. After activating, go to{' '}
-              <strong>AI Suite → Connection</strong> to link your account.
+              Bulk runs, scheduling, and auto-apply. Paste your license key after activating.
             </p>
             <a href="/downloads/aisuite-seo-pro-1.0.0.zip" style={downloadBtn}>Download SEO Pro ↓</a>
           </div>
         </div>
 
         <p style={{ fontSize: '13px', color: '#9b9b9b', maxWidth: '440px', margin: '32px 0 24px', textAlign: 'center', lineHeight: 1.6 }}>
-          Save this page (bookmark it) — it’s your download hub. Receipt is in your inbox from
+          Bookmark this page — your key and downloads live here. Receipt is in your inbox from
           Stripe. Questions or a refund within 30 days? Just reply to it.
         </p>
         <Link href="/" style={{ fontSize: '14px', color: '#6b6b6b', textDecoration: 'underline' }}>
