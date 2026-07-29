@@ -7,7 +7,7 @@ const TICKER_ITEMS = [
   'AI Suite Core',
   'AI Suite SEO',
   'SEO Pro',
-  'Free on WordPress.org',
+  'Free & GPL',
   'Managed or BYOK',
   'GPL Licensed',
 ];
@@ -27,18 +27,20 @@ const TRUSTED = [
 
 const PLUGINS = [
   {
-    id: 'FREE · WORDPRESS.ORG',
+    id: 'FREE · DIRECT DOWNLOAD',
     name: 'AI Suite Core',
     tagline: 'The runtime every module builds on',
     price: 'Free',
+    download: '/downloads/aisuite-core.zip',
     desc: 'Connection, credits, brand context, and a three-tier job queue (Action Scheduler → loopback → WP-Cron). One shared embedding index of your site that every module retrieves against.',
     features: ['Signed gateway calls, both directions', 'Credits meter or BYOK — your key is never stored in WordPress', 'Brand context shared across modules', 'Reconcile poll for firewalled hosts'],
   },
   {
-    id: 'FREE · WORDPRESS.ORG',
+    id: 'FREE · DIRECT DOWNLOAD',
     name: 'AI Suite SEO',
     tagline: 'Analyze, review, apply — a complete product',
     price: 'Free',
+    download: '/downloads/aisuite-seo.zip',
     desc: 'Full SEO suggestions with a review queue, per-post or in batches of ten. Block- and DOM-aware internal link insertion, validated against a closed candidate set. No locked features, no license checks.',
     features: ['Suggestion table + review UI', 'Internal links inserted block-aware', 'Revision saved before every write', 'Conflict detection for Yoast, Rank Math & AIOSEO'],
   },
@@ -47,6 +49,7 @@ const PLUGINS = [
     name: 'AI Suite SEO Pro',
     tagline: 'Bulk, scheduling, and auto-apply',
     price: '$79/yr',
+    download: null,
     desc: 'Everything the free SEO plugin deliberately doesn’t contain: whole-site bulk runs, scheduled re-optimization, and auto-apply for trusted suggestion types. Ships with its own update client.',
     features: ['Bulk-run your entire backlog', 'Scheduled re-optimization', 'Auto-apply trusted suggestions', 'Updates served direct, not via .org'],
   },
@@ -161,7 +164,7 @@ export default function Studio() {
             Premium plugins for <span className={styles.serif}>WordPress</span>, on demand.
           </h1>
           <p className={styles.subtitle}>
-            One runtime, free on WordPress.org. A complete SEO module, also free. Go Pro for bulk,
+            One runtime, free to download. A complete SEO module, also free. Go Pro for bulk,
             scheduling, and auto-apply — managed credits or your own key.
           </p>
 
@@ -212,9 +215,8 @@ export default function Studio() {
         <p className={styles.sectionLabel}>The suite</p>
         <h2 className={styles.sectionTitle}>Two free plugins. One worth paying for.</h2>
         <p className={styles.sectionSub}>
-          Core and SEO are complete products on WordPress.org — no locked features, no license
-          checks. Pro is a separate download that adds what the free plugin deliberately doesn’t
-          contain.
+          Core and SEO are complete, free products — no locked features, no license checks.
+          Pro is a separate download that adds what the free plugin deliberately doesn’t contain.
         </p>
         <div className={styles.pluginGrid}>
           {PLUGINS.map((p) => (
@@ -231,9 +233,15 @@ export default function Studio() {
                   <li key={f}>{f}</li>
                 ))}
               </ul>
-              <a href="#pricing" className={styles.pluginCta}>
-                Get {p.name} →
-              </a>
+              {p.download ? (
+                <a href={p.download} className={styles.pluginCta}>
+                  Download {p.name} ↓
+                </a>
+              ) : (
+                <a href="#pricing" className={styles.pluginCta}>
+                  Get {p.name} →
+                </a>
+              )}
             </article>
           ))}
         </div>
@@ -250,7 +258,7 @@ export default function Studio() {
         <div className={styles.pricingGrid}>
           <div className={styles.priceCard}>
             <h3 className={styles.priceName}>Free</h3>
-            <p className={styles.priceNote}>Core + SEO, from WordPress.org.</p>
+            <p className={styles.priceNote}>Core + SEO, free downloads.</p>
             <p className={styles.priceAmount}>
               $0<span> forever</span>
             </p>
@@ -261,8 +269,8 @@ export default function Studio() {
               <li>Block-aware internal link insertion</li>
               <li>BYOK — unlimited actions on your key</li>
             </ul>
-            <a href="#plugins" className={styles.priceButton}>
-              Install from WordPress.org
+            <a href="/downloads/aisuite-core.zip" className={styles.priceButton}>
+              Download the free plugins
             </a>
           </div>
 

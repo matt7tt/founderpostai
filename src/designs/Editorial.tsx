@@ -18,7 +18,7 @@ const plugins = [
       'Brand context shared across modules',
       'Reconcile poll for firewalled hosts',
     ],
-    cta: null as null | { label: string; href: string },
+    cta: { label: 'Download Core ↓', href: '/downloads/aisuite-core.zip', track: null },
   },
   {
     id: '02',
@@ -32,7 +32,7 @@ const plugins = [
       'Revision saved before every write',
       'Conflict detection for Yoast, Rank Math & AIOSEO',
     ],
-    cta: null,
+    cta: { label: 'Download SEO ↓', href: '/downloads/aisuite-seo.zip', track: null },
   },
   {
     id: '03',
@@ -46,7 +46,7 @@ const plugins = [
       'Auto-apply trusted suggestions',
       'Updates served direct, not via .org',
     ],
-    cta: { label: 'Get SEO Pro', href: PAYMENT_LINKS.pro },
+    cta: { label: 'Get SEO Pro', href: PAYMENT_LINKS.pro, track: 'pro' },
   },
 ];
 
@@ -93,7 +93,7 @@ export default function Editorial() {
           <div className="max-w-6xl mx-auto px-6 py-20 md:py-28 grid md:grid-cols-[1.4fr_1fr] gap-12 items-center">
             <div>
               <p className="text-[11px] uppercase tracking-[0.22em] text-[#00749C] mb-6" style={{ fontFamily: mono }}>
-                Free on WordPress.org · Pro in this store
+                Free & GPL · Pro in this store
               </p>
               <h1 className="text-4xl md:text-6xl leading-[1.05] font-bold tracking-tight mb-6" style={{ fontFamily: serif }}>
                 AI plugins for WordPress that don’t suck.
@@ -179,7 +179,7 @@ export default function Editorial() {
               Two free plugins. One worth paying for.
             </h2>
             <p className="text-lg text-[#1B1712]/65 leading-relaxed">
-              Core and SEO are complete products on WordPress.org — no locked features, no license
+              Core and SEO are complete, free products — no locked features, no license
               checks. Pro is a separate download that adds what the free plugin deliberately
               doesn’t contain.
             </p>
@@ -206,18 +206,14 @@ export default function Editorial() {
                   ))}
                 </ul>
                 <div className="mt-auto flex items-center gap-3">
-                  {p.cta ? (
+                  {p.cta && (
                     <a
                       href={p.cta.href}
-                      onClick={() => track('checkout_click', { design: 'editorial', plan: 'pro' })}
+                      onClick={p.cta.track ? () => track('checkout_click', { design: 'editorial', plan: 'pro' }) : undefined}
                       className="border border-[#1B1712]/30 px-5 py-2.5 text-sm font-medium hover:bg-[#1B1712] hover:text-[#F7F4EE] transition-colors"
                     >
                       {p.cta.label}
                     </a>
-                  ) : (
-                    <span className="border border-[#1B1712]/20 px-5 py-2.5 text-sm font-medium text-[#1B1712]/60">
-                      On WordPress.org
-                    </span>
                   )}
                 </div>
               </article>
@@ -237,7 +233,7 @@ export default function Editorial() {
             </h2>
             <div className="grid md:grid-cols-3 gap-10">
               {[
-                ['01', 'Install from WordPress.org', 'Plugins → Add New → search “AI Suite”. Core and the SEO module install like any other plugin. No composer, no node, no build step.'],
+                ['01', 'Download & upload the zips', 'Plugins → Add New → Upload Plugin. Core first, then the SEO module — it installs like any other plugin. No composer, no node, no build step.'],
                 ['02', 'Connect once', 'Managed credits work out of the box. Prefer BYOK? Your provider key is posted straight to the gateway — never written to WordPress.'],
                 ['03', 'Review, then apply', 'Suggestions land in a review queue. Approve what you like; a WordPress revision is saved before every write, so anything can be rolled back.'],
               ].map(([n, t, d]) => (
@@ -270,7 +266,7 @@ export default function Editorial() {
             {/* Free */}
             <div className="border border-[#1B1712]/20 bg-white p-8 flex flex-col">
               <h3 className="text-lg font-bold mb-1">Free</h3>
-              <p className="text-sm text-[#1B1712]/55 mb-6">Core + SEO, from WordPress.org.</p>
+              <p className="text-sm text-[#1B1712]/55 mb-6">Core + SEO, free downloads.</p>
               <p className="text-4xl font-bold mb-1" style={{ fontFamily: serif }}>
                 $0<span className="text-base font-normal text-[#1B1712]/50"> forever</span>
               </p>
@@ -281,8 +277,8 @@ export default function Editorial() {
                 <li>✓ Block-aware internal link insertion</li>
                 <li>✓ BYOK — unlimited actions on your key</li>
               </ul>
-              <a href="#plugins" className="mt-auto block text-center border border-[#1B1712]/30 px-6 py-3 font-medium hover:border-[#1B1712] transition-colors">
-                Install from WordPress.org
+              <a href="/downloads/aisuite-core.zip" className="mt-auto block text-center border border-[#1B1712]/30 px-6 py-3 font-medium hover:border-[#1B1712] transition-colors">
+                Download the free plugins
               </a>
             </div>
 
