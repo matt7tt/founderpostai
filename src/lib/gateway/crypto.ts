@@ -1,0 +1,53 @@
+import crypto from 'crypto';
+
+export function sign(secret: string, timestamp: string, rawBody: string): string {
+  return crypto.createHmac('sha256', secret).update(`${timestamp}.${rawBody}`).digest('hex');
+}
+
+// Verify an inbound (WP → gateway) request. Returns error string or null.
+export function verifyInbound(
+  headers: Record<string, string | string[] | undefined>,
+  rawBody: string,
+  secret: string
+): string | null {
+  const ts = headers['x-aisuite-timestamp'] as string;
+  const sig = headers['x-aisuite-signature'] as string;
+  if (!ts || !sig) return 'Missing signature headers';
+  const age = Math.abs(Math.floor(Date.now() / 1000) - parseInt(ts, 10));
+  if (age > 300) return 'Timestamp outside 300s window';
+  const expected = sign(secret, ts, rawBody);
+  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return 'Bad signature';
+  return null;
+}
+
+export function outboundHeaders(secret: string, rawBody: string, siteId: string) {
+  const ts = Math.floor(Date.now() / 1000).toString();
+  return {
+    'Content-Type': 'application/json',
+    'X-AISuite-Site': siteId,
+    'X-AISuite-Timestamp': ts,
+    'X-AISuite-Signature': sign(secret, ts, rawBody),
+    'X-AISuite-Plugin': 'gateway',
+  };
+}
+
+export function randomId(prefix: string): string {
+  return `${prefix}_${crypto.randomBytes(12).toString('hex')}`;
+}
+
+export function encrypt(plaintext: string): string {
+  const key = Buffer.from(process.env.GATEWAY_KMS_KEY || '', 'hex');
+  if (key.length !== 32) throw new Error('GATEWAY_KMS_KEY must be 64 hex chars');
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const enc = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
+  return Buffer.concat([iv, cipher.getAuthTag(), enc]).toString('base64');
+}
+
+export function decrypt(blob: string): string {
+  const key = Buffer.from(process.env.GATEWAY_KMS_KEY || '', 'hex');
+  const buf = Buffer.from(blob, 'base64');
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, buf.subarray(0, 12));
+  decipher.setAuthTag(buf.subarray(12, 28));
+  return Buffer.concat([decipher.update(buf.subarray(28)), decipher.final()]).toString('utf8');
+}

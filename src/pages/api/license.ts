@@ -44,6 +44,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.log(`License issued: plan=${plan} key=${licenseKey} email=${session.customer_details?.email}`);
     }
 
+    // Record for the update server (best-effort — don't fail the page over it).
+    try {
+      const { setJSON } = await import('@/lib/gateway/redis');
+      await setJSON(`license:${licenseKey}`, {
+        plan,
+        status: subscription.status === 'active' ? 'active' : subscription.status,
+        subscription_id: subscriptionId,
+      });
+    } catch (e) {
+      console.warn('License redis record failed:', e);
+    }
+
     return res.status(200).json({
       plan,
       planLabel: PLAN_LABELS[plan],
