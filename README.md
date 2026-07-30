@@ -1,16 +1,48 @@
 # FounderPostAI
 
-Generate LinkedIn posts that actually get engagement. Built specifically for founders.
+A store for the **AI Suite** WordPress plugin family:
 
-## Features
+- **AI Suite Core** (Free, WordPress.org) — connection, credits, brand context, job queue
+- **AI Suite SEO** (Free, WordPress.org) — suggestions + review queue, batches of ten, block-aware internal links
+- **AI Suite SEO Pro** ($79/yr, this store) — bulk runs, scheduling, auto-apply
+- **Agency** ($199/yr) — Pro on unlimited client sites, BYOK flat fee
 
-- 🚀 Generate 5 LinkedIn post variations in seconds
-- 🎛️ Control tone, post type, and length
-- 📊 Usage tracking (free: 2/month, pro: 50/month)
-- 💳 Stripe subscription for Pro plan ($9/month)
-- 📋 Copy to clipboard
-- 📁 Post history
-- 🔐 Email/password auth via NextAuth
+Billing modes: managed credits ("actions") or BYOK (customer's own provider key, never stored in WordPress). 30-day refunds, GPL-licensed.
+
+## A/B testing
+
+The homepage is split 50/50 between two designs via `src/middleware.ts` (cookie `ab_design`,
+30 days). Variants live in `src/designs/Editorial.tsx` and `src/designs/Studio.tsx`.
+Force one with `/?v=studio` or `/?v=editorial`. Conversion events (`landing_view`,
+`checkout_click`) go to Vercel Analytics via `@vercel/analytics`.
+
+## Payments
+
+Stripe Payment Links — no custom checkout code. Set:
+
+```env
+NEXT_PUBLIC_STRIPE_PAYMENT_LINK_PRO="https://buy.stripe.com/..."
+NEXT_PUBLIC_STRIPE_PAYMENT_LINK_AGENCY="https://buy.stripe.com/..."
+```
+
+Set each link's after-payment redirect to:
+
+```text
+https://founderpostai.com/thanks?session_id={CHECKOUT_SESSION_ID}
+```
+
+The Checkout Session placeholder is required: the thank-you page verifies the
+paid Stripe subscription, issues the customer’s license, and indexes it for Pro updates.
+
+## Design direction
+
+Editorial / indie-plugin-shop aesthetic (deliberately anti-"AI SaaS" slop): warm paper background
+(`#F7F4EE`), ink text (`#1B1712`), single WordPress-blue accent (`#00749C`), serif display type
+(Charter/Cambria stack), monospace micro-labels, hard borders and offset shadows instead of
+gradients and glow.
+
+The landing page (`src/pages/index.tsx`) is self-contained Tailwind; the legacy SaaS dashboard,
+auth, and Stripe checkout are still present but unlinked from the homepage except the login link.
 
 ## Setup
 
@@ -26,34 +58,36 @@ Create a `.env.local` file:
 
 ```env
 ANTHROPIC_API_KEY=sk-ant-your_key
-NEXTAUTH_SECRET=your_random_32char_secret
-NEXTAUTH_URL=http://localhost:3000
+ANTHROPIC_MODEL=your_supported_model_id
 NEXT_PUBLIC_URL=http://localhost:3000
+UPSTASH_REDIS_REST_URL=https://your-database.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your_upstash_token
+GATEWAY_KMS_KEY=your_random_64_character_hex_key
 STRIPE_SECRET_KEY=sk_test_your_key
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_key
-STRIPE_WEBHOOK_SECRET=whsec_your_secret
-STRIPE_PRO_PRICE_ID=price_your_price_id
+NEXT_PUBLIC_STRIPE_PAYMENT_LINK_PRO=https://buy.stripe.com/...
+NEXT_PUBLIC_STRIPE_PAYMENT_LINK_AGENCY=https://buy.stripe.com/...
+STRIPE_PRICE_PRO=price_...
+STRIPE_PRICE_AGENCY=price_...
 ```
 
-### 3. Create Stripe Product
+Generate `GATEWAY_KMS_KEY` with `openssl rand -hex 32`. Changing it after customers
+save BYOK credentials makes those credentials unreadable, so store it as a durable secret.
 
-1. Go to [Stripe Dashboard](https://dashboard.stripe.com)
-2. Create a product: "FounderPostAI Pro"
-3. Set price: $9.00/month recurring
-4. Copy the price ID to `STRIPE_PRO_PRICE_ID`
+### 3. Create Stripe products and Payment Links
 
-### 4. Set up Stripe Webhook
+1. Create **AI Suite SEO Pro** at $79/year.
+2. Create **AI Suite Agency** at $199/year.
+3. Create a Payment Link for each and set the matching public environment variable.
+4. Copy each product's recurring Price ID into `STRIPE_PRICE_PRO` or
+   `STRIPE_PRICE_AGENCY`. License issuance fails closed if these are missing.
+5. Set each after-payment redirect to
+   `https://yourdomain.com/thanks?session_id={CHECKOUT_SESSION_ID}`.
 
-1. In Stripe Dashboard → Webhooks → Add endpoint
-2. URL: `https://yourdomain.com/api/webhooks/stripe`
-3. Events to listen for:
-   - `checkout.session.completed`
-   - `customer.subscription.deleted`
-   - `customer.subscription.updated`
-   - `invoice.payment_failed`
-4. Copy webhook signing secret to `STRIPE_WEBHOOK_SECRET`
+No webhook is required for the plugin purchase flow. The license endpoint verifies the
+Checkout Session before issuing a key, and the Pro update endpoint re-checks the
+subscription in Stripe before returning a package.
 
-### 5. Run locally
+### 4. Run locally
 
 ```bash
 npm run dev
@@ -61,7 +95,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000)
 
-### 6. Deploy to Vercel
+### 5. Deploy to Vercel
 
 ```bash
 npx vercel --prod
@@ -76,9 +110,9 @@ Add all environment variables in Vercel project settings.
 - **Auth**: NextAuth.js
 - **AI**: Anthropic Claude API
 - **Payments**: Stripe
-- **Storage**: In-memory (upgrade to PostgreSQL for production)
+- **Gateway storage**: Upstash Redis
 
 ## Notes
 
-- In-memory storage resets on server restart. For production, use a real database (Vercel Postgres, Supabase, PlanetScale)
-- The free tier allows 2 posts/month, Pro allows 50/month
+- Legacy LinkedIn-SaaS routes remain in the repository but are not linked from the plugin storefront.
+- The plugin gateway requires Redis; it deliberately does not fall back to process memory.

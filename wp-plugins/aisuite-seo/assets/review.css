@@ -1,0 +1,113 @@
+/* Review queue. The diff is the product — everything else stays quiet. */
+
+.aisuite-review {
+	margin-top: 24px;
+}
+
+.aisuite-card {
+	background: #fff;
+	border: 1px solid var(--aisuite-line, #dcdcde);
+	border-radius: 4px;
+	margin-bottom: 16px;
+	overflow: hidden;
+}
+
+.aisuite-card__head {
+	display: flex;
+	align-items: baseline;
+	gap: 12px;
+	padding: 12px 16px;
+	border-bottom: 1px solid var(--aisuite-line, #dcdcde);
+	background: #f6f7f7;
+}
+
+.aisuite-card__field {
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--aisuite-muted, #646970);
+}
+
+.aisuite-card__post {
+	text-decoration: none;
+	font-weight: 600;
+}
+
+.aisuite-diff {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+}
+
+.aisuite-diff__side {
+	padding: 16px;
+}
+
+.aisuite-diff__side--current {
+	border-right: 1px solid var(--aisuite-line, #dcdcde);
+	color: var(--aisuite-muted, #646970);
+}
+
+.aisuite-diff__side--suggested {
+	background: var(--aisuite-accent-soft, #e6efeb);
+}
+
+.aisuite-diff__label {
+	display: block;
+	font-size: 11px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--aisuite-muted, #646970);
+	margin-bottom: 6px;
+}
+
+.aisuite-diff__value {
+	line-height: 1.5;
+	overflow-wrap: anywhere;
+}
+
+.aisuite-links {
+	margin: 0;
+}
+
+.aisuite-links li {
+	margin-bottom: 4px;
+}
+
+.aisuite-card__why {
+	margin: 0;
+	padding: 12px 16px;
+	border-top: 1px solid var(--aisuite-line, #dcdcde);
+	color: var(--aisuite-muted, #646970);
+	font-style: italic;
+}
+
+.aisuite-card__actions {
+	display: flex;
+	gap: 8px;
+	padding: 12px 16px;
+	border-top: 1px solid var(--aisuite-line, #dcdcde);
+}
+
+.aisuite-card__actions form {
+	margin: 0;
+}
+
+.aisuite-empty {
+	background: #fff;
+	border: 1px dashed var(--aisuite-line, #dcdcde);
+	border-radius: 4px;
+	padding: 32px;
+	text-align: center;
+}
+
+@media screen and (max-width: 782px) {
+	.aisuite-diff {
+		grid-template-columns: 1fr;
+	}
+
+	.aisuite-diff__side--current {
+		border-right: 0;
+		border-bottom: 1px solid var(--aisuite-line, #dcdcde);
+	}
+}

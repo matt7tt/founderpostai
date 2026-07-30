@@ -16,4 +16,4 @@ build/
 .vscode/
 dev.db
 dev.db-shm
-dev.db-wal
+dev.db-wal.vercel
