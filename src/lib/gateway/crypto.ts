@@ -16,7 +16,10 @@ export function verifyInbound(
   const age = Math.abs(Math.floor(Date.now() / 1000) - parseInt(ts, 10));
   if (age > 300) return 'Timestamp outside 300s window';
   const expected = sign(secret, ts, rawBody);
-  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return 'Bad signature';
+  const given = Buffer.from(sig);
+  const want = Buffer.from(expected);
+  // timingSafeEqual throws on length mismatch — that must be a 401, not a 500.
+  if (given.length !== want.length || !crypto.timingSafeEqual(given, want)) return 'Bad signature';
   return null;
 }
 
