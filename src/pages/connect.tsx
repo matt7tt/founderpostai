@@ -1,6 +1,6 @@
-import Head from 'next/head';
 import Link from 'next/link';
 import { useState } from 'react';
+import SeoHead from '../components/SeoHead';
 
 export default function Connect() {
   const [token, setToken] = useState('');
@@ -24,9 +24,7 @@ export default function Connect() {
 
   return (
     <>
-      <Head>
-        <title>Get a connection token — FounderPostAI</title>
-      </Head>
+      <SeoHead title="Connect Your Site | FounderPostAI" path="/connect" noIndex />
       <div
         style={{
           minHeight: '100vh',

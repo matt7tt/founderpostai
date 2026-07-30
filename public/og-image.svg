@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="FounderPostAI AI SEO plugins for WordPress">
+  <defs>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d9fbff"/>
+      <stop offset=".52" stop-color="#f7f4ee"/>
+      <stop offset="1" stop-color="#cddcff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <rect x="54" y="54" width="1092" height="522" rx="30" fill="#f7f4ee" stroke="#1b1712" stroke-opacity=".16" stroke-width="2"/>
+  <text x="100" y="128" fill="#1b1712" font-family="Georgia, serif" font-size="38" font-style="italic" font-weight="700">FounderPostAI</text>
+  <text x="100" y="222" fill="#1b1712" font-family="Arial, Helvetica, sans-serif" font-size="70" font-weight="750">AI SEO plugins for</text>
+  <text x="100" y="307" fill="#1b1712" font-family="Georgia, serif" font-size="78" font-style="italic" font-weight="700">WordPress</text>
+  <text x="100" y="382" fill="#1b1712" font-family="Arial, Helvetica, sans-serif" font-size="70" font-weight="750">that do the work.</text>
+  <text x="100" y="447" fill="#5f5a54" font-family="Arial, Helvetica, sans-serif" font-size="30">Free Core + SEO. Bulk automation with SEO Pro.</text>
+  <g transform="translate(100 485)">
+    <rect width="178" height="54" rx="27" fill="#00749c"/>
+    <text x="89" y="35" text-anchor="middle" fill="white" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700">Core · Free</text>
+    <rect x="194" width="176" height="54" rx="27" fill="#1b1712"/>
+    <text x="282" y="35" text-anchor="middle" fill="white" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700">SEO · Free</text>
+    <rect x="386" width="230" height="54" rx="27" fill="#ffffff" stroke="#1b1712" stroke-opacity=".25"/>
+    <text x="501" y="35" text-anchor="middle" fill="#1b1712" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700">SEO Pro · $79/yr</text>
+  </g>
+</svg>

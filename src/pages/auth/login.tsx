@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import SeoHead from '../../components/SeoHead';
 
 export default function Login() {
   const router = useRouter();
@@ -32,7 +33,9 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-linkedin to-blue-700 flex items-center justify-center p-4">
+    <>
+      <SeoHead title="Log In | FounderPostAI" path="/auth/login" noIndex />
+      <div className="min-h-screen bg-gradient-to-br from-linkedin to-blue-700 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-lg shadow-xl p-8">
           <h1 className="text-3xl font-bold text-center mb-2 text-gray-900">FounderPostAI</h1>
@@ -90,6 +93,7 @@ export default function Login() {
           </p>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

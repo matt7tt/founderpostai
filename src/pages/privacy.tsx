@@ -1,12 +1,14 @@
-import Head from 'next/head';
 import Link from 'next/link';
+import SeoHead from '../components/SeoHead';
 
 export default function Privacy() {
   return (
     <>
-      <Head>
-        <title>Privacy Policy — FounderPostAI</title>
-      </Head>
+      <SeoHead
+        title="Privacy Policy | FounderPostAI"
+        description="How FounderPostAI handles purchases, connected WordPress sites, AI processing, analytics, provider keys, and data rights."
+        path="/privacy"
+      />
       <div style={{ fontFamily: "'Inter', sans-serif", maxWidth: '680px', margin: '0 auto', padding: '64px 24px', color: '#0a0a0a', lineHeight: 1.7 }}>
         <h1 style={{ letterSpacing: '-0.04em' }}>Privacy Policy</h1>
         <p style={{ color: '#6b6b6b' }}>Last updated: July 2026</p>

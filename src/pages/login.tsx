@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import Head from 'next/head';
+import SeoHead from '../components/SeoHead';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -32,9 +32,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <Head>
-        <title>Log in — FounderPostAI</title>
-      </Head>
+      <SeoHead title="Log In | FounderPostAI" path="/login" noIndex />
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">

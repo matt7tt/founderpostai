@@ -1,10 +1,10 @@
 import { useSession, signOut } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import Head from 'next/head';
 import Link from 'next/link';
 import GeneratorForm from '@/components/GeneratorForm';
 import PostCard from '@/components/PostCard';
+import SeoHead from '@/components/SeoHead';
 
 interface UserStats {
   tier: string;
@@ -149,9 +149,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <Head>
-        <title>Dashboard — FounderPostAI</title>
-      </Head>
+      <SeoHead title="Dashboard | FounderPostAI" path="/dashboard" noIndex />
       <div className="min-h-screen bg-gray-50">
         {/* Toast */}
         {toast && (
