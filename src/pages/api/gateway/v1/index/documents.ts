@@ -19,13 +19,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const site = await authedSite(req, res, raw);
   if (!site) return;
 
-  const { documents } = JSON.parse(raw || '{}');
-  if (!Array.isArray(documents)) return res.status(400).json({ error: 'documents must be an array' });
+  let documents: any;
+  try {
+    ({ documents } = JSON.parse(raw || '{}'));
+  } catch {
+    return res.status(400).json({ error: 'Invalid JSON' });
+  }
+  if (!Array.isArray(documents) || documents.length > 500) {
+    return res.status(400).json({ error: 'documents must be an array of at most 500 items' });
+  }
+
+  const clean = documents.map((d: any) => ({
+    post_id: Number.isInteger(d?.post_id) ? d.post_id : 0,
+    url: typeof d?.url === 'string' ? d.url.slice(0, 2048) : '',
+    title: typeof d?.title === 'string' ? d.title.slice(0, 500) : '',
+    content: typeof d?.content === 'string' ? d.content.slice(0, 500_000) : '',
+  }));
 
   await setJSON(
     `docs:${site.site_id}`,
-    documents.map((d: any) => ({ post_id: d.post_id, url: d.url, title: d.title, content: d.content })),
+    clean,
     60 * 60 * 24 * 90
   );
-  return res.status(200).json({ indexed: documents.length });
+  return res.status(200).json({ indexed: clean.length });
 }

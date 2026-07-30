@@ -287,8 +287,8 @@ class AISuite_Admin {
 	 * Billing mode and, for BYOK, the provider key.
 	 */
 	protected function render_billing() {
-		$mode   = AISuite_Billing::mode();
-		$key    = AISuite_Billing::provider_key_status();
+		$mode = AISuite_Billing::mode();
+		$key  = AISuite_Billing::provider_key_status();
 		$dash = aisuite_dashboard_url();
 		?>
 		<div class="aisuite-panel">
@@ -444,10 +444,11 @@ class AISuite_Admin {
 		);
 
 		$failures = array(
-			'connect_fail' => __( 'Connection failed.', 'aisuite-core' ),
-			'billing_fail' => __( 'Could not change billing mode.', 'aisuite-core' ),
-			'key_fail'     => __( 'That key could not be verified.', 'aisuite-core' ),
-			'health_fail'  => __( 'Connection test failed.', 'aisuite-core' ),
+			'connect_fail'    => __( 'Connection failed.', 'aisuite-core' ),
+			'billing_fail'    => __( 'Could not change billing mode.', 'aisuite-core' ),
+			'key_fail'        => __( 'That key could not be verified.', 'aisuite-core' ),
+			'key_remove_fail' => __( 'The provider key could not be removed.', 'aisuite-core' ),
+			'health_fail'     => __( 'Connection test failed.', 'aisuite-core' ),
 		);
 
 		if ( isset( $success[ $code ] ) ) {
@@ -477,6 +478,7 @@ class AISuite_Admin {
 	public function handle_connect() {
 		$this->guard( 'aisuite_connect' );
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- guard() verifies this action's capability and nonce above.
 		$token  = isset( $_POST['connect_token'] ) ? sanitize_text_field( wp_unslash( $_POST['connect_token'] ) ) : '';
 		$result = $this->core->gateway->register_site( $token );
 
@@ -490,6 +492,7 @@ class AISuite_Admin {
 
 	public function handle_disconnect() {
 		$this->guard( 'aisuite_disconnect' );
+		$this->core->jobs->fail_all( __( 'This job was cancelled because the site was disconnected.', 'aisuite-core' ) );
 		AISuite_Site_Auth::disconnect();
 		$this->redirect( 'disconnected' );
 	}
@@ -501,8 +504,11 @@ class AISuite_Admin {
 		// business_name — would otherwise be reset to defaults on every save.
 		$input = $this->core->brand->get();
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- guard() verifies this action's capability and nonce above.
 		foreach ( array( 'what_you_do', 'audience', 'tone', 'primary_market', 'avoid_phrases', 'style_notes' ) as $field ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- guard() verifies this action's capability and nonce above.
 			if ( isset( $_POST[ $field ] ) ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing -- guard() verifies this action's capability and nonce above.
 				$input[ $field ] = sanitize_textarea_field( wp_unslash( $_POST[ $field ] ) );
 			}
 		}
@@ -515,6 +521,7 @@ class AISuite_Admin {
 	public function handle_billing_mode() {
 		$this->guard( 'aisuite_billing_mode' );
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- guard() verifies this action's capability and nonce above.
 		$mode   = isset( $_POST['mode'] ) ? sanitize_key( wp_unslash( $_POST['mode'] ) ) : AISuite_Billing::MODE_MANAGED;
 		$result = $this->core->gateway->set_billing_mode(
 			AISuite_Billing::MODE_BYOK === $mode ? AISuite_Billing::MODE_BYOK : AISuite_Billing::MODE_MANAGED
@@ -535,8 +542,9 @@ class AISuite_Admin {
 	public function handle_set_key() {
 		$this->guard( 'aisuite_set_key' );
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- guard() verifies this action's capability and nonce above.
 		$provider = isset( $_POST['provider'] ) ? sanitize_key( wp_unslash( $_POST['provider'] ) ) : '';
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- normalized and shape-validated below; sanitize_text_field() would corrupt valid keys.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- guard() verifies the nonce; the key is normalized and shape-validated below.
 		$key = isset( $_POST['provider_key'] ) ? AISuite_Billing::normalize_key( wp_unslash( $_POST['provider_key'] ) ) : '';
 
 		$valid = AISuite_Billing::validate_key_shape( $provider, $key );
@@ -561,7 +569,12 @@ class AISuite_Admin {
 	public function handle_clear_key() {
 		$this->guard( 'aisuite_clear_key' );
 
-		$this->core->gateway->delete_provider_key();
+		$result = $this->core->gateway->delete_provider_key();
+
+		if ( is_wp_error( $result ) ) {
+			set_transient( $this->detail_key(), $result->get_error_message(), MINUTE_IN_SECONDS );
+			$this->redirect( 'key_remove_fail' );
+		}
 
 		$this->redirect( 'key_removed' );
 	}

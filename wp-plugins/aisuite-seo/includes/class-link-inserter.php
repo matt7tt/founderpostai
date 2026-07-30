@@ -268,12 +268,32 @@ class AISuite_SEO_Link_Inserter {
 		$map   = array();
 		$index = 0;
 
+		// WordPress's own regex knows which registered shortcodes are enclosing.
+		// Shield the complete match so text inside [shortcode]...[/shortcode] is
+		// not edited either. The fallback below still protects unknown tags.
+		if ( function_exists( 'get_shortcode_regex' ) ) {
+			$regex = get_shortcode_regex();
+
+			if ( $regex ) {
+				$html = preg_replace_callback(
+					'/' . $regex . '/s',
+					function ( $matches ) use ( &$map, &$index ) {
+						$token         = '<!--aisuite-sc-' . $index . '-->';
+						$map[ $token ] = $matches[0];
+						++$index;
+						return $token;
+					},
+					$html
+				);
+			}
+		}
+
 		$html = preg_replace_callback(
 			'/\[[^\]]+\]/',
 			function ( $matches ) use ( &$map, &$index ) {
-				$token         = '<!--aisuite-sc-' . $index . '-->';
-				$map[ $token ] = $matches[0];
-				$index++;
+					$token         = '<!--aisuite-sc-' . $index . '-->';
+					$map[ $token ] = $matches[0];
+					++$index;
 				return $token;
 			},
 			$html

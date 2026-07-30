@@ -45,6 +45,7 @@ class AISuite_SEO_Store {
 
 		dbDelta( $sql );
 
+		wp_cache_delete( 'aisuite_seo_table', 'aisuite' );
 		update_option( self::DB_OPTION, self::DB_VERSION, false );
 	}
 
@@ -82,8 +83,8 @@ class AISuite_SEO_Store {
 
 		$table = self::table();
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-		$wpdb->query( "DROP TABLE IF EXISTS {$table}" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) );
 
 		delete_option( self::DB_OPTION );
 	}
@@ -100,22 +101,13 @@ class AISuite_SEO_Store {
 		}
 
 		$table = self::table();
-
-		$wpdb->delete(
-			$table,
-			array(
-				'post_id' => (int) $post_id,
-				'field'   => $field,
-				'status'  => 'pending',
-			),
-			array( '%d', '%s', '%s' )
-		);
-
-		$wpdb->insert(
+		$field = substr( sanitize_key( $field ), 0, 32 );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- suggestions intentionally live in a purpose-built indexed queue table.
+		$saved = $wpdb->insert(
 			$table,
 			array(
 				'post_id'         => (int) $post_id,
-				'field'           => substr( $field, 0, 32 ),
+				'field'           => $field,
 				'current_value'   => (string) $current,
 				'suggested_value' => (string) $suggested,
 				'rationale'       => (string) $rationale,
@@ -125,9 +117,29 @@ class AISuite_SEO_Store {
 			array( '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
 		);
 
+		if ( false === $saved ) {
+			return 0;
+		}
+
+		$id = (int) $wpdb->insert_id;
+
+		// Insert first. If the database rejects the new row, the customer's
+		// existing pending suggestion remains available instead of disappearing.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->query(
+			$wpdb->prepare(
+				'DELETE FROM %i WHERE post_id = %d AND field = %s AND status = %s AND id <> %d',
+				$table,
+				(int) $post_id,
+				$field,
+				'pending',
+				$id
+			)
+		);
+
 		self::flush_counts();
 
-		return (int) $wpdb->insert_id;
+		return $id;
 	}
 
 	public static function get( $id ) {
@@ -139,8 +151,8 @@ class AISuite_SEO_Store {
 
 		$table = self::table();
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is derived from $wpdb->prefix.
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", (int) $id ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $table, (int) $id ) );
 	}
 
 	/**
@@ -164,25 +176,37 @@ class AISuite_SEO_Store {
 			)
 		);
 
+		$args['status']   = sanitize_key( $args['status'] );
+		$args['per_page'] = min( 100, max( 1, (int) $args['per_page'] ) );
+		$args['page']     = max( 1, (int) $args['page'] );
+
 		$table  = self::table();
-		$where  = array( 'status = %s' );
-		$params = array( $args['status'] );
+		$offset = ( $args['page'] - 1 ) * $args['per_page'];
 
 		if ( $args['post_id'] ) {
-			$where[]  = 'post_id = %d';
-			$params[] = (int) $args['post_id'];
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			return $wpdb->get_results(
+				$wpdb->prepare(
+					'SELECT * FROM %i WHERE status = %s AND post_id = %d ORDER BY created_at DESC LIMIT %d OFFSET %d',
+					$table,
+					$args['status'],
+					(int) $args['post_id'],
+					$args['per_page'],
+					$offset
+				)
+			);
 		}
 
-		$offset   = max( 0, ( (int) $args['page'] - 1 ) * (int) $args['per_page'] );
-		$params[] = (int) $args['per_page'];
-		$params[] = $offset;
-
-		$clause = implode( ' AND ', $where );
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is derived from $wpdb->prefix; values are prepared.
-		$sql = $wpdb->prepare( "SELECT * FROM {$table} WHERE {$clause} ORDER BY created_at DESC LIMIT %d OFFSET %d", $params );
-
-		return $wpdb->get_results( $sql );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT * FROM %i WHERE status = %s ORDER BY created_at DESC LIMIT %d OFFSET %d',
+				$table,
+				$args['status'],
+				$args['per_page'],
+				$offset
+			)
+		);
 	}
 
 	/**
@@ -205,8 +229,8 @@ class AISuite_SEO_Store {
 
 		$table = self::table();
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-		$count = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE status = %s", $status ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$count = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE status = %s', $table, $status ) );
 
 		wp_cache_set( $key, $count, 'aisuite', 5 * MINUTE_IN_SECONDS );
 
@@ -223,22 +247,30 @@ class AISuite_SEO_Store {
 	public static function resolve( $id, $status ) {
 		global $wpdb;
 
-		if ( ! self::table_exists() ) {
-			return;
+		if ( ! self::table_exists() || ! in_array( $status, array( 'approved', 'rejected' ), true ) ) {
+			return false;
 		}
 
-		$wpdb->update(
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- custom queue-table write; flush_counts() invalidates its cache below.
+		$updated = $wpdb->update(
 			self::table(),
 			array(
 				'status'      => $status,
 				'resolved_at' => current_time( 'mysql', true ),
 				'resolved_by' => get_current_user_id(),
 			),
-			array( 'id' => (int) $id ),
+			array(
+				'id'     => (int) $id,
+				'status' => 'pending',
+			),
 			array( '%s', '%s', '%d' ),
-			array( '%d' )
+			array( '%d', '%s' )
 		);
 
-		self::flush_counts();
+		if ( $updated ) {
+			self::flush_counts();
+		}
+
+		return 1 === $updated;
 	}
 }

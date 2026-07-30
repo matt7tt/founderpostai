@@ -3,7 +3,7 @@
  * Plugin Name:       AI Suite Core
  * Plugin URI:        https://founderpostai.com
  * Description:       Shared runtime for the AI Suite modules: account connection, credit balance, brand context, and the background job queue every module runs on.
- * Version:           0.1.1
+ * Version:           0.1.2
  * Requires at least: 6.5
  * Requires PHP:      7.4
  * Author:            FounderPostAI
@@ -16,7 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'AISUITE_CORE_VERSION', '0.1.1' );
+define( 'AISUITE_CORE_VERSION', '0.1.2' );
 define( 'AISUITE_CORE_FILE', __FILE__ );
 define( 'AISUITE_CORE_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AISUITE_CORE_URL', plugin_dir_url( __FILE__ ) );
@@ -86,12 +86,6 @@ final class AISuite_Core {
 
 		new AISuite_REST_Callback();
 		new AISuite_Admin( $this );
-
-		add_action( 'init', array( $this, 'load_textdomain' ) );
-	}
-
-	public function load_textdomain() {
-		load_plugin_textdomain( 'aisuite-core', false, dirname( plugin_basename( AISUITE_CORE_FILE ) ) . '/languages' );
 	}
 
 	/** True when the site has completed the connection handshake. */
@@ -125,5 +119,13 @@ register_deactivation_hook(
 	function () {
 		wp_clear_scheduled_hook( 'aisuite_refresh_account' );
 		wp_clear_scheduled_hook( AISuite_Job_Queue::HOOK_CLEANUP );
+		wp_unschedule_hook( AISuite_Job_Queue::HOOK_SUBMIT );
+		wp_unschedule_hook( AISuite_Job_Queue::HOOK_RECONCILE );
+		wp_unschedule_hook( AISuite_Job_Queue::HOOK_TRACK );
+
+		if ( function_exists( 'as_unschedule_all_actions' ) ) {
+			as_unschedule_all_actions( AISuite_Job_Queue::HOOK_SUBMIT, array(), AISuite_Job_Queue::GROUP );
+			as_unschedule_all_actions( AISuite_Job_Queue::HOOK_RECONCILE, array(), AISuite_Job_Queue::GROUP );
+		}
 	}
 );

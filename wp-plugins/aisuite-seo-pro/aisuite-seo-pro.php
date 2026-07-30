@@ -3,7 +3,7 @@
  * Plugin Name:       AI Suite SEO Pro
  * Plugin URI:        https://founderpostai.com/seo
  * Description:       Adds site-wide bulk optimization, scheduled re-analysis, and auto-apply rules to AI Suite SEO.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Requires at least: 6.5
  * Requires PHP:      7.4
  * Requires Plugins:  aisuite-core, aisuite-seo
@@ -11,6 +11,7 @@
  * Author URI:        https://founderpostai.com
  * License:           GPL-2.0-or-later
  * Text Domain:       aisuite-seo-pro
+ * Update URI:        https://founderpostai.com/aisuite-seo-pro
  *
  * NOT distributed on WordPress.org. Ships from your own store with its own
  * update server. The free plugin must never contain locked code that this one
@@ -19,7 +20,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'AISUITE_SEO_PRO_VERSION', '1.0.0' );
+define( 'AISUITE_SEO_PRO_VERSION', '1.0.1' );
 define( 'AISUITE_SEO_PRO_FILE', __FILE__ );
 
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-updater.php';
@@ -28,6 +29,17 @@ add_action(
 	'plugins_loaded',
 	function () {
 		if ( ! function_exists( 'aisuite' ) || ! class_exists( 'AISuite_SEO_Optimizer' ) ) {
+			add_action(
+				'admin_notices',
+				function () {
+					if ( current_user_can( 'activate_plugins' ) ) {
+						printf(
+							'<div class="notice notice-error"><p>%s</p></div>',
+							esc_html__( 'AI Suite SEO Pro needs both AI Suite Core and AI Suite SEO. Install and activate them to continue.', 'aisuite-seo-pro' )
+						);
+					}
+				}
+			);
 			return;
 		}
 
@@ -47,11 +59,13 @@ register_deactivation_hook(
 
 class AISuite_SEO_Pro {
 
-	const OPTION        = 'aisuite_seo_pro_settings';
+	const OPTION         = 'aisuite_seo_pro_settings';
 	const LICENSE_OPTION = 'aisuite_seo_pro_license';
-	const CRON_HOOK     = 'aisuite_seo_pro_sweep';
-	const CONTINUE_HOOK = 'aisuite_seo_pro_bulk_continue';
-	const BATCH_SIZE    = 25;
+	const CRON_HOOK      = 'aisuite_seo_pro_sweep';
+	const CONTINUE_HOOK  = 'aisuite_seo_pro_bulk_continue';
+	const SWEEP_CURSOR   = 'aisuite_seo_pro_sweep_cursor';
+	const BATCH_SIZE     = 25;
+	const MAX_SCAN       = 1000;
 
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'menu' ), 30 );
@@ -70,15 +84,19 @@ class AISuite_SEO_Pro {
 		return wp_parse_args(
 			(array) get_option( self::OPTION, array() ),
 			array(
-				'schedule_enabled'  => false,
-				'auto_apply_empty'  => false,
-				'daily_post_limit'  => 50,
+				'schedule_enabled' => false,
+				'auto_apply_empty' => false,
+				'daily_post_limit' => 50,
 			)
 		);
 	}
 
 	public static function license_key() {
 		return (string) get_option( self::LICENSE_OPTION, '' );
+	}
+
+	public static function license_is_valid( $license ) {
+		return (bool) preg_match( '/^AIS[PA]-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/', (string) $license );
 	}
 
 	public function menu() {
@@ -183,6 +201,10 @@ class AISuite_SEO_Pro {
 		if ( isset( $_POST['license_key'] ) ) {
 			$license = strtoupper( sanitize_text_field( wp_unslash( $_POST['license_key'] ) ) );
 
+			if ( '' !== $license && ! self::license_is_valid( $license ) ) {
+				$license = '';
+			}
+
 			if ( $license !== self::license_key() ) {
 				update_option( self::LICENSE_OPTION, $license, false );
 				// The cached update response was fetched with the old key.
@@ -254,58 +276,87 @@ class AISuite_SEO_Pro {
 	 * spend the customer's monthly actions on identical suggestions.
 	 */
 	public function sweep() {
-		$limit     = (int) $this->settings()['daily_post_limit'];
-		$optimizer = new AISuite_SEO_Optimizer();
-		$queued    = 0;
-		$paged     = 1;
+		global $wpdb;
 
-		while ( $queued < $limit && $paged <= 20 ) {
-			$posts = get_posts(
-				array(
-					'post_type'      => array( 'post', 'page' ),
-					'post_status'    => 'publish',
-					'posts_per_page' => 50,
-					'paged'          => $paged,
-					'orderby'        => 'modified',
-					'order'          => 'DESC',
+		$limit     = (int) $this->settings()['daily_post_limit'];
+		$optimizer = new AISuite_SEO_Optimizer( false );
+		$queued    = 0;
+		$scanned   = 0;
+		$cursor    = max( 0, (int) get_option( self::SWEEP_CURSOR, 0 ) );
+
+		while ( $queued < $limit && $scanned < self::MAX_SCAN ) {
+			// Stable ID cursor: ordering by "modified" restarted at the same newest
+			// 1,000 posts every day, so older posts on large sites were never seen.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$post_ids = $wpdb->get_col(
+				$wpdb->prepare(
+					'SELECT ID FROM %i
+					WHERE ID > %d
+					  AND post_status = %s
+					  AND post_type IN (%s, %s)
+					ORDER BY ID ASC
+					LIMIT %d',
+					$wpdb->posts,
+					$cursor,
+					'publish',
+					'post',
+					'page',
+					min( 100, self::MAX_SCAN - $scanned )
 				)
 			);
 
-			if ( empty( $posts ) ) {
+			if ( empty( $post_ids ) ) {
+				update_option( self::SWEEP_CURSOR, 0, false );
 				break;
 			}
 
-			foreach ( $posts as $post ) {
-				$analyzed = (int) get_post_meta( $post->ID, '_aisuite_seo_analyzed', true );
-				$modified = strtotime( $post->post_modified_gmt . ' GMT' );
+			foreach ( $post_ids as $post_id ) {
+				$post_id         = (int) $post_id;
+				$previous_cursor = $cursor;
+				$post            = get_post( $post_id );
+				++$scanned;
 
-				if ( $analyzed && $modified && $modified <= $analyzed ) {
-					continue; // Unchanged since its last analysis.
-				}
-
-				$in_flight = (int) get_post_meta( $post->ID, AISuite_SEO_Optimizer::META_QUEUED, true );
-
-				if ( $in_flight && time() - $in_flight < DAY_IN_SECONDS ) {
-					continue; // An analysis is already queued or running.
-				}
-
-				$result = $optimizer->analyze( $post->ID, false );
-
-				if ( is_wp_error( $result ) ) {
-					if ( in_array( $result->get_error_code(), array( 'aisuite_queue_full', 'aisuite_out_of_credits', 'aisuite_not_connected' ), true ) ) {
-						return;
-					}
+				if ( ! $post ) {
+					$cursor = $post_id;
 					continue;
 				}
 
-				$queued++;
+				$analyzed = (int) get_post_meta( $post_id, '_aisuite_seo_analyzed', true );
+				$modified = strtotime( $post->post_modified_gmt . ' GMT' );
+
+				if ( $analyzed && $modified && $modified <= $analyzed ) {
+					$cursor = $post_id;
+					continue; // Unchanged since its last analysis.
+				}
+
+				$in_flight = (int) get_post_meta( $post_id, AISuite_SEO_Optimizer::META_QUEUED, true );
+
+				if ( $in_flight && time() - $in_flight < DAY_IN_SECONDS ) {
+					$cursor = $post_id;
+					continue; // An analysis is already queued or running.
+				}
+
+				$result = $optimizer->analyze( $post_id, false );
+
+				if ( is_wp_error( $result ) ) {
+					if ( in_array( $result->get_error_code(), array( 'aisuite_queue_full', 'aisuite_out_of_credits', 'aisuite_not_connected' ), true ) ) {
+						update_option( self::SWEEP_CURSOR, $previous_cursor, false );
+						return;
+					}
+					$cursor = $post_id;
+					continue;
+				}
+
+				++$queued;
+				$cursor = $post_id;
 
 				if ( $queued >= $limit ) {
+					update_option( self::SWEEP_CURSOR, $cursor, false );
 					return;
 				}
 			}
 
-			$paged++;
+			update_option( self::SWEEP_CURSOR, $cursor, false );
 		}
 	}
 
@@ -355,7 +406,7 @@ class AISuite_SEO_Pro {
 			)
 		);
 
-		$optimizer = new AISuite_SEO_Optimizer();
+		$optimizer = new AISuite_SEO_Optimizer( false );
 		$enforce   = (bool) get_current_user_id(); // Cron continuations run with no user.
 		$queued    = 0;
 		$blocked   = '';
@@ -364,7 +415,7 @@ class AISuite_SEO_Pro {
 			$result = $optimizer->analyze( $post_id, $enforce );
 
 			if ( ! is_wp_error( $result ) ) {
-				$queued++;
+				++$queued;
 				continue;
 			}
 
@@ -401,7 +452,7 @@ class AISuite_SEO_Pro {
 			return;
 		}
 
-		$optimizer   = new AISuite_SEO_Optimizer();
+		$optimizer   = new AISuite_SEO_Optimizer( false );
 		$suggestions = AISuite_SEO_Store::query(
 			array(
 				'status'   => 'pending',
@@ -409,13 +460,28 @@ class AISuite_SEO_Pro {
 				'per_page' => 10,
 			)
 		);
+		$returned    = array();
+
+		foreach ( isset( $result['suggestions'] ) ? (array) $result['suggestions'] : array() as $suggestion ) {
+			$field = isset( $suggestion['field'] ) ? sanitize_key( $suggestion['field'] ) : '';
+
+			if ( in_array( $field, array( 'title', 'description' ), true ) ) {
+				$value              = isset( $suggestion['value'] ) ? sanitize_text_field( $suggestion['value'] ) : '';
+				$limit              = 'title' === $field ? 60 : 155;
+				$returned[ $field ] = function_exists( 'mb_substr' ) ? mb_substr( $value, 0, $limit ) : substr( $value, 0, $limit );
+			}
+		}
 
 		foreach ( $suggestions as $row ) {
 			if ( ! in_array( $row->field, array( 'title', 'description' ), true ) ) {
 				continue;
 			}
 
-			if ( '' !== trim( (string) $row->current_value ) ) {
+			if ( ! isset( $returned[ $row->field ] ) || $returned[ $row->field ] !== (string) $row->suggested_value ) {
+				continue; // Do not auto-apply an older pending suggestion.
+			}
+
+			if ( '' !== trim( (string) $row->current_value ) || '' !== trim( $optimizer->current_value( $post_id, $row->field ) ) ) {
 				continue;
 			}
 

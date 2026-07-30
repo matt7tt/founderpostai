@@ -1,14 +1,28 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getJSON, setJSON, redis } from '@/lib/gateway/redis';
+import { getJSON, redis } from '@/lib/gateway/redis';
 import { randomId, outboundHeaders, decrypt } from '@/lib/gateway/crypto';
-import { authedSite, saveJob, accountFor, Job, Site } from '@/lib/gateway/store';
+import {
+  authedSite,
+  saveJob,
+  getJob,
+  accountFor,
+  ensureAccountPeriod,
+  Job,
+  Site,
+} from '@/lib/gateway/store';
+import { validateSiteUrls } from '@/lib/gateway/url';
 
 export const config = { api: { bodyParser: false } };
 export const maxDuration = 60;
 
 async function rawBody(req: NextApiRequest): Promise<string> {
   const chunks: Buffer[] = [];
-  for await (const c of req) chunks.push(c);
+  let length = 0;
+  for await (const c of req) {
+    length += c.length;
+    if (length > 1024 * 1024) throw new Error('REQUEST_TOO_LARGE');
+    chunks.push(c);
+  }
   return Buffer.concat(chunks).toString('utf8');
 }
 
@@ -43,16 +57,62 @@ Rules: title max 60 chars, description max 155 chars, anchor must appear VERBATI
 }
 
 function parseSuggestions(text: string, p: any) {
-  const json = JSON.parse(text.replace(/```json|```/g, '').trim());
+  let json: any;
+  try {
+    json = JSON.parse(text.replace(/```json|```/g, '').trim());
+  } catch {
+    const error: any = new Error('The AI provider returned malformed JSON.');
+    error.status = 502;
+    throw error;
+  }
   const validIds = new Set((p.link_targets || []).map((t: any) => t.id));
-  return (json.suggestions || []).map((s: any) => {
-    if (s.field === 'internal_links') {
-      s.value = (s.value || []).filter(
-        (l: any) => validIds.has(l.target_id) && p.content.includes(l.anchor)
-      );
-    }
-    return s;
-  });
+  if (!Array.isArray(json.suggestions)) {
+    const error: any = new Error('The AI provider returned an invalid suggestion list.');
+    error.status = 502;
+    throw error;
+  }
+
+  const suggestions = json.suggestions
+    .filter((s: any) => s && ['title', 'description', 'internal_links'].includes(s.field))
+    .slice(0, 3)
+    .map((s: any) => {
+      if (s.field === 'internal_links') {
+        return {
+          field: s.field,
+          value: (Array.isArray(s.value) ? s.value : [])
+            .filter(
+              (l: any) =>
+                l &&
+                validIds.has(l.target_id) &&
+                typeof l.anchor === 'string' &&
+                l.anchor.length <= 200 &&
+                p.content.includes(l.anchor)
+            )
+            .slice(0, 2),
+          rationale: typeof s.rationale === 'string' ? s.rationale.slice(0, 500) : '',
+        };
+      }
+      return {
+        field: s.field,
+        value: typeof s.value === 'string' ? s.value : '',
+        rationale: typeof s.rationale === 'string' ? s.rationale.slice(0, 500) : '',
+      };
+    });
+
+  if (
+    !suggestions.some(
+      (suggestion: any) =>
+        (suggestion.field === 'title' || suggestion.field === 'description') &&
+        typeof suggestion.value === 'string' &&
+        suggestion.value.trim() !== ''
+    )
+  ) {
+    const error: any = new Error('The AI provider returned no usable metadata suggestions.');
+    error.status = 502;
+    throw error;
+  }
+
+  return suggestions;
 }
 
 async function runAnalysis(payload: any, brand: any, apiKey: string): Promise<any> {
@@ -64,10 +124,11 @@ async function runAnalysis(payload: any, brand: any, apiKey: string): Promise<an
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
+      model: process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001',
       max_tokens: 1024,
       messages: [{ role: 'user', content: buildPrompt(payload, brand) }],
     }),
+    signal: AbortSignal.timeout(45_000),
   });
   if (!r.ok) {
     const e = await r.json().catch(() => ({}));
@@ -82,20 +143,54 @@ async function runAnalysis(payload: any, brand: any, apiKey: string): Promise<an
 async function deliverCallback(site: Site, body: any) {
   const raw = JSON.stringify(body);
   try {
-    await fetch(site.callback_url, {
+    // Re-resolve before every outbound request. A domain that was public when
+    // it registered must not become an SSRF route to a private service later.
+    const { callbackUrl } = await validateSiteUrls(site.site_url, site.callback_url);
+    const response = await fetch(callbackUrl, {
       method: 'POST',
       headers: outboundHeaders(site.site_secret, raw, site.site_id),
       body: raw,
       signal: AbortSignal.timeout(8000),
     });
-  } catch {
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+  } catch (error: any) {
+    console.warn(
+      `Callback delivery failed: site=${site.site_id} job=${body?.job_id || 'unknown'} error=${error?.message || 'unknown'}`
+    );
     // Firewalled sites use the GET /v1/jobs/{id} reconcile poll — job record is terminal.
   }
 }
 
+async function duplicateJobResponse(jobId: string, site: Site, res: NextApiResponse) {
+  const job = await getJob(jobId);
+  if (!job || job.site_id !== site.site_id) {
+    return res.status(202).json({ job_id: jobId, estimated_credits: 1, duplicate: true });
+  }
+  return res.status(202).json({
+    job_id: job.job_id,
+    status: job.status,
+    result: job.result,
+    error: job.error,
+    credits_charged: job.credits_charged,
+    account:
+      job.status === 'completed' || job.status === 'failed'
+        ? await accountFor(site)
+        : undefined,
+    estimated_credits: 1,
+    duplicate: true,
+  });
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end();
-  const raw = await rawBody(req);
+  let raw: string;
+  try {
+    raw = await rawBody(req);
+  } catch (error: any) {
+    return res.status(error.message === 'REQUEST_TOO_LARGE' ? 413 : 400).json({ error: 'Request body is too large' });
+  }
   const site = await authedSite(req, res, raw);
   if (!site) return;
 
@@ -106,40 +201,88 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Invalid JSON' });
   }
 
-  const { type, payload, idempotency_key, callback_url, brand_context } = body;
+  const { type, payload, idempotency_key, brand_context } = body;
   if (type !== 'seo.analyze_post') return res.status(400).json({ error: `Unknown job type: ${type}` });
-  if (!idempotency_key) return res.status(400).json({ error: 'Missing idempotency_key' });
+  if (
+    typeof idempotency_key !== 'string' ||
+    !/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(idempotency_key)
+  ) {
+    return res.status(400).json({ error: 'Invalid idempotency_key' });
+  }
+  if (
+    !payload ||
+    typeof payload !== 'object' ||
+    typeof payload.title !== 'string' ||
+    typeof payload.content !== 'string' ||
+    payload.content.length > 500_000 ||
+    !Array.isArray(payload.link_targets) ||
+    payload.link_targets.length > 100 ||
+    (brand_context !== undefined && (brand_context === null || typeof brand_context !== 'object'))
+  ) {
+    return res.status(400).json({ error: 'Invalid job payload' });
+  }
 
   // Idempotency: a duplicate submit returns the existing job, no double charge.
-  const existing = await getJSON<string>(`idem:${site.site_id}:${idempotency_key}`);
+  const idemKey = `idem:${site.site_id}:${idempotency_key}`;
+  const existing = await getJSON<string>(idemKey);
   if (existing) {
-    return res.status(202).json({ job_id: existing, estimated_credits: 1, duplicate: true });
+    return duplicateJobResponse(existing, site, res);
   }
 
-  const anthropic = await getAnthropicKey(site);
+  let anthropic: Awaited<ReturnType<typeof getAnthropicKey>>;
+  try {
+    anthropic = await getAnthropicKey(site);
+  } catch {
+    return res.status(422).json({
+      error: 'The stored provider key could not be read. Remove it and add it again.',
+    });
+  }
   if (!anthropic) {
-    return res.status(402).json({ error: 'No AI provider key on file. Add one or switch to managed credits.' });
+    if (site.billing_mode === 'byok') {
+      return res.status(422).json({ error: 'No AI provider key on file. Add one or switch to managed credits.' });
+    }
+    return res.status(503).json({ error: 'Managed AI processing is temporarily unavailable.' });
   }
 
+  await ensureAccountPeriod(site);
+
+  const jobId = randomId('job');
+  const claimed = await redis('SET', idemKey, JSON.stringify(jobId), 'NX', 'EX', 600);
+  if (!claimed) {
+    const concurrent = await getJSON<string>(idemKey);
+    if (concurrent) return duplicateJobResponse(concurrent, site, res);
+    return res.status(503).json({ error: 'Could not resolve the concurrent job. Please retry.' });
+  }
+
+  let creditReserved = false;
   if (!anthropic.byok) {
-    const remaining = parseInt((await redis('GET', `credits:${site.site_id}`)) ?? '0', 10);
-    if (remaining < 1) {
+    const remaining = parseInt(await redis('DECR', `credits:${site.site_id}`), 10);
+    if (remaining < 0) {
+      await redis('INCR', `credits:${site.site_id}`);
+      await redis('DEL', idemKey);
       return res.status(402).json({ error: 'Out of credits for this period. Upgrade or add your own provider key.' });
     }
+    creditReserved = true;
   }
 
   const job: Job = {
-    job_id: randomId('job'),
+    job_id: jobId,
     site_id: site.site_id,
     type,
     status: 'processing',
     idempotency_key,
-    callback_url: callback_url || site.callback_url,
+    callback_url: site.callback_url,
     credits_charged: 0,
     created_at: new Date().toISOString(),
   };
-  await saveJob(job);
-  await setJSON(`idem:${site.site_id}:${idempotency_key}`, job.job_id, 60 * 60 * 24 * 7);
+  try {
+    await saveJob(job);
+    await redis('EXPIRE', idemKey, 60 * 60 * 24 * 7);
+  } catch (error) {
+    if (creditReserved) await redis('INCR', `credits:${site.site_id}`);
+    await redis('DEL', idemKey);
+    throw error;
+  }
 
   // Process inline (MVP): fast enough for single posts, and the reconcile poll
   // always finds a terminal state even if the callback is blocked.
@@ -147,15 +290,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     job.result = await runAnalysis(payload, brand_context, anthropic.key);
     job.status = 'completed';
     job.credits_charged = 1;
-    if (anthropic.byok) {
-      await redis('INCR', `actions:${site.site_id}`);
-    } else {
-      await redis('DECR', `credits:${site.site_id}`);
-    }
   } catch (e: any) {
+    if (creditReserved) {
+      await redis('INCR', `credits:${site.site_id}`);
+      creditReserved = false;
+    }
     job.status = 'failed';
     job.error = e.message || 'Analysis failed';
-    await saveJob(job);
+    try {
+      await saveJob(job);
+    } catch {
+      await redis('DEL', idemKey);
+      return res.status(503).json({ error: 'Could not persist the failed job. Please retry.' });
+    }
+
+    // Let the WordPress queue retry rate limits and provider outages. Keeping
+    // the idempotency record would only return this failed job forever.
+    if (e.status === 429 || e.status >= 500 || e.name === 'TimeoutError') {
+      await redis('DEL', idemKey);
+      return res.status(e.status === 429 ? 429 : 503).json({ error: job.error });
+    }
+
+    const account = await accountFor(site);
     await deliverCallback(site, {
       idempotency_key,
       job_id: job.job_id,
@@ -163,14 +319,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       status: 'failed',
       credits_charged: 0,
       error: job.error,
-      account: await accountFor(site),
+      account,
     });
-    if (e.status === 429) return res.status(429).json({ job_id: job.job_id, error: job.error });
-    if (e.status === 402 || e.status === 401) return res.status(402).json({ job_id: job.job_id, error: job.error });
-    return res.status(202).json({ job_id: job.job_id, estimated_credits: 1 });
+    if ([401, 402, 403].includes(e.status)) {
+      return res.status(422).json({ job_id: job.job_id, error: job.error });
+    }
+    return res.status(202).json({
+      job_id: job.job_id,
+      status: 'failed',
+      error: job.error,
+      credits_charged: 0,
+      account,
+      estimated_credits: 1,
+    });
   }
 
-  await saveJob(job);
+  try {
+    await saveJob(job);
+  } catch {
+    if (creditReserved) {
+      await redis('INCR', `credits:${site.site_id}`);
+    }
+    await redis('DEL', idemKey);
+    return res.status(503).json({ error: 'Could not persist the completed job. Please retry.' });
+  }
+  if (anthropic.byok) {
+    try {
+      await redis('INCR', `actions:${site.site_id}`);
+    } catch {
+      // The completed result is already durable. A usage-counter outage must
+      // not delete idempotency and cause the customer's model call to repeat.
+    }
+  }
+  const account = await accountFor(site);
   await deliverCallback(site, {
     idempotency_key,
     job_id: job.job_id,
@@ -178,8 +359,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     status: 'completed',
     credits_charged: job.credits_charged,
     result: job.result,
-    account: await accountFor(site),
+    account,
   });
 
-  return res.status(202).json({ job_id: job.job_id, estimated_credits: 1 });
+  return res.status(202).json({
+    job_id: job.job_id,
+    status: 'completed',
+    result: job.result,
+    credits_charged: job.credits_charged,
+    account,
+    estimated_credits: 1,
+  });
 }

@@ -4,18 +4,42 @@ export function sign(secret: string, timestamp: string, rawBody: string): string
   return crypto.createHmac('sha256', secret).update(`${timestamp}.${rawBody}`).digest('hex');
 }
 
+export function signRequest(
+  secret: string,
+  timestamp: string,
+  method: string,
+  path: string,
+  rawBody: string
+): string {
+  const canonical = `${method.toUpperCase()}\n${path}\n${rawBody}`;
+  return sign(secret, timestamp, canonical);
+}
+
+export function canonicalRequestPath(url = ''): string {
+  const parsed = new URL(url, 'http://gateway.local');
+  const pathname = parsed.pathname.startsWith('/api/gateway')
+    ? parsed.pathname.slice('/api/gateway'.length)
+    : parsed.pathname;
+  return `${pathname || '/'}${parsed.search}`;
+}
+
 // Verify an inbound (WP → gateway) request. Returns error string or null.
 export function verifyInbound(
   headers: Record<string, string | string[] | undefined>,
   rawBody: string,
-  secret: string
+  secret: string,
+  method = '',
+  path = ''
 ): string | null {
-  const ts = headers['x-aisuite-timestamp'] as string;
-  const sig = headers['x-aisuite-signature'] as string;
-  if (!ts || !sig) return 'Missing signature headers';
+  const ts = headers['x-aisuite-timestamp'];
+  const sig = headers['x-aisuite-signature'];
+  if (typeof ts !== 'string' || typeof sig !== 'string') return 'Missing signature headers';
+  if (!/^\d{10,}$/.test(ts) || !/^[a-f0-9]{64}$/i.test(sig)) return 'Malformed signature headers';
   const age = Math.abs(Math.floor(Date.now() / 1000) - parseInt(ts, 10));
   if (age > 300) return 'Timestamp outside 300s window';
-  const expected = sign(secret, ts, rawBody);
+  const version = headers['x-aisuite-signature-version'];
+  const expected =
+    version === '2' ? signRequest(secret, ts, method, path, rawBody) : sign(secret, ts, rawBody);
   const given = Buffer.from(sig);
   const want = Buffer.from(expected);
   // timingSafeEqual throws on length mismatch — that must be a 401, not a 500.

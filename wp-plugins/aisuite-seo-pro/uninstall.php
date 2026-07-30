@@ -8,6 +8,7 @@ defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 
 delete_option( 'aisuite_seo_pro_settings' );
 delete_option( 'aisuite_seo_pro_license' );
+delete_option( 'aisuite_seo_pro_sweep_cursor' );
 
 delete_transient( 'aisuite_seo_pro_update' );
 

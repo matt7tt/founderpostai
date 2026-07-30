@@ -23,9 +23,11 @@ class AISuite_Job_Queue {
 	const HOOK_SUBMIT    = 'aisuite_submit_job';
 	const HOOK_RECONCILE = 'aisuite_reconcile_job';
 	const HOOK_CLEANUP   = 'aisuite_cleanup_jobs';
+	const HOOK_TRACK     = 'aisuite_track_job';
 	const JOB_PREFIX     = 'aisuite_job_';
 	const INDEX_OPTION   = 'aisuite_open_jobs';
-	const LOOPBACK_TOKEN = 'aisuite_loopback_token';
+	const LOOPBACK_TOKEN = 'aisuite_loopback_';
+	const LOCK_PREFIX    = 'aisuite_lock_';
 	const AJAX_ACTION    = 'aisuite_run_queue';
 
 	/** Seconds one loopback pass will spend submitting before handing off. */
@@ -52,6 +54,7 @@ class AISuite_Job_Queue {
 		add_action( self::HOOK_SUBMIT, array( $this, 'run_submit' ), 10, 1 );
 		add_action( self::HOOK_RECONCILE, array( $this, 'run_reconcile' ), 10, 1 );
 		add_action( self::HOOK_CLEANUP, array( $this, 'run_cleanup' ) );
+		add_action( self::HOOK_TRACK, array( $this, 'track_deferred' ), 10, 1 );
 		add_action( 'aisuite_refresh_account', array( $this->gateway, 'get_account' ) );
 
 		// Loopback entry point. Authenticated by a rotating token, not a nonce:
@@ -91,6 +94,10 @@ class AISuite_Job_Queue {
 	 * @return string|WP_Error Local job reference.
 	 */
 	public function enqueue( $type, array $payload, array $context = array() ) {
+		if ( ! AISuite_Site_Auth::is_connected() ) {
+			return new WP_Error( 'aisuite_not_connected', __( 'Connect your AI Suite account before running this.', 'aisuite-core' ) );
+		}
+
 		$open = $this->tracked();
 
 		if ( count( $open ) >= self::MAX_OPEN ) {
@@ -155,14 +162,15 @@ class AISuite_Job_Queue {
 	public function spawn_loopback() {
 		$token = wp_generate_password( 32, false );
 
-		set_transient( self::LOOPBACK_TOKEN, $token, 5 * MINUTE_IN_SECONDS );
+		set_transient( $this->loopback_key( $token ), 1, 5 * MINUTE_IN_SECONDS );
 
 		wp_remote_post(
 			admin_url( 'admin-ajax.php' ),
 			array(
 				'timeout'   => 0.01,
 				'blocking'  => false,
-				'sslverify' => apply_filters( 'https_local_ssl_verify', false ),
+					// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WordPress core's loopback SSL filter.
+					'sslverify' => apply_filters( 'https_local_ssl_verify', false ),
 				'body'      => array(
 					'action' => self::AJAX_ACTION,
 					'token'  => $token,
@@ -175,20 +183,22 @@ class AISuite_Job_Queue {
 	 * Runs inside the loopback request: submit whatever is queued.
 	 */
 	public function handle_loopback() {
-		$token = get_transient( self::LOOPBACK_TOKEN );
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- a single-use server-generated transient authenticates this non-user loopback.
 		$given = isset( $_POST['token'] ) ? sanitize_text_field( wp_unslash( $_POST['token'] ) ) : '';
+		$token = $given ? get_transient( $this->loopback_key( $given ) ) : false;
 
-		if ( ! $token || ! $given || ! hash_equals( $token, $given ) ) {
+		if ( ! $token || ! $given ) {
 			wp_die( '', '', array( 'response' => 403 ) );
 		}
 
-		delete_transient( self::LOOPBACK_TOKEN );
+		delete_transient( $this->loopback_key( $given ) );
 
 		// The originating request has already returned; don't die with it.
 		ignore_user_abort( true );
 
 		if ( function_exists( 'set_time_limit' ) ) {
-			@set_time_limit( 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, Squiz.PHP.DiscouragedFunctions.Discouraged -- background worker must outlive the originating request.
+			@set_time_limit( 0 );
 		}
 
 		$started   = time();
@@ -223,46 +233,70 @@ class AISuite_Job_Queue {
 	 * @param string $ref Local job reference.
 	 */
 	public function run_submit( $ref ) {
-		$record = $this->get( $ref );
-
-		if ( empty( $record ) || 'queued' !== $record['status'] ) {
-			return; // Loopback and cron both arrived; first one wins.
-		}
-
-		// Claim it before the network call, so a concurrent runner skips it.
-		$record['status'] = 'submitting';
-		$this->put( $ref, $record );
-
-		$result = $this->gateway->submit_job( $record['type'], (array) $record['payload'], $ref );
-
-		// The gateway may process the job and deliver the callback while this
-		// request is still open. That callback resolves the job and deletes the
-		// record — writing "running" over that would resurrect a finished job
-		// and fire its completion hooks a second time on the reconcile poll.
-		$record = $this->get( $ref );
-
-		if ( empty( $record ) || 'submitting' !== $record['status'] ) {
+		if ( ! $this->acquire_lock( 'submit_' . $ref ) ) {
 			return;
 		}
 
-		if ( is_wp_error( $result ) ) {
-			if ( $this->should_retry( $result, $record ) ) {
-				$this->requeue( $ref, $record );
-			} else {
-				$this->fail( $ref, $result->get_error_message() );
+		try {
+			$record = $this->get( $ref );
+
+			if ( empty( $record ) || 'queued' !== $record['status'] ) {
+				return; // Loopback and cron both arrived; first one wins.
 			}
-			return;
-		}
 
-		$record['status'] = 'running';
-		$record['job_id'] = isset( $result['job_id'] ) ? $result['job_id'] : '';
-		unset( $record['payload'] ); // Don't hold post content longer than needed.
-		$this->put( $ref, $record );
+			// The option write alone is not a compare-and-swap. The lock above is
+			// what makes this claim atomic across loopback, cron, and Action Scheduler.
+			$record['status'] = 'submitting';
+			$this->put( $ref, $record );
 
-		if ( self::has_action_scheduler() ) {
-			as_schedule_single_action( time() + 180, self::HOOK_RECONCILE, array( $ref ), self::GROUP );
-		} elseif ( ! wp_next_scheduled( self::HOOK_RECONCILE, array( $ref ) ) ) {
-			wp_schedule_single_event( time() + 300, self::HOOK_RECONCILE, array( $ref ) );
+			$result = $this->gateway->submit_job( $record['type'], (array) $record['payload'], $ref );
+
+			// The gateway may process the job and deliver the callback while this
+			// request is still open. That callback resolves the job and deletes the
+			// record — writing "running" over that would resurrect a finished job.
+			$record = $this->get( $ref );
+
+			if ( empty( $record ) || 'submitting' !== $record['status'] ) {
+				return;
+			}
+
+			if ( ! is_wp_error( $result ) && ( empty( $result['job_id'] ) || ! is_scalar( $result['job_id'] ) ) ) {
+				$result = new WP_Error( 'aisuite_bad_job_response', __( 'The gateway accepted the job but did not return a job identifier.', 'aisuite-core' ) );
+			}
+
+			if ( is_wp_error( $result ) ) {
+				if ( $this->should_retry( $result, $record ) ) {
+					$this->requeue( $ref, $record );
+				} else {
+					$this->fail( $ref, $result->get_error_message() );
+				}
+				return;
+			}
+
+			if ( isset( $result['account'] ) && is_array( $result['account'] ) ) {
+				AISuite_Site_Auth::store_account( $result['account'] );
+			}
+
+			// Short jobs currently finish inline. If a callback is blocked but
+			// the signed submit response already has the durable terminal result,
+			// consume it immediately instead of waiting for the reconcile poll.
+			if ( isset( $result['status'] ) && 'completed' === $result['status'] ) {
+				$this->complete( $ref, isset( $result['result'] ) ? (array) $result['result'] : array() );
+				return;
+			}
+
+			if ( isset( $result['status'] ) && 'failed' === $result['status'] ) {
+				$this->fail( $ref, isset( $result['error'] ) ? $result['error'] : __( 'Job failed.', 'aisuite-core' ) );
+				return;
+			}
+
+			$record['status'] = 'running';
+			$record['job_id'] = sanitize_text_field( (string) $result['job_id'] );
+			unset( $record['payload'] ); // Don't hold post content longer than needed.
+			$this->put( $ref, $record );
+			$this->schedule_reconcile( $ref, 180, 300 );
+		} finally {
+			$this->release_lock( 'submit_' . $ref );
 		}
 	}
 
@@ -326,7 +360,12 @@ class AISuite_Job_Queue {
 		$result = $this->gateway->get_job( $record['job_id'] );
 
 		if ( is_wp_error( $result ) ) {
-			return; // Cleanup will time it out if it never resolves.
+			$this->schedule_reconcile( $ref, 300, 600 );
+			return;
+		}
+
+		if ( isset( $result['account'] ) && is_array( $result['account'] ) ) {
+			AISuite_Site_Auth::store_account( $result['account'] );
 		}
 
 		$status = isset( $result['status'] ) ? $result['status'] : '';
@@ -335,10 +374,8 @@ class AISuite_Job_Queue {
 			$this->complete( $ref, isset( $result['result'] ) ? (array) $result['result'] : array() );
 		} elseif ( 'failed' === $status ) {
 			$this->fail( $ref, isset( $result['error'] ) ? $result['error'] : __( 'Job failed.', 'aisuite-core' ) );
-		} elseif ( self::has_action_scheduler() ) {
-			as_schedule_single_action( time() + 300, self::HOOK_RECONCILE, array( $ref ), self::GROUP );
-		} elseif ( ! wp_next_scheduled( self::HOOK_RECONCILE, array( $ref ) ) ) {
-			wp_schedule_single_event( time() + 600, self::HOOK_RECONCILE, array( $ref ) );
+		} else {
+			$this->schedule_reconcile( $ref, 300, 600 );
 		}
 	}
 
@@ -356,35 +393,51 @@ class AISuite_Job_Queue {
 	 * Fan the result out to whichever module owns this job type.
 	 */
 	public function complete( $ref, array $result ) {
-		$record = $this->get( $ref );
-
-		if ( empty( $record ) || in_array( $record['status'], array( 'done', 'failed' ), true ) ) {
-			return; // Callback and reconcile both landed; ignore the second.
-		}
-
-		$type    = $record['type'];
-		$context = isset( $record['context'] ) ? (array) $record['context'] : array();
-
-		$this->finish( $ref );
-
-		do_action( 'aisuite_job_completed_' . $type, $result, $context, $ref );
-		do_action( 'aisuite_job_completed', $type, $result, $context, $ref );
-	}
-
-	public function fail( $ref, $message ) {
-		$record = $this->get( $ref );
-
-		if ( empty( $record ) || in_array( $record['status'], array( 'done', 'failed' ), true ) ) {
+		if ( ! $this->acquire_lock( 'finish_' . $ref ) ) {
 			return;
 		}
 
-		$type    = $record['type'];
-		$context = isset( $record['context'] ) ? (array) $record['context'] : array();
+		try {
+			$record = $this->get( $ref );
 
-		$this->finish( $ref );
+			if ( empty( $record ) ) {
+				return; // Callback and reconcile both landed; ignore the second.
+			}
 
-		do_action( 'aisuite_job_failed_' . $type, $message, $context, $ref );
-		do_action( 'aisuite_job_failed', $type, $message, $context, $ref );
+			$type    = $record['type'];
+			$context = isset( $record['context'] ) ? (array) $record['context'] : array();
+
+			$this->finish( $ref );
+
+			do_action( 'aisuite_job_completed_' . $type, $result, $context, $ref );
+			do_action( 'aisuite_job_completed', $type, $result, $context, $ref );
+		} finally {
+			$this->release_lock( 'finish_' . $ref );
+		}
+	}
+
+	public function fail( $ref, $message ) {
+		if ( ! $this->acquire_lock( 'finish_' . $ref ) ) {
+			return;
+		}
+
+		try {
+			$record = $this->get( $ref );
+
+			if ( empty( $record ) ) {
+				return;
+			}
+
+			$type    = $record['type'];
+			$context = isset( $record['context'] ) ? (array) $record['context'] : array();
+
+			$this->finish( $ref );
+
+			do_action( 'aisuite_job_failed_' . $type, $message, $context, $ref );
+			do_action( 'aisuite_job_failed', $type, $message, $context, $ref );
+		} finally {
+			$this->release_lock( 'finish_' . $ref );
+		}
 	}
 
 	/**
@@ -399,6 +452,11 @@ class AISuite_Job_Queue {
 
 		wp_clear_scheduled_hook( self::HOOK_SUBMIT, array( $ref ) );
 		wp_clear_scheduled_hook( self::HOOK_RECONCILE, array( $ref ) );
+
+		if ( function_exists( 'as_unschedule_all_actions' ) ) {
+			as_unschedule_all_actions( self::HOOK_SUBMIT, array( $ref ), self::GROUP );
+			as_unschedule_all_actions( self::HOOK_RECONCILE, array( $ref ), self::GROUP );
+		}
 	}
 
 	/**
@@ -407,12 +465,12 @@ class AISuite_Job_Queue {
 	 */
 	public function run_cleanup() {
 		$open = $this->tracked();
-		$keep = array();
 
 		foreach ( $open as $ref ) {
 			$record = $this->get( $ref );
 
 			if ( empty( $record ) ) {
+				$this->untrack( $ref );
 				continue;
 			}
 
@@ -422,11 +480,7 @@ class AISuite_Job_Queue {
 				$this->fail( $ref, __( 'This job timed out before a result came back.', 'aisuite-core' ) );
 				continue;
 			}
-
-			$keep[] = $ref;
 		}
-
-		update_option( self::INDEX_OPTION, $keep, false );
 	}
 
 	/**
@@ -434,31 +488,117 @@ class AISuite_Job_Queue {
 	 * the refs are tracked in one non-autoloaded option.
 	 */
 	protected function track( $ref ) {
+		if ( ! $this->acquire_lock( 'index', 10, true ) ) {
+			if ( ! wp_next_scheduled( self::HOOK_TRACK, array( $ref ) ) ) {
+				wp_schedule_single_event( time() + 5, self::HOOK_TRACK, array( $ref ) );
+			}
+			return;
+		}
+
 		$open = $this->tracked();
 
 		if ( ! in_array( $ref, $open, true ) ) {
 			$open[] = $ref;
 			update_option( self::INDEX_OPTION, $open, false );
 		}
+
+		$this->release_lock( 'index' );
 	}
 
 	protected function untrack( $ref ) {
+		if ( ! $this->acquire_lock( 'index', 10, true ) ) {
+			return;
+		}
+
 		$open = $this->tracked();
 		$next = array_values( array_diff( $open, array( $ref ) ) );
 
 		if ( count( $next ) !== count( $open ) ) {
 			update_option( self::INDEX_OPTION, $next, false );
 		}
+
+		$this->release_lock( 'index' );
 	}
 
 	/** @return array */
 	public function tracked() {
 		$open = get_option( self::INDEX_OPTION, array() );
-		return is_array( $open ) ? $open : array();
+		$open = is_array( $open ) ? $open : array();
+
+		return array_values(
+			array_unique(
+				array_filter(
+					$open,
+					function ( $ref ) {
+						return is_string( $ref ) && (bool) preg_match( '/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i', $ref );
+					}
+				)
+			)
+		);
 	}
 
 	/** Queued or in-flight job count, for the admin. */
 	public function open_count() {
 		return count( $this->tracked() );
+	}
+
+	/** Retry an index write that briefly lost contention with another request. */
+	public function track_deferred( $ref ) {
+		if ( $this->get( $ref ) ) {
+			$this->track( $ref );
+		}
+	}
+
+	/** Fail every local job before credentials are removed. */
+	public function fail_all( $message ) {
+		foreach ( $this->tracked() as $ref ) {
+			$this->fail( $ref, $message );
+		}
+	}
+
+	protected function schedule_reconcile( $ref, $action_scheduler_delay, $cron_delay ) {
+		if ( self::has_action_scheduler() ) {
+			if ( ! function_exists( 'as_next_scheduled_action' ) || ! as_next_scheduled_action( self::HOOK_RECONCILE, array( $ref ), self::GROUP ) ) {
+				as_schedule_single_action( time() + $action_scheduler_delay, self::HOOK_RECONCILE, array( $ref ), self::GROUP );
+			}
+		} elseif ( ! wp_next_scheduled( self::HOOK_RECONCILE, array( $ref ) ) ) {
+			wp_schedule_single_event( time() + $cron_delay, self::HOOK_RECONCILE, array( $ref ) );
+		}
+	}
+
+	protected function loopback_key( $token ) {
+		return self::LOOPBACK_TOKEN . md5( (string) $token );
+	}
+
+	/**
+	 * add_option() is an atomic INSERT because option_name is unique. That gives
+	 * the queue a small cross-request mutex without requiring a cache backend.
+	 */
+	protected function acquire_lock( $name, $ttl = 300, $wait = false ) {
+		$key      = self::LOCK_PREFIX . md5( (string) $name );
+		$attempts = $wait ? 50 : 1;
+
+		for ( $attempt = 0; $attempt < $attempts; $attempt++ ) {
+			if ( add_option( $key, time(), '', false ) ) {
+				return true;
+			}
+
+			$created = (int) get_option( $key, 0 );
+
+			if ( $created && time() - $created > $ttl ) {
+				delete_option( $key );
+				continue;
+			}
+
+			if ( $wait ) {
+				usleep( 20000 );
+			}
+		}
+
+		return false;
+	}
+
+	protected function release_lock( $name ) {
+		delete_option( self::LOCK_PREFIX . md5( (string) $name ) );
 	}
 }

@@ -15,7 +15,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const site = await authedSite(req, res, raw);
   if (!site) return;
 
-  const { mode } = JSON.parse(raw || '{}');
+  let mode: unknown;
+  try {
+    ({ mode } = JSON.parse(raw || '{}'));
+  } catch {
+    return res.status(400).json({ error: 'Invalid JSON' });
+  }
   if (mode !== 'managed' && mode !== 'byok') {
     return res.status(400).json({ error: 'mode must be managed or byok' });
   }

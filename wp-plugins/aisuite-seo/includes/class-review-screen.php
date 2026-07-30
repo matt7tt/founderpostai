@@ -90,7 +90,17 @@ class AISuite_SEO_Review_Screen {
 			$status = 'pending';
 		}
 
-		$suggestions = AISuite_SEO_Store::query( array( 'status' => $status ) );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination.
+		$page_number = isset( $_GET['paged'] ) ? max( 1, (int) $_GET['paged'] ) : 1;
+		$per_page    = 20;
+		$total       = AISuite_SEO_Store::count( $status );
+		$suggestions = AISuite_SEO_Store::query(
+			array(
+				'status'   => $status,
+				'page'     => $page_number,
+				'per_page' => $per_page,
+			)
+		);
 		$conflict    = AISuite_SEO_Meta_Output::conflicting_plugin();
 		?>
 		<div class="wrap aisuite-wrap">
@@ -104,7 +114,7 @@ class AISuite_SEO_Review_Screen {
 						<?php
 						printf(
 							/* translators: %s: conflicting plugin name */
-							esc_html__( '%s is active, so it controls the tags on your pages. AI Suite will keep writing suggestions but will not output meta tags while that plugin is running.', 'aisuite-seo' ),
+							esc_html__( '%s is active, so it controls the tags on your pages. Approved AI Suite titles and descriptions are passed to it through its integration filters.', 'aisuite-seo' ),
 							'<strong>' . esc_html( $conflict ) . '</strong>'
 						);
 						?>
@@ -127,11 +137,18 @@ class AISuite_SEO_Review_Screen {
 					'pending'  => __( 'Pending', 'aisuite-seo' ),
 					'approved' => __( 'Applied', 'aisuite-seo' ),
 					'rejected' => __( 'Dismissed', 'aisuite-seo' ),
-				) as $key => $label ) :
-					?>
-					<li>
-						<a href="<?php echo esc_url( add_query_arg( array( 'page' => self::SLUG, 'status' => $key ), admin_url( 'admin.php' ) ) ); ?>"
-							class="<?php echo $status === $key ? 'current' : ''; ?>">
+					) as $key => $label ) :
+						$status_url = add_query_arg(
+							array(
+								'page'   => self::SLUG,
+								'status' => $key,
+							),
+							admin_url( 'admin.php' )
+						);
+						?>
+						<li>
+							<a href="<?php echo esc_url( $status_url ); ?>"
+								class="<?php echo $status === $key ? 'current' : ''; ?>">
 							<?php echo esc_html( $label ); ?>
 							<span class="count">(<?php echo esc_html( number_format_i18n( AISuite_SEO_Store::count( $key ) ) ); ?>)</span>
 						</a>
@@ -148,6 +165,33 @@ class AISuite_SEO_Review_Screen {
 					<?php endforeach; ?>
 				<?php endif; ?>
 			</div>
+
+			<?php
+			$total_pages = (int) ceil( $total / $per_page );
+
+			if ( $total_pages > 1 ) {
+				$pagination_url = add_query_arg(
+					array(
+						'page'   => self::SLUG,
+						'status' => $status,
+						'paged'  => 999999999,
+					),
+					admin_url( 'admin.php' )
+				);
+
+				echo wp_kses_post(
+					paginate_links(
+						array(
+							'base'      => str_replace( '999999999', '%#%', $pagination_url ),
+							'current'   => $page_number,
+							'total'     => $total_pages,
+							'prev_text' => __( '&laquo; Previous', 'aisuite-seo' ),
+							'next_text' => __( 'Next &raquo;', 'aisuite-seo' ),
+						)
+					)
+				);
+			}
+			?>
 		</div>
 		<?php
 	}
@@ -212,6 +256,7 @@ class AISuite_SEO_Review_Screen {
 						<?php echo wp_kses_post( $this->format_value( $row ) ); ?>
 					</div>
 				</div>
+
 			</div>
 
 			<?php if ( $row->rationale ) : ?>
@@ -268,10 +313,19 @@ class AISuite_SEO_Review_Screen {
 	public function handle_resolve() {
 		$id = isset( $_POST['suggestion_id'] ) ? (int) $_POST['suggestion_id'] : 0;
 
+		if ( ! current_user_can( self::CAP ) ) {
+			wp_die( esc_html__( 'You do not have permission to do that.', 'aisuite-seo' ) );
+		}
+
 		check_admin_referer( 'aisuite_seo_resolve_' . $id );
 
-		$decision  = isset( $_POST['decision'] ) ? sanitize_key( wp_unslash( $_POST['decision'] ) ) : '';
-		$optimizer = new AISuite_SEO_Optimizer();
+		$decision = isset( $_POST['decision'] ) ? sanitize_key( wp_unslash( $_POST['decision'] ) ) : '';
+
+		if ( ! in_array( $decision, array( 'apply', 'reject' ), true ) ) {
+			$this->redirect( 'error', __( 'Unknown review decision.', 'aisuite-seo' ) );
+		}
+
+		$optimizer = new AISuite_SEO_Optimizer( false );
 
 		$result = 'apply' === $decision ? $optimizer->apply( $id ) : $optimizer->reject( $id );
 
@@ -283,7 +337,11 @@ class AISuite_SEO_Review_Screen {
 	}
 
 	public function handle_analyze() {
-		$mode = isset( $_REQUEST['mode'] ) ? sanitize_key( wp_unslash( $_REQUEST['mode'] ) ) : 'single';
+		if ( ! current_user_can( self::CAP ) ) {
+			wp_die( esc_html__( 'You do not have permission to do that.', 'aisuite-seo' ) );
+		}
+
+		$mode = isset( $_POST['mode'] ) ? sanitize_key( wp_unslash( $_POST['mode'] ) ) : 'single';
 
 		if ( 'batch' === $mode ) {
 			check_admin_referer( 'aisuite_seo_analyze_batch' );
@@ -303,7 +361,7 @@ class AISuite_SEO_Review_Screen {
 			$post_ids = array( $post_id );
 		}
 
-		$optimizer = new AISuite_SEO_Optimizer();
+		$optimizer = new AISuite_SEO_Optimizer( false );
 		$queued    = 0;
 		$blocked   = null;
 
@@ -311,7 +369,7 @@ class AISuite_SEO_Review_Screen {
 			$result = $optimizer->analyze( $post_id );
 
 			if ( ! is_wp_error( $result ) ) {
-				$queued++;
+				++$queued;
 				continue;
 			}
 

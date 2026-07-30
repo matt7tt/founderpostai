@@ -4,7 +4,7 @@ Tags: ai, automation, seo, content
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.1.1
+Stable tag: 0.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -44,17 +44,23 @@ Yes. Core is free, and connecting is free. Actions draw from a monthly allowance
 
 = Does it store my API keys? =
 
-No. Whether you use included actions or your own provider key, the key lives on the gateway. WordPress holds only a site identifier and a signing secret — so a database backup or a staging clone of your site never contains a live credential.
+No provider key is stored in WordPress. Whether you use included actions or your own provider key, that provider credential lives on the gateway. WordPress holds only a site identifier and a signing secret used to authenticate this installation.
 
-= Can I use my own OpenAI or Anthropic account? =
+= Can I use my own Anthropic account? =
 
-Yes. Switch billing to "Use my own API key" on the Connection screen, then add the key there or on your dashboard. Model usage is then billed directly by your provider and your plan fee is flat.
+Yes. Switch billing to "Use my own API key" on the Connection screen, then add the key there or on your dashboard. Model usage is then billed directly by Anthropic and your plan fee is flat.
 
 = Why are jobs slow on my site? =
 
 Background work runs immediately in most cases. If your host blocks loopback requests, it falls back to WP-Cron, which only fires when someone visits your site. The Connection screen shows which method your site is using.
 
 == Changelog ==
+
+= 0.1.2 =
+* Prevented duplicate queue runners from submitting or completing the same job twice.
+* Polling now retries temporary gateway failures instead of leaving jobs stuck until cleanup.
+* Gateway errors are shown accurately, BYOK key removal reports failures, and disconnecting cancels local jobs cleanly.
+* New requests bind signatures to the HTTP method and route to prevent cross-route replay.
 
 = 0.1.1 =
 * Connection ping endpoint no longer requires credentials, so first-time registration succeeds behind the gateway's reachability check.

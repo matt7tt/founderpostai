@@ -3,7 +3,7 @@
  * Plugin Name:       AI Suite SEO
  * Plugin URI:        https://founderpostai.com/seo
  * Description:       Writes titles, meta descriptions, and internal links for your posts, then shows you the exact change before anything goes live.
- * Version:           0.1.1
+ * Version:           0.1.2
  * Requires at least: 6.5
  * Requires PHP:      7.4
  * Requires Plugins:  aisuite-core
@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'AISUITE_SEO_VERSION', '0.1.1' );
+define( 'AISUITE_SEO_VERSION', '0.1.2' );
 define( 'AISUITE_SEO_FILE', __FILE__ );
 define( 'AISUITE_SEO_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AISUITE_SEO_URL', plugin_dir_url( __FILE__ ) );

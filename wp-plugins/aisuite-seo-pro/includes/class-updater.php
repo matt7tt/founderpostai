@@ -43,22 +43,29 @@ class AISuite_SEO_Pro_Updater {
 			return false;
 		}
 
-		$response = wp_remote_get(
-			add_query_arg(
-				array(
-					'slug'    => $this->slug,
-					'version' => $this->version,
-				),
-				aisuite_gateway_url() . '/v1/updates/check'
+		$timestamp = (string) time();
+		$url       = add_query_arg(
+			array(
+				'slug'    => $this->slug,
+				'version' => $this->version,
 			),
+			aisuite_gateway_url() . '/v1/updates/check'
+		);
+		$query     = wp_parse_url( $url, PHP_URL_QUERY );
+		$path      = '/v1/updates/check' . ( $query ? '?' . $query : '' );
+		$response  = wp_remote_get(
+			$url,
 			array(
 				'timeout' => 10,
 				'headers' => array(
-					'X-AISuite-Site'    => AISuite_Site_Auth::site_id(),
+					'X-AISuite-Site'              => AISuite_Site_Auth::site_id(),
+					'X-AISuite-Timestamp'         => $timestamp,
+					'X-AISuite-Signature'         => AISuite_Site_Auth::sign_request( $timestamp, 'GET', $path, '' ),
+					'X-AISuite-Signature-Version' => '2',
 					// The update server only hands out the package URL to an
 					// active license. Without this header it returns metadata
 					// only, and there is nothing to install.
-					'X-AISuite-License' => class_exists( 'AISuite_SEO_Pro' ) ? AISuite_SEO_Pro::license_key() : '',
+					'X-AISuite-License'           => class_exists( 'AISuite_SEO_Pro' ) ? AISuite_SEO_Pro::license_key() : '',
 				),
 			)
 		);
@@ -70,6 +77,16 @@ class AISuite_SEO_Pro_Updater {
 
 		$data = json_decode( wp_remote_retrieve_body( $response ), true );
 		$data = is_array( $data ) ? $data : array();
+
+		if ( isset( $data['version'] ) && ! is_scalar( $data['version'] ) ) {
+			$data = array();
+		}
+
+		foreach ( array( 'package', 'url' ) as $url_key ) {
+			if ( ! empty( $data[ $url_key ] ) ) {
+				$data[ $url_key ] = esc_url_raw( $data[ $url_key ], array( 'https' ) );
+			}
+		}
 
 		set_transient( self::TRANSIENT, $data, 6 * HOUR_IN_SECONDS );
 
@@ -149,6 +166,26 @@ class AISuite_SEO_Pro_Updater {
 				esc_html__( 'Enter your AI Suite SEO Pro license key to receive plugin updates.', 'aisuite-seo-pro' ),
 				esc_url( admin_url( 'admin.php?page=aisuite-seo-pro' ) ),
 				esc_html__( 'Add license key', 'aisuite-seo-pro' )
+				);
+			return;
+		}
+
+		if ( class_exists( 'AISuite_SEO_Pro' ) && ! AISuite_SEO_Pro::license_is_valid( AISuite_SEO_Pro::license_key() ) ) {
+			printf(
+				'<div class="notice notice-error"><p>%s <a href="%s">%s</a></p></div>',
+				esc_html__( 'The AI Suite SEO Pro license key is not in a valid format.', 'aisuite-seo-pro' ),
+				esc_url( admin_url( 'admin.php?page=aisuite-seo-pro' ) ),
+				esc_html__( 'Replace license key', 'aisuite-seo-pro' )
+			);
+			return;
+		}
+
+		$remote = $this->remote();
+
+		if ( is_array( $remote ) && array_key_exists( 'package', $remote ) && empty( $remote['package'] ) ) {
+			printf(
+				'<div class="notice notice-warning"><p>%s</p></div>',
+				esc_html__( 'This AI Suite SEO Pro license is not active, so plugin updates are unavailable.', 'aisuite-seo-pro' )
 			);
 		}
 	}

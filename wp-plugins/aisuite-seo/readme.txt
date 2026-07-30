@@ -5,7 +5,7 @@ Requires at least: 6.5
 Requires Plugins: aisuite-core
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.1.1
+Stable tag: 0.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -23,7 +23,7 @@ Run an analysis on a post and AI Suite SEO returns:
 
 Every suggestion lands in a review queue showing the current value beside the proposed one and a one-line reason. Nothing touches your content until you click Apply, and applying an internal-link change saves a revision first, so it is always reversible.
 
-If Yoast, Rank Math, All in One SEO, or SEOPress is active, AI Suite SEO leaves your page tags alone and keeps writing suggestions you can use anywhere.
+If Yoast, Rank Math, All in One SEO, or SEOPress is active, AI Suite SEO leaves tag rendering to that plugin and passes approved titles and descriptions through its public integration filters.
 
 == External services ==
 
@@ -41,7 +41,7 @@ No. Every suggestion waits for approval.
 
 = Does it work alongside Yoast? =
 
-Yes. It detects Yoast and stops outputting meta tags so the two never conflict.
+Yes. It detects Yoast, stops outputting duplicate tags, and passes approved titles and descriptions to Yoast through its documented filters.
 
 = How many posts can I analyze? =
 
@@ -52,6 +52,13 @@ As many as your monthly action allowance covers, or without limit if you are usi
 Nothing is changed. Links are only inserted where the exact phrase appears as ordinary text — never inside headings, code, existing links, or shortcodes.
 
 == Changelog ==
+
+= 0.1.2 =
+* Per-post queue claims now prevent simultaneous requests from charging twice for one analysis.
+* Added pagination so every suggestion remains reachable on large review queues.
+* Approved metadata now integrates with Yoast, Rank Math, All in One SEO, and SEOPress without duplicate tags.
+* Applying a stale suggestion no longer overwrites metadata edited after the analysis.
+* Suggestion writes are failure-safe and model output is validated and length-limited before storage.
 
 = 0.1.1 =
 * Internal link targets are re-checked and their permalinks refreshed at apply time, so a stale suggestion can never insert a broken link.

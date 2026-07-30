@@ -15,6 +15,17 @@ class AISuite_SEO_Meta_Output {
 	public function __construct() {
 		add_action( 'wp_head', array( $this, 'output' ), 1 );
 		add_filter( 'document_title_parts', array( $this, 'filter_title' ) );
+
+		// When another SEO plugin owns wp_head, feed it the approved AI Suite
+		// values through its public filters instead of printing duplicate tags.
+		add_filter( 'wpseo_title', array( $this, 'integration_title' ) );
+		add_filter( 'wpseo_metadesc', array( $this, 'integration_description' ) );
+		add_filter( 'rank_math/frontend/title', array( $this, 'integration_title' ) );
+		add_filter( 'rank_math/frontend/description', array( $this, 'integration_description' ) );
+		add_filter( 'aioseo_title', array( $this, 'integration_title' ) );
+		add_filter( 'aioseo_description', array( $this, 'integration_description' ) );
+		add_filter( 'seopress_titles_title', array( $this, 'integration_title' ) );
+		add_filter( 'seopress_titles_desc', array( $this, 'integration_description' ) );
 	}
 
 	/**
@@ -54,6 +65,24 @@ class AISuite_SEO_Meta_Output {
 		}
 
 		return $parts;
+	}
+
+	public function integration_title( $title ) {
+		return $this->integration_value( $title, AISuite_SEO_Optimizer::META_TITLE );
+	}
+
+	public function integration_description( $description ) {
+		return $this->integration_value( $description, AISuite_SEO_Optimizer::META_DESCRIPTION );
+	}
+
+	protected function integration_value( $current, $meta_key ) {
+		if ( ! is_singular() ) {
+			return $current;
+		}
+
+		$custom = get_post_meta( get_queried_object_id(), $meta_key, true );
+
+		return '' !== trim( (string) $custom ) ? (string) $custom : $current;
 	}
 
 	public function output() {

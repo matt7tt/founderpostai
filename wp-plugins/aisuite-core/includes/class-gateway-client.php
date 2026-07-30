@@ -65,7 +65,11 @@ class AISuite_Gateway_Client {
 			return new WP_Error( 'aisuite_bad_registration', __( 'The gateway did not return site credentials.', 'aisuite-core' ) );
 		}
 
-		AISuite_Site_Auth::store_credentials( $data['site_id'], $data['site_secret'] );
+		$stored = AISuite_Site_Auth::store_credentials( $data['site_id'], $data['site_secret'] );
+
+		if ( is_wp_error( $stored ) ) {
+			return $stored;
+		}
 
 		if ( ! empty( $data['account'] ) && is_array( $data['account'] ) ) {
 			AISuite_Site_Auth::store_account( $data['account'] );
@@ -203,15 +207,20 @@ class AISuite_Gateway_Client {
 		$raw       = null === $body ? '' : wp_json_encode( $body );
 		$timestamp = (string) time();
 
+		if ( false === $raw ) {
+			return new WP_Error( 'aisuite_json_encode', __( 'The request could not be encoded as JSON.', 'aisuite-core' ) );
+		}
+
 		$args = array(
 			'method'  => $method,
 			'timeout' => (int) $timeout,
 			'headers' => array(
 				'Content-Type'          => 'application/json',
-				'X-AISuite-Site'        => AISuite_Site_Auth::site_id(),
-				'X-AISuite-Timestamp'   => $timestamp,
-				'X-AISuite-Signature'   => AISuite_Site_Auth::sign( $timestamp, $raw ),
-				'X-AISuite-Plugin'      => AISUITE_CORE_VERSION,
+					'X-AISuite-Site'        => AISuite_Site_Auth::site_id(),
+					'X-AISuite-Timestamp'   => $timestamp,
+					'X-AISuite-Signature'   => AISuite_Site_Auth::sign_request( $timestamp, $method, $path, $raw ),
+					'X-AISuite-Signature-Version' => '2',
+					'X-AISuite-Plugin'      => AISUITE_CORE_VERSION,
 			),
 		);
 
@@ -257,9 +266,13 @@ class AISuite_Gateway_Client {
 		}
 
 		if ( $code >= 400 || ! is_array( $data ) ) {
-			$message = is_array( $data ) && ! empty( $data['message'] )
-				? $data['message']
-				: __( 'The gateway returned an unexpected response.', 'aisuite-core' );
+			if ( is_array( $data ) && ! empty( $data['message'] ) && is_scalar( $data['message'] ) ) {
+				$message = sanitize_text_field( (string) $data['message'] );
+			} elseif ( is_array( $data ) && ! empty( $data['error'] ) && is_scalar( $data['error'] ) ) {
+				$message = sanitize_text_field( (string) $data['error'] );
+			} else {
+				$message = __( 'The gateway returned an unexpected response.', 'aisuite-core' );
+			}
 
 			return new WP_Error( 'aisuite_gateway_error', $message, array( 'status' => $code ) );
 		}

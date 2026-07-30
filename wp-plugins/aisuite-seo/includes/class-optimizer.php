@@ -15,13 +15,16 @@ class AISuite_SEO_Optimizer {
 	const META_DESCRIPTION = '_aisuite_seo_description';
 	const META_INDEXED     = '_aisuite_seo_indexed_hash';
 	const META_QUEUED      = '_aisuite_seo_queued';
+	const APPLY_LOCK       = 'aisuite_seo_apply_lock_';
 
 	/** Fields the gateway may return. Anything else is dropped. */
 	const FIELDS = array( 'title', 'description', 'internal_links' );
 
-	public function __construct() {
-		add_action( 'aisuite_job_completed_seo.analyze_post', array( $this, 'receive_analysis' ), 10, 2 );
-		add_action( 'aisuite_job_failed_seo.analyze_post', array( $this, 'receive_failure' ), 10, 2 );
+	public function __construct( $register_hooks = true ) {
+		if ( $register_hooks ) {
+			add_action( 'aisuite_job_completed_seo.analyze_post', array( $this, 'receive_analysis' ), 10, 2 );
+			add_action( 'aisuite_job_failed_seo.analyze_post', array( $this, 'receive_failure' ), 10, 2 );
+		}
 	}
 
 	/**
@@ -47,6 +50,22 @@ class AISuite_SEO_Optimizer {
 			return new WP_Error( 'aisuite_seo_denied', __( 'You cannot edit this post.', 'aisuite-seo' ) );
 		}
 
+		$in_flight = (int) get_post_meta( $post_id, self::META_QUEUED, true );
+
+		if ( $in_flight && time() - $in_flight < DAY_IN_SECONDS ) {
+			return new WP_Error( 'aisuite_seo_already_queued', __( 'This post is already queued for analysis.', 'aisuite-seo' ) );
+		}
+
+		if ( $in_flight ) {
+			delete_post_meta( $post_id, self::META_QUEUED );
+		}
+
+		// Unique post meta is an atomic claim. Writing the marker after enqueue
+		// allowed two simultaneous bulk/admin requests to charge for the same post.
+		if ( ! add_post_meta( $post_id, self::META_QUEUED, time(), true ) ) {
+			return new WP_Error( 'aisuite_seo_already_queued', __( 'This post is already queued for analysis.', 'aisuite-seo' ) );
+		}
+
 		$payload = array(
 			'post_id'      => (int) $post_id,
 			'permalink'    => get_permalink( $post ),
@@ -63,10 +82,8 @@ class AISuite_SEO_Optimizer {
 
 		$ref = aisuite()->jobs->enqueue( 'seo.analyze_post', $payload, array( 'post_id' => (int) $post_id ) );
 
-		if ( ! is_wp_error( $ref ) ) {
-			// In-flight marker so bulk runs never queue (and charge for) the
-			// same post twice while its first analysis is still processing.
-			update_post_meta( $post_id, self::META_QUEUED, time() );
+		if ( is_wp_error( $ref ) ) {
+			delete_post_meta( $post_id, self::META_QUEUED );
 		}
 
 		return $ref;
@@ -84,8 +101,9 @@ class AISuite_SEO_Optimizer {
 			array(
 				'post_type'        => array( 'post', 'page' ),
 				'post_status'      => 'publish',
-				'posts_per_page'   => $limit,
-				'exclude'          => array( (int) $exclude_id ),
+				// Fetch one extra and skip the current post below. A
+				// post__not_in query is unnecessarily expensive on large sites.
+				'posts_per_page'   => $limit + 1,
 				'orderby'          => 'modified',
 				'order'            => 'DESC',
 				'suppress_filters' => false,
@@ -95,11 +113,19 @@ class AISuite_SEO_Optimizer {
 		$candidates = array();
 
 		foreach ( $posts as $post ) {
+			if ( (int) $post->ID === (int) $exclude_id ) {
+				continue;
+			}
+
 			$candidates[] = array(
 				'id'    => $post->ID,
 				'title' => $post->post_title,
 				'url'   => get_permalink( $post ),
 			);
+
+			if ( count( $candidates ) >= $limit ) {
+				break;
+			}
 		}
 
 		return $candidates;
@@ -115,9 +141,19 @@ class AISuite_SEO_Optimizer {
 			return;
 		}
 
-		$suggestions = isset( $result['suggestions'] ) ? (array) $result['suggestions'] : array();
+		if ( ! AISuite_SEO_Store::table_exists() ) {
+			$this->receive_failure( __( 'The suggestions table is unavailable. Deactivate and reactivate AI Suite SEO, then try again.', 'aisuite-seo' ), $context );
+			return;
+		}
+
+		$suggestions  = isset( $result['suggestions'] ) ? (array) $result['suggestions'] : array();
+		$store_failed = false;
 
 		foreach ( $suggestions as $suggestion ) {
+			if ( ! is_array( $suggestion ) ) {
+				continue;
+			}
+
 			$field = isset( $suggestion['field'] ) ? sanitize_key( $suggestion['field'] ) : '';
 
 			if ( ! in_array( $field, self::FIELDS, true ) ) {
@@ -127,9 +163,17 @@ class AISuite_SEO_Optimizer {
 			$value = isset( $suggestion['value'] ) ? $suggestion['value'] : '';
 
 			if ( 'internal_links' === $field ) {
-				$value = wp_json_encode( $this->filter_links( (array) $value ) );
+				$value = wp_json_encode( $this->filter_links( (array) $value, $post_id ) );
 			} else {
-				$value = sanitize_text_field( $value );
+				if ( ! is_scalar( $value ) ) {
+					continue;
+				}
+
+				$value = sanitize_text_field( (string) $value );
+				$value = $this->truncate(
+					$value,
+					'title' === $field ? 60 : 155
+				);
 			}
 
 			if ( '' === $value || '[]' === $value ) {
@@ -141,13 +185,24 @@ class AISuite_SEO_Optimizer {
 				continue;
 			}
 
-			AISuite_SEO_Store::put(
+			$stored = AISuite_SEO_Store::put(
 				$post_id,
 				$field,
 				$this->current_value( $post_id, $field ),
 				$value,
-				isset( $suggestion['rationale'] ) ? sanitize_text_field( $suggestion['rationale'] ) : ''
+				isset( $suggestion['rationale'] ) && is_scalar( $suggestion['rationale'] )
+					? sanitize_text_field( (string) $suggestion['rationale'] )
+					: ''
 			);
+
+			if ( ! $stored ) {
+				$store_failed = true;
+			}
+		}
+
+		if ( $store_failed ) {
+			$this->receive_failure( __( 'A suggestion could not be saved. Check the site database and run the analysis again.', 'aisuite-seo' ), $context );
+			return;
 		}
 
 		delete_post_meta( $post_id, '_aisuite_seo_error' );
@@ -167,14 +222,19 @@ class AISuite_SEO_Optimizer {
 	/**
 	 * Drop any proposed link whose target isn't a real published post here.
 	 */
-	protected function filter_links( array $links ) {
+	protected function filter_links( array $links, $exclude_id = 0 ) {
 		$clean = array();
+		$seen  = array();
 
 		foreach ( $links as $link ) {
+			if ( ! is_array( $link ) ) {
+				continue;
+			}
+
 			$target = isset( $link['target_id'] ) ? (int) $link['target_id'] : 0;
 			$anchor = isset( $link['anchor'] ) ? sanitize_text_field( $link['anchor'] ) : '';
 
-			if ( ! $target || '' === $anchor ) {
+			if ( ! $target || $target === (int) $exclude_id || '' === $anchor || isset( $seen[ $target ] ) ) {
 				continue;
 			}
 
@@ -184,11 +244,12 @@ class AISuite_SEO_Optimizer {
 				continue;
 			}
 
-			$clean[] = array(
+			$clean[]         = array(
 				'target_id' => $target,
 				'anchor'    => $anchor,
 				'url'       => get_permalink( $post ),
 			);
+			$seen[ $target ] = true;
 		}
 
 		return $clean;
@@ -211,60 +272,96 @@ class AISuite_SEO_Optimizer {
 	 * @return true|WP_Error
 	 */
 	public function apply( $suggestion_id, $enforce_caps = true ) {
-		$row = AISuite_SEO_Store::get( $suggestion_id );
-
-		if ( ! $row ) {
-			return new WP_Error( 'aisuite_seo_missing', __( 'That suggestion no longer exists.', 'aisuite-seo' ) );
+		if ( ! $this->acquire_apply_lock( $suggestion_id ) ) {
+			return new WP_Error( 'aisuite_seo_busy', __( 'That suggestion is already being handled. Refresh and try again.', 'aisuite-seo' ) );
 		}
 
-		if ( 'pending' !== $row->status ) {
-			return new WP_Error( 'aisuite_seo_resolved', __( 'That suggestion has already been handled.', 'aisuite-seo' ) );
+		try {
+			$row = AISuite_SEO_Store::get( $suggestion_id );
+
+			if ( ! $row ) {
+				return new WP_Error( 'aisuite_seo_missing', __( 'That suggestion no longer exists.', 'aisuite-seo' ) );
+			}
+
+			if ( 'pending' !== $row->status ) {
+				return new WP_Error( 'aisuite_seo_resolved', __( 'That suggestion has already been handled.', 'aisuite-seo' ) );
+			}
+
+			if ( $enforce_caps && ! current_user_can( 'edit_post', $row->post_id ) ) {
+				return new WP_Error( 'aisuite_seo_denied', __( 'You cannot edit this post.', 'aisuite-seo' ) );
+			}
+
+			if ( in_array( $row->field, array( 'title', 'description' ), true ) && $this->current_value( $row->post_id, $row->field ) !== (string) $row->current_value ) {
+				return new WP_Error(
+					'aisuite_seo_stale',
+					__( 'This field changed after the suggestion was created. Run a new analysis so nothing newer is overwritten.', 'aisuite-seo' )
+				);
+			}
+
+			switch ( $row->field ) {
+				case 'title':
+					$updated = update_post_meta( $row->post_id, self::META_TITLE, $this->truncate( sanitize_text_field( $row->suggested_value ), 60 ) );
+					break;
+
+				case 'description':
+					$updated = update_post_meta( $row->post_id, self::META_DESCRIPTION, $this->truncate( sanitize_text_field( $row->suggested_value ), 155 ) );
+					break;
+
+				case 'internal_links':
+					$applied = $this->insert_links( $row->post_id, json_decode( $row->suggested_value, true ) );
+
+					if ( is_wp_error( $applied ) ) {
+						return $applied;
+					}
+					$updated = true;
+					break;
+
+				default:
+					return new WP_Error( 'aisuite_seo_unknown_field', __( 'Unknown suggestion type.', 'aisuite-seo' ) );
+			}
+
+			if ( false === $updated ) {
+				return new WP_Error( 'aisuite_seo_write_failed', __( 'WordPress could not save that change. The suggestion remains pending so you can try again.', 'aisuite-seo' ) );
+			}
+
+			if ( ! AISuite_SEO_Store::resolve( $suggestion_id, 'approved' ) ) {
+				return new WP_Error( 'aisuite_seo_resolved', __( 'That suggestion was handled by another request.', 'aisuite-seo' ) );
+			}
+
+			return true;
+		} finally {
+			$this->release_apply_lock( $suggestion_id );
 		}
-
-		if ( $enforce_caps && ! current_user_can( 'edit_post', $row->post_id ) ) {
-			return new WP_Error( 'aisuite_seo_denied', __( 'You cannot edit this post.', 'aisuite-seo' ) );
-		}
-
-		switch ( $row->field ) {
-			case 'title':
-				update_post_meta( $row->post_id, self::META_TITLE, sanitize_text_field( $row->suggested_value ) );
-				break;
-
-			case 'description':
-				update_post_meta( $row->post_id, self::META_DESCRIPTION, sanitize_text_field( $row->suggested_value ) );
-				break;
-
-			case 'internal_links':
-				$applied = $this->insert_links( $row->post_id, json_decode( $row->suggested_value, true ) );
-
-				if ( is_wp_error( $applied ) ) {
-					return $applied;
-				}
-				break;
-
-			default:
-				return new WP_Error( 'aisuite_seo_unknown_field', __( 'Unknown suggestion type.', 'aisuite-seo' ) );
-		}
-
-		AISuite_SEO_Store::resolve( $suggestion_id, 'approved' );
-
-		return true;
 	}
 
 	public function reject( $suggestion_id, $enforce_caps = true ) {
-		$row = AISuite_SEO_Store::get( $suggestion_id );
-
-		if ( ! $row ) {
-			return new WP_Error( 'aisuite_seo_missing', __( 'That suggestion no longer exists.', 'aisuite-seo' ) );
+		if ( ! $this->acquire_apply_lock( $suggestion_id ) ) {
+			return new WP_Error( 'aisuite_seo_busy', __( 'That suggestion is already being handled. Refresh and try again.', 'aisuite-seo' ) );
 		}
 
-		if ( $enforce_caps && ! current_user_can( 'edit_post', $row->post_id ) ) {
-			return new WP_Error( 'aisuite_seo_denied', __( 'You cannot edit this post.', 'aisuite-seo' ) );
+		try {
+			$row = AISuite_SEO_Store::get( $suggestion_id );
+
+			if ( ! $row ) {
+				return new WP_Error( 'aisuite_seo_missing', __( 'That suggestion no longer exists.', 'aisuite-seo' ) );
+			}
+
+			if ( 'pending' !== $row->status ) {
+				return new WP_Error( 'aisuite_seo_resolved', __( 'That suggestion has already been handled.', 'aisuite-seo' ) );
+			}
+
+			if ( $enforce_caps && ! current_user_can( 'edit_post', $row->post_id ) ) {
+				return new WP_Error( 'aisuite_seo_denied', __( 'You cannot edit this post.', 'aisuite-seo' ) );
+			}
+
+			if ( ! AISuite_SEO_Store::resolve( $suggestion_id, 'rejected' ) ) {
+				return new WP_Error( 'aisuite_seo_resolved', __( 'That suggestion was handled by another request.', 'aisuite-seo' ) );
+			}
+
+			return true;
+		} finally {
+			$this->release_apply_lock( $suggestion_id );
 		}
-
-		AISuite_SEO_Store::resolve( $suggestion_id, 'rejected' );
-
-		return true;
 	}
 
 	/**
@@ -289,7 +386,7 @@ class AISuite_SEO_Optimizer {
 		// Suggestions can sit in the queue for days. Re-check each target and
 		// refresh its permalink at apply time, so an unpublished target is
 		// dropped and a changed permalink never becomes a broken link.
-		$links = $this->filter_links( $links );
+		$links = $this->filter_links( $links, $post_id );
 
 		if ( empty( $links ) ) {
 			return new WP_Error( 'aisuite_seo_no_links', __( 'The linked pages are no longer published, so nothing was changed.', 'aisuite-seo' ) );
@@ -321,5 +418,34 @@ class AISuite_SEO_Optimizer {
 		}
 
 		return true;
+	}
+
+	protected function truncate( $value, $length ) {
+		if ( function_exists( 'mb_substr' ) ) {
+			return mb_substr( (string) $value, 0, $length );
+		}
+
+		return substr( (string) $value, 0, $length );
+	}
+
+	protected function acquire_apply_lock( $suggestion_id ) {
+		$key = self::APPLY_LOCK . (int) $suggestion_id;
+
+		if ( add_option( $key, time(), '', false ) ) {
+			return true;
+		}
+
+		$created = (int) get_option( $key, 0 );
+
+		if ( $created && time() - $created > 5 * MINUTE_IN_SECONDS ) {
+			delete_option( $key );
+			return add_option( $key, time(), '', false );
+		}
+
+		return false;
+	}
+
+	protected function release_apply_lock( $suggestion_id ) {
+		delete_option( self::APPLY_LOCK . (int) $suggestion_id );
 	}
 }

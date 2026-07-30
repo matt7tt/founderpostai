@@ -15,7 +15,9 @@ class AISuite_Modules {
 	protected $modules = array();
 
 	public function __construct() {
-		add_action( 'plugins_loaded', array( $this, 'collect' ), 20 );
+		// Module registration uses translated labels. WordPress 6.7+ warns when
+		// just-in-time translation is triggered before init.
+		add_action( 'init', array( $this, 'collect' ), 5 );
 	}
 
 	public function collect() {

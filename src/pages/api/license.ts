@@ -34,17 +34,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    if (!['active', 'trialing'].includes(subscription.status)) {
+      return res.status(402).json({ error: 'Subscription is not active' });
+    }
 
     let licenseKey = subscription.metadata?.license_key;
-    if (!licenseKey) {
-      licenseKey = generateLicenseKey(plan);
+    const licensePattern =
+      plan === 'agency'
+        ? /^AISA-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/
+        : /^AISP-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/;
+    if (!licenseKey || !licensePattern.test(licenseKey)) {
+      // Deterministic per subscription: concurrent success-page requests cannot
+      // mint two different keys and show the customer the one Stripe did not keep.
+      licenseKey = generateLicenseKey(plan, subscriptionId);
       await stripe.subscriptions.update(subscriptionId, {
         metadata: { plan, license_key: licenseKey, license_status: 'active' },
       });
-      console.log(`License issued: plan=${plan} key=${licenseKey} email=${session.customer_details?.email}`);
+      console.info(`License issued: plan=${plan} subscription=${subscriptionId}`);
     }
 
-    // Record for the update server (best-effort — don't fail the page over it).
+    // The receipt is only useful if the update service can resolve its key.
+    // Stripe metadata is already durable, so a retry safely repairs Redis.
     try {
       const { setJSON } = await import('@/lib/gateway/redis');
       await setJSON(`license:${licenseKey}`, {
@@ -53,7 +63,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         subscription_id: subscriptionId,
       });
     } catch (e) {
-      console.warn('License redis record failed:', e);
+      console.error(`License index failed for subscription ${subscriptionId}:`, e);
+      return res.status(503).json({ error: 'License is being prepared. Refresh in a moment.' });
     }
 
     return res.status(200).json({

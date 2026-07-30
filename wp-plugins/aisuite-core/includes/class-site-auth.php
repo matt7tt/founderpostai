@@ -32,8 +32,17 @@ class AISuite_Site_Auth {
 	}
 
 	public static function store_credentials( $site_id, $secret ) {
-		update_option( self::OPT_SITE_ID, sanitize_text_field( $site_id ), false );
+		$site_id = is_string( $site_id ) ? sanitize_text_field( $site_id ) : '';
+		$secret  = is_string( $secret ) ? trim( $secret ) : '';
+
+		if ( '' === $site_id || strlen( $site_id ) > 191 || strlen( $secret ) < 24 || strlen( $secret ) > 255 ) {
+			return new WP_Error( 'aisuite_bad_credentials', __( 'The gateway returned invalid site credentials.', 'aisuite-core' ) );
+		}
+
+		update_option( self::OPT_SITE_ID, $site_id, false );
 		update_option( self::OPT_SECRET, $secret, false );
+
+		return true;
 	}
 
 	public static function disconnect() {
@@ -76,6 +85,18 @@ class AISuite_Site_Auth {
 	}
 
 	/**
+	 * Version 2 binds the signature to the HTTP method and gateway path. The
+	 * original body-only scheme let an empty-body signature be replayed against
+	 * another route during its five-minute validity window.
+	 */
+	public static function sign_request( $timestamp, $method, $path, $raw_body, $secret = null ) {
+		$secret    = null === $secret ? self::secret() : $secret;
+		$canonical = strtoupper( (string) $method ) . "\n" . (string) $path . "\n" . (string) $raw_body;
+
+		return hash_hmac( 'sha256', $timestamp . '.' . $canonical, $secret );
+	}
+
+	/**
 	 * Verify an inbound callback.
 	 *
 	 * @return true|WP_Error
@@ -87,6 +108,10 @@ class AISuite_Site_Auth {
 
 		if ( ! $signature || ! $timestamp ) {
 			return new WP_Error( 'aisuite_missing_signature', __( 'Missing signature headers.', 'aisuite-core' ), array( 'status' => 401 ) );
+		}
+
+		if ( ! preg_match( '/^\d{10,}$/', (string) $timestamp ) || ! preg_match( '/^[a-f0-9]{64}$/i', (string) $signature ) ) {
+			return new WP_Error( 'aisuite_bad_signature', __( 'Malformed signature headers.', 'aisuite-core' ), array( 'status' => 401 ) );
 		}
 
 		if ( abs( time() - (int) $timestamp ) > self::MAX_SKEW ) {

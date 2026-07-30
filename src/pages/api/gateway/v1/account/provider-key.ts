@@ -25,25 +25,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const site = await authedSite(req, res, raw);
   if (!site) return;
 
-  const { provider, key } = JSON.parse(raw || '{}');
-  if (provider !== 'anthropic' || !key) {
+  let body: any;
+  try {
+    body = JSON.parse(raw || '{}');
+  } catch {
+    return res.status(400).json({ error: 'Invalid JSON' });
+  }
+  const { provider, key } = body;
+  if (provider !== 'anthropic' || typeof key !== 'string' || key.length < 20 || key.length > 300) {
     return res.status(400).json({ error: 'Only provider=anthropic is supported right now' });
   }
 
   // Verify with the cheapest possible live call before storing.
-  const check = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': key,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1,
-      messages: [{ role: 'user', content: 'hi' }],
-    }),
-  });
+  let check: Response;
+  try {
+    check = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001',
+        max_tokens: 1,
+        messages: [{ role: 'user', content: 'hi' }],
+      }),
+      signal: AbortSignal.timeout(15_000),
+    });
+  } catch {
+    return res.status(503).json({ error: 'The provider could not be reached. Try again in a moment.' });
+  }
   if (!check.ok) {
     const e = await check.json().catch(() => ({}));
     return res.status(422).json({

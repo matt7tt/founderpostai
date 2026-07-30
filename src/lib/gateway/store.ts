@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getJSON, setJSON, redis } from './redis';
-import { verifyInbound } from './crypto';
+import { canonicalRequestPath, verifyInbound } from './crypto';
 
 export interface Site {
   site_id: string;
@@ -33,13 +33,35 @@ export const getJob = (id: string) => getJSON<Job>(`job:${id}`);
 export const saveJob = (j: Job) => setJSON(`job:${j.job_id}`, j, 60 * 60 * 24 * 30);
 
 export async function periodEnd(): Promise<string> {
-  const d = new Date();
-  d.setMonth(d.getMonth() + 1, 1);
-  d.setHours(0, 0, 0, 0);
-  return d.toISOString();
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)).toISOString();
+}
+
+export async function ensureAccountPeriod(site: Site): Promise<void> {
+  const now = new Date();
+  const period = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+  const script = `
+    if redis.call('GET', KEYS[1]) ~= ARGV[1] then
+      redis.call('SET', KEYS[1], ARGV[1])
+      redis.call('SET', KEYS[2], ARGV[2])
+      redis.call('SET', KEYS[3], 0)
+    end
+    return 1
+  `;
+  await redis(
+    'EVAL',
+    script,
+    3,
+    `account-period:${site.site_id}`,
+    `credits:${site.site_id}`,
+    `actions:${site.site_id}`,
+    period,
+    site.credits_included
+  );
 }
 
 export async function accountFor(site: Site): Promise<any> {
+  await ensureAccountPeriod(site);
   const base = { plan: site.plan, period_end: await periodEnd() };
   if (site.billing_mode === 'byok') {
     const key = await getJSON<any>(`pkey:${site.site_id}`);
@@ -74,7 +96,13 @@ export async function authedSite(
     res.status(401).json({ error: 'Unknown site' });
     return null;
   }
-  const err = verifyInbound(req.headers as any, rawBody, site.site_secret);
+  const err = verifyInbound(
+    req.headers as any,
+    rawBody,
+    site.site_secret,
+    req.method || '',
+    canonicalRequestPath(req.url)
+  );
   if (err) {
     res.status(401).json({ error: err });
     return null;
