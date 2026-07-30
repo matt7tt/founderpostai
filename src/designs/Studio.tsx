@@ -79,13 +79,22 @@ export default function Studio() {
 
   return (
     <div className={styles.root}>
+      <a href="#main-content" className={styles.skipLink}>
+        Skip to content
+      </a>
+
       {/* Navbar */}
       <nav className={styles.navbar}>
         <div className={styles.navbarInner}>
-          <a href="#" className={styles.logo}>
+          <Link href="/" className={styles.logo}>
             FounderPostAI<sup>®</sup>
-          </a>
-          <button className={styles.menuButton} onClick={() => setDrawerOpen(!drawerOpen)}>
+          </Link>
+          <button
+            className={styles.menuButton}
+            onClick={() => setDrawerOpen(!drawerOpen)}
+            aria-expanded={drawerOpen}
+            aria-controls="studio-menu"
+          >
             Menu
             <ChevronUp
               size={16}
@@ -99,7 +108,11 @@ export default function Studio() {
       </nav>
 
       {/* Drawer */}
-      <div className={`${styles.drawer} ${drawerOpen ? styles.drawerOpen : ''}`}>
+      <div
+        id="studio-menu"
+        className={`${styles.drawer} ${drawerOpen ? styles.drawerOpen : ''}`}
+        inert={!drawerOpen ? true : undefined}
+      >
         {DRAWER_LINKS.map((l) =>
           l.href.startsWith('/') || l.href.startsWith('mailto') ? (
             <Link key={l.label} href={l.href} className={styles.drawerLink} onClick={() => setDrawerOpen(false)}>
@@ -114,8 +127,18 @@ export default function Studio() {
         <p className={styles.drawerFooter}>© {new Date().getFullYear()} FounderPostAI — AI plugins for WordPress</p>
       </div>
 
+      <main id="main-content">
       {/* Hero */}
       <section className={styles.hero}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/studio-hero.webp"
+          alt=""
+          width="1280"
+          height="724"
+          fetchPriority="high"
+          className={styles.heroBackground}
+        />
         {/* Side curved lines (desktop) */}
         <div className={styles.linesLeft}>
           {sideLines.map((_, i) => (
@@ -161,7 +184,7 @@ export default function Studio() {
           </div>
 
           <h1 className={styles.title}>
-            Premium plugins for <span className={styles.serif}>WordPress</span>, on demand.
+            AI SEO plugins for <span className={styles.serif}>WordPress</span>, on demand.
           </h1>
           <p className={styles.subtitle}>
             One runtime, free to download. A complete SEO module, also free. Go Pro for bulk,
@@ -175,8 +198,10 @@ export default function Studio() {
             <a href="mailto:support@founderpostai.com" className={styles.bookButton}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="https://framerusercontent.com/images/hfneFL6CHBi5BnNvCeOaqU9HqE4.png"
-                alt="Support avatar"
+                src="/images/support-avatar.png"
+                alt=""
+                width="40"
+                height="40"
                 className={styles.bookAvatar}
               />
               <span>
@@ -347,7 +372,7 @@ export default function Studio() {
           Give your site the <span className={styles.serif}>upgrade</span> it deserves.
         </h2>
         <p className={styles.sectionSub}>
-          SEO Pro on one site, $79/yr. Free forever on WordPress.org. Thirty days to change your
+          SEO Pro on one site, $79/yr. Core and SEO are free forever. Thirty days to change your
           mind.
         </p>
         <a
@@ -358,16 +383,19 @@ export default function Studio() {
           Get SEO Pro — $79/yr
         </a>
       </section>
+      </main>
 
       {/* Footer */}
       <footer className={styles.footer}>
-        <span className={styles.logo} style={{ fontSize: '20px' }}>
+        <Link href="/" className={styles.logo} style={{ fontSize: '20px' }}>
           FounderPostAI<sup>®</sup>
-        </span>
+        </Link>
         <div className={styles.footerLinks}>
           <a href="#plugins">Plugins</a>
           <a href="#pricing">Pricing</a>
           <a href="#faq">FAQ</a>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
           <Link href="/login">Account</Link>
         </div>
         <p>© {new Date().getFullYear()} FounderPostAI · GPL-licensed code</p>

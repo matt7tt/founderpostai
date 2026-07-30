@@ -2,8 +2,8 @@
 
 A store for the **AI Suite** WordPress plugin family:
 
-- **AI Suite Core** (Free, WordPress.org) — connection, credits, brand context, job queue
-- **AI Suite SEO** (Free, WordPress.org) — suggestions + review queue, batches of ten, block-aware internal links
+- **AI Suite Core** (Free, direct download) — connection, credits, brand context, job queue
+- **AI Suite SEO** (Free, direct download) — suggestions + review queue, batches of ten, block-aware internal links
 - **AI Suite SEO Pro** ($79/yr, this store) — bulk runs, scheduling, auto-apply
 - **Agency** ($199/yr) — Pro on unlimited client sites, BYOK flat fee
 
@@ -11,10 +11,15 @@ Billing modes: managed credits ("actions") or BYOK (customer's own provider key,
 
 ## A/B testing
 
-The homepage is split 50/50 between two designs via `src/middleware.ts` (cookie `ab_design`,
-30 days). Variants live in `src/designs/Editorial.tsx` and `src/designs/Studio.tsx`.
+The homepage is split 50/50 between two designs in `src/pages/index.tsx` (cookie `ab_design`,
+30 days). Assignment happens during server rendering so a visitor sees their assigned design on
+the first request. Variants live in `src/designs/Editorial.tsx` and `src/designs/Studio.tsx`.
 Force one with `/?v=studio` or `/?v=editorial`. Conversion events (`landing_view`,
 `checkout_click`) go to Vercel Analytics via `@vercel/analytics`.
+
+Both variants share one canonical URL, search metadata, social preview, and SoftwareApplication
+structured-data graph. Public indexable URLs are listed in `/sitemap.xml`; account and transaction
+routes send `noindex` directives.
 
 ## Payments
 

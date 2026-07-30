@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import SeoHead from '../components/SeoHead';
 
 const card: React.CSSProperties = {
   background: '#ffffff',
@@ -54,9 +54,7 @@ export default function Thanks() {
 
   return (
     <>
-      <Head>
-        <title>Thank you — FounderPostAI</title>
-      </Head>
+      <SeoHead title="Thank you | FounderPostAI" path="/thanks" noIndex />
       <div
         style={{
           minHeight: '100vh',

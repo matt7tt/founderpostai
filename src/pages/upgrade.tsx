@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
-import Head from 'next/head';
 import Link from 'next/link';
+import SeoHead from '../components/SeoHead';
 
 export default function Upgrade() {
   const { data: session, status } = useSession();
@@ -52,9 +52,7 @@ export default function Upgrade() {
 
   return (
     <>
-      <Head>
-        <title>Upgrade to Pro - FounderPostAI</title>
-      </Head>
+      <SeoHead title="Upgrade to Pro | FounderPostAI" path="/upgrade" noIndex />
       <div className="min-h-screen bg-gray-50">
         {/* Nav */}
         <nav className="bg-white border-b border-gray-200">

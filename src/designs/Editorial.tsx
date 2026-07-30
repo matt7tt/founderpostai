@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import Head from 'next/head';
 import { PAYMENT_LINKS, track } from '../lib/ab';
 
 const serif = "Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif";
@@ -52,28 +51,26 @@ const plugins = [
 
 export default function Editorial() {
   return (
-    <>
-      <Head>
-        <title>FounderPostAI — AI plugins for WordPress that don’t suck</title>
-        <meta
-          name="description"
-          content="AI Suite for WordPress: a free runtime and SEO module on WordPress.org, with Pro for bulk, scheduling, and auto-apply. Managed credits or your own key."
-        />
-      </Head>
+    <div className="min-h-screen bg-[#F7F4EE] text-[#1B1712] antialiased">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[300] focus:bg-[#1B1712] focus:px-4 focus:py-3 focus:text-white"
+        >
+          Skip to content
+        </a>
 
-      <div className="min-h-screen bg-[#F7F4EE] text-[#1B1712] antialiased">
         {/* Nav */}
         <header className="border-b border-[#1B1712]/15">
           <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
             <div className="flex items-baseline gap-2">
-              <span className="text-xl font-bold tracking-tight" style={{ fontFamily: serif }}>
+              <Link href="/" className="text-xl font-bold tracking-tight" style={{ fontFamily: serif }}>
                 FounderPostAI
-              </span>
-              <span className="hidden sm:inline text-[11px] uppercase tracking-[0.18em] text-[#1B1712]/50" style={{ fontFamily: mono }}>
+              </Link>
+              <span className="hidden sm:inline text-[11px] uppercase tracking-[0.18em] text-[#1B1712]/70" style={{ fontFamily: mono }}>
                 AI Suite for WordPress
               </span>
             </div>
-            <nav className="flex items-center gap-6 text-sm">
+            <nav aria-label="Primary navigation" className="flex items-center gap-6 text-sm">
               <a href="#plugins" className="hidden sm:inline hover:text-[#00749C] transition-colors">Plugins</a>
               <a href="#pricing" className="hidden sm:inline hover:text-[#00749C] transition-colors">Pricing</a>
               <a href="#faq" className="hidden sm:inline hover:text-[#00749C] transition-colors">FAQ</a>
@@ -88,6 +85,7 @@ export default function Editorial() {
           </div>
         </header>
 
+        <main id="main-content">
         {/* Hero */}
         <section className="border-b border-[#1B1712]/15">
           <div className="max-w-6xl mx-auto px-6 py-20 md:py-28 grid md:grid-cols-[1.4fr_1fr] gap-12 items-center">
@@ -96,10 +94,10 @@ export default function Editorial() {
                 Free & GPL · Pro in this store
               </p>
               <h1 className="text-4xl md:text-6xl leading-[1.05] font-bold tracking-tight mb-6" style={{ fontFamily: serif }}>
-                AI plugins for WordPress that don’t suck.
+                AI SEO plugins for WordPress that don’t suck.
               </h1>
               <p className="text-lg md:text-xl text-[#1B1712]/70 leading-relaxed max-w-xl mb-8">
-                One runtime, free on WordPress.org. A complete SEO module, also free. Go Pro for
+                One runtime, free to download. A complete SEO module, also free. Go Pro for
                 bulk, scheduling, and auto-apply — managed credits or your own key.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -116,7 +114,7 @@ export default function Editorial() {
                   See pricing →
                 </a>
               </div>
-              <p className="text-sm text-[#1B1712]/50">
+              <p className="text-sm text-[#1B1712]/70">
                 30-day refunds, no questions · GPL-licensed · Revision saved before every write
               </p>
             </div>
@@ -126,7 +124,7 @@ export default function Editorial() {
               <div className="border-b border-[#1B1712]/15 px-4 py-2.5 flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#1B1712]/20" />
                 <span className="w-2.5 h-2.5 rounded-full bg-[#1B1712]/20" />
-                <span className="ml-2 text-[11px] text-[#1B1712]/50" style={{ fontFamily: mono }}>
+                <span className="ml-2 text-[11px] text-[#1B1712]/70" style={{ fontFamily: mono }}>
                   wp-admin · AI Suite → Review queue
                 </span>
               </div>
@@ -149,7 +147,7 @@ export default function Editorial() {
                     <span className="border border-[#1B1712]/25 text-xs px-3 py-1.5">Reject</span>
                   </div>
                 </div>
-                <p className="text-[11px] text-[#1B1712]/40" style={{ fontFamily: mono }}>
+                <p className="text-[11px] text-[#1B1712]/70" style={{ fontFamily: mono }}>
                   ↑ nothing ships without your review
                 </p>
               </div>
@@ -189,7 +187,7 @@ export default function Editorial() {
             {plugins.map((p) => (
               <article key={p.id} className="bg-[#F7F4EE] p-8 flex flex-col hover:bg-white transition-colors">
                 <div className="flex items-start justify-between mb-6">
-                  <span className="text-[11px] text-[#1B1712]/40" style={{ fontFamily: mono }}>MODULE {p.id}</span>
+                  <span className="text-[11px] text-[#1B1712]/70" style={{ fontFamily: mono }}>MODULE {p.id}</span>
                   <span className="text-sm font-bold bg-[#1B1712] text-[#F7F4EE] px-2.5 py-1" style={{ fontFamily: mono }}>
                     {p.price}
                   </span>
@@ -220,7 +218,7 @@ export default function Editorial() {
             ))}
           </div>
 
-          <p className="mt-6 text-sm text-[#1B1712]/50 text-center">
+          <p className="mt-6 text-sm text-[#1B1712]/70 text-center">
             Every module: managed credits from us, or unlimited actions on your own provider key.
           </p>
         </section>
@@ -238,7 +236,7 @@ export default function Editorial() {
                 ['03', 'Review, then apply', 'Suggestions land in a review queue. Approve what you like; a WordPress revision is saved before every write, so anything can be rolled back.'],
               ].map(([n, t, d]) => (
                 <div key={n}>
-                  <p className="text-5xl font-bold text-[#00749C]/20 mb-3" style={{ fontFamily: serif }}>{n}</p>
+                  <p aria-hidden="true" className="text-5xl font-bold text-[#00749C]/70 mb-3" style={{ fontFamily: serif }}>{n}</p>
                   <h3 className="text-lg font-bold mb-2">{t}</h3>
                   <p className="text-[#1B1712]/65 leading-relaxed">{d}</p>
                 </div>
@@ -266,11 +264,11 @@ export default function Editorial() {
             {/* Free */}
             <div className="border border-[#1B1712]/20 bg-white p-8 flex flex-col">
               <h3 className="text-lg font-bold mb-1">Free</h3>
-              <p className="text-sm text-[#1B1712]/55 mb-6">Core + SEO, free downloads.</p>
+              <p className="text-sm text-[#1B1712]/70 mb-6">Core + SEO, free downloads.</p>
               <p className="text-4xl font-bold mb-1" style={{ fontFamily: serif }}>
-                $0<span className="text-base font-normal text-[#1B1712]/50"> forever</span>
+                $0<span className="text-base font-normal text-[#1B1712]/70"> forever</span>
               </p>
-              <p className="text-sm text-[#1B1712]/50 mb-8">complete product, no license checks</p>
+              <p className="text-sm text-[#1B1712]/70 mb-8">complete product, no license checks</p>
               <ul className="space-y-2.5 text-sm mb-8 text-[#1B1712]/75">
                 <li>✓ Analyze, review & apply suggestions</li>
                 <li>✓ Per-post and batches of ten</li>
@@ -288,9 +286,9 @@ export default function Editorial() {
                 Best deal
               </span>
               <h3 className="text-lg font-bold mb-1">SEO Pro</h3>
-              <p className="text-sm text-[#1B1712]/55 mb-6">Bulk, scheduling & auto-apply for one site.</p>
+              <p className="text-sm text-[#1B1712]/70 mb-6">Bulk, scheduling & auto-apply for one site.</p>
               <p className="text-4xl font-bold mb-1" style={{ fontFamily: serif }}>
-                $79<span className="text-base font-normal text-[#1B1712]/50">/yr</span>
+                $79<span className="text-base font-normal text-[#1B1712]/70">/yr</span>
               </p>
               <p className="text-sm text-[#00749C] font-medium mb-8">
                 managed credits included — no API key needed
@@ -314,11 +312,11 @@ export default function Editorial() {
             {/* Agency */}
             <div className="border border-[#1B1712]/20 bg-white p-8 flex flex-col">
               <h3 className="text-lg font-bold mb-1">Agency</h3>
-              <p className="text-sm text-[#1B1712]/55 mb-6">Pro on every client site you run.</p>
+              <p className="text-sm text-[#1B1712]/70 mb-6">Pro on every client site you run.</p>
               <p className="text-4xl font-bold mb-1" style={{ fontFamily: serif }}>
-                $199<span className="text-base font-normal text-[#1B1712]/50">/yr</span>
+                $199<span className="text-base font-normal text-[#1B1712]/70">/yr</span>
               </p>
-              <p className="text-sm text-[#1B1712]/50 mb-8">unlimited sites, BYOK flat fee</p>
+              <p className="text-sm text-[#1B1712]/70 mb-8">unlimited sites, BYOK flat fee</p>
               <ul className="space-y-2.5 text-sm mb-8 text-[#1B1712]/75">
                 <li>✓ Everything in SEO Pro</li>
                 <li>✓ Unlimited client sites</li>
@@ -336,7 +334,7 @@ export default function Editorial() {
             </div>
           </div>
 
-          <p className="mt-8 text-sm text-[#1B1712]/50 text-center max-w-xl mx-auto">
+          <p className="mt-8 text-sm text-[#1B1712]/70 text-center max-w-xl mx-auto">
             Not happy in the first 30 days? One email, full refund, and everything already applied
             stays exactly where it is — it’s plain WordPress content.
           </p>
@@ -375,7 +373,7 @@ export default function Editorial() {
               Give your WordPress site the upgrade it deserves.
             </h2>
             <p className="text-lg text-[#F7F4EE]/65 mb-8 max-w-xl mx-auto">
-              SEO Pro on one site, $79/yr. Free forever on WordPress.org. Thirty days to change
+              SEO Pro on one site, $79/yr. Core and SEO are free forever. Thirty days to change
               your mind.
             </p>
             <a
@@ -387,21 +385,23 @@ export default function Editorial() {
             </a>
           </div>
         </section>
+        </main>
 
         {/* Footer */}
         <footer className="border-t border-[#1B1712]/15">
-          <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-[#1B1712]/55">
+          <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-[#1B1712]/70">
             <span className="font-bold text-[#1B1712]" style={{ fontFamily: serif }}>FounderPostAI</span>
             <div className="flex gap-6">
               <a href="#plugins" className="hover:text-[#00749C]">Plugins</a>
               <a href="#pricing" className="hover:text-[#00749C]">Pricing</a>
               <a href="#faq" className="hover:text-[#00749C]">FAQ</a>
+              <Link href="/privacy" className="hover:text-[#00749C]">Privacy</Link>
+              <Link href="/terms" className="hover:text-[#00749C]">Terms</Link>
               <Link href="/login" className="hover:text-[#00749C]">Account</Link>
             </div>
             <p>© {new Date().getFullYear()} FounderPostAI · GPL-licensed code, human-written support</p>
           </div>
         </footer>
-      </div>
-    </>
+    </div>
   );
 }

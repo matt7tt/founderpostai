@@ -1,24 +1,43 @@
 import { GetServerSideProps } from 'next';
-import Head from 'next/head';
 import { useEffect } from 'react';
+import HomeStructuredData from '../components/HomeStructuredData';
+import SeoHead from '../components/SeoHead';
 import Editorial from '../designs/Editorial';
 import Studio from '../designs/Studio';
 import { track, DesignVariant } from '../lib/ab';
+import { HOME_DESCRIPTION, HOME_TITLE } from '../lib/site';
 
 interface HomeProps {
   design: DesignVariant;
   showSwitcher: boolean;
 }
 
-export const getServerSideProps: GetServerSideProps<HomeProps> = async ({ req, query }) => {
+export const getServerSideProps: GetServerSideProps<HomeProps> = async ({
+  req,
+  res,
+  query,
+}) => {
   // Manual override for testing: /?v=studio or /?v=editorial
   const forced =
     query.v === 'studio' ? 'studio' : query.v === 'editorial' ? 'editorial' : null;
   const cookie = req.cookies.ab_design;
+  const assigned =
+    cookie === 'studio' || cookie === 'editorial'
+      ? cookie
+      : Math.random() < 0.5
+        ? 'editorial'
+        : 'studio';
+
+  if (!forced && cookie !== 'studio' && cookie !== 'editorial') {
+    res.setHeader(
+      'Set-Cookie',
+      `ab_design=${assigned}; Path=/; Max-Age=${60 * 60 * 24 * 30}; HttpOnly; Secure; SameSite=Lax`
+    );
+  }
 
   return {
     props: {
-      design: forced || (cookie === 'studio' ? 'studio' : 'editorial'),
+      design: forced || assigned,
       // Hide the switcher from real visitors so it doesn't pollute the experiment
       showSwitcher: !!forced || process.env.NODE_ENV !== 'production',
     },
@@ -36,13 +55,13 @@ export default function Home({ design, showSwitcher }: HomeProps) {
 
   return (
     <>
-      <Head>
-        <title>FounderPostAI — AI plugins for WordPress that don’t suck</title>
-        <meta
-          name="description"
-          content="Three focused AI plugins for WordPress: write faster, support visitors, and fix your SEO backlog. Fair prices, 30-day refunds, no subscriptions you forget about."
-        />
-      </Head>
+      <SeoHead
+        title={HOME_TITLE}
+        description={HOME_DESCRIPTION}
+        path="/"
+        preloadImage={design === 'studio' ? '/images/studio-hero.webp' : undefined}
+      />
+      <HomeStructuredData />
 
       {design === 'studio' ? <Studio /> : <Editorial />}
 

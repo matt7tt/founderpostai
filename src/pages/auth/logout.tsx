@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
+import SeoHead from '../../components/SeoHead';
 
 export default function Logout() {
   const router = useRouter();
@@ -10,5 +11,5 @@ export default function Logout() {
     });
   }, [router]);
 
-  return null;
+  return <SeoHead title="Logging Out | FounderPostAI" path="/auth/logout" noIndex />;
 }
