@@ -77,7 +77,7 @@ export default function Thanks() {
             margin: '0 0 24px',
           }}
         >
-          FounderPostAI<sup style={{ fontFamily: "'Inter', sans-serif", fontStyle: 'normal', fontSize: '14px' }}>®</sup>
+          FounderPostAI
         </p>
         <h1
           style={{

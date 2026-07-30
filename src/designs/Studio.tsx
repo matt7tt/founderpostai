@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronUp } from 'lucide-react';
+import { AI_SEO_CAPABILITIES, HOME_FAQS } from '../lib/products';
 import { WORDPRESS_ORG_REVIEW_NOTICE } from '../lib/site';
 import styles from '../styles/Studio.module.css';
 
@@ -14,16 +15,14 @@ const TICKER_ITEMS = [
 ];
 
 const TRUSTED = [
-  { name: 'WooCommerce', style: { fontFamily: 'system-ui', fontWeight: 800 } },
-  { name: 'Yoast', style: { fontFamily: 'Georgia, serif', fontWeight: 500 } },
+  { name: 'Block Editor', style: { fontFamily: 'system-ui', fontWeight: 800 } },
+  { name: 'Classic Editor', style: { fontFamily: 'Georgia, serif', fontWeight: 500 } },
+  { name: 'Yoast SEO', style: { fontFamily: 'Georgia, serif', fontWeight: 500 } },
   { name: 'Rank Math', style: { fontFamily: "'Inter', sans-serif", fontWeight: 600 } },
-  { name: 'Elementor', style: { fontFamily: "'Inter', sans-serif", fontWeight: 700 } },
-  { name: 'Gutenberg', style: { fontFamily: 'system-ui', fontWeight: 600 } },
-  { name: 'WP Engine', style: { fontFamily: 'Georgia, serif', fontWeight: 700 } },
-  { name: 'Kinsta', style: { fontFamily: 'system-ui', fontWeight: 800 } },
-  { name: 'Cloudways', style: { fontFamily: "'Inter', sans-serif", fontWeight: 600 } },
-  { name: 'AIOSEO', style: { fontFamily: "'Source Serif 4', serif", fontWeight: 600 } },
-  { name: 'Multisite', style: { fontFamily: "'Inter', sans-serif", fontWeight: 600 } },
+  { name: 'All in One SEO', style: { fontFamily: "'Source Serif 4', serif", fontWeight: 600 } },
+  { name: 'SEOPress', style: { fontFamily: "'Inter', sans-serif", fontWeight: 700 } },
+  { name: 'Action Scheduler', style: { fontFamily: 'system-ui', fontWeight: 600 } },
+  { name: 'WP-Cron', style: { fontFamily: "'Inter', sans-serif", fontWeight: 600 } },
 ];
 
 const PLUGINS = [
@@ -56,14 +55,6 @@ const PLUGINS = [
   },
 ];
 
-const FAQS = [
-  ['Why are Core and SEO free?', 'Because WordPress.org doesn’t allow hosted plugins with locked or crippled features — so the split is by plugin, not by feature flag. The free SEO plugin is complete: analyze, review, apply, per-post and batches of ten. Pro is a separate download that adds bulk, scheduling, and auto-apply.'],
-  ['Managed credits or BYOK — what’s the difference?', 'Managed: we buy inference wholesale and you spend “actions” from a credit balance. BYOK: you connect your own Anthropic key, pay a flat plan fee, and run unlimited actions — model usage is billed by Anthropic. Either way, your key is posted straight to the gateway and never written to WordPress.'],
-  ['Will it slow down my site?', 'No. All inference happens on the gateway, not your server. Jobs dispatch through Action Scheduler, a loopback, or WP-Cron with a time budget — nothing heavy runs on the page request your visitors hit.'],
-  ['What happens to my content? Is it safe?', 'Every write saves a WordPress revision first, so anything applied can be rolled back. Content is only sent to the gateway when you run an action, and it’s never used to train models.'],
-  ['What happens if I cancel Pro?', 'Bulk, scheduling, and auto-apply stop at the end of your paid period. Everything already applied — meta, links, revisions — is plain WordPress content and stays exactly where it is. The free plugins keep working forever.'],
-];
-
 const DRAWER_LINKS = [
   { label: 'Plugins', href: '#plugins' },
   { label: 'Plans', href: '#pricing' },
@@ -89,7 +80,7 @@ export default function Studio() {
       <nav className={styles.navbar}>
         <div className={styles.navbarInner}>
           <Link href="/" className={styles.logo}>
-            FounderPostAI<sup>®</sup>
+            FounderPostAI
           </Link>
           <button
             className={styles.menuButton}
@@ -186,11 +177,12 @@ export default function Studio() {
           </div>
 
           <h1 className={styles.title}>
-            AI SEO plugins for <span className={styles.serif}>WordPress</span>, on demand.
+            Safe AI SEO automation for <span className={styles.serif}>WordPress</span>.
           </h1>
           <p className={styles.subtitle}>
-            One runtime, free to download. A complete SEO module, also free. Go Pro for bulk,
-            scheduling, and auto-apply — managed credits or your own key.
+            Generate reviewable SEO titles, meta descriptions, and safe internal-link
+            suggestions. Approve every change, keep revisions, and add bulk automation when
+            you are ready.
           </p>
 
           <div className={styles.ctaRow}>
@@ -235,6 +227,38 @@ export default function Studio() {
             )}
           </div>
         </div>
+      </section>
+
+      {/* Search-focused capabilities */}
+      <section id="capabilities" aria-labelledby="studio-capabilities-heading" className={styles.section}>
+        <p className={styles.sectionLabel}>WordPress AI SEO workflow</p>
+        <h2 id="studio-capabilities-heading" className={styles.sectionTitle}>
+          Optimize search snippets and internal links without giving up editorial control.
+        </h2>
+        <p className={styles.sectionSub}>
+          FounderPostAI analyzes the content already on your site, returns structured suggestions,
+          and lets you review the exact proposed value before anything changes.
+        </p>
+        <div className={styles.capabilityGrid}>
+          {AI_SEO_CAPABILITIES.map((capability) => (
+            <article id={capability.id} key={capability.id} className={styles.capabilityCard}>
+              <h3>{capability.title}</h3>
+              <p>{capability.summary}</p>
+              <ul>
+                {capability.points.map((point) => (
+                  <li key={point}>{point}</li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
+        <p className={styles.sectionSub} style={{ marginTop: '28px', marginBottom: 0 }}>
+          See the complete{' '}
+          <Link href="/ai-suite#workflow" style={{ color: 'inherit', textDecoration: 'underline' }}>
+            WordPress AI SEO workflow and technical details
+          </Link>
+          .
+        </p>
       </section>
 
       {/* Plugins */}
@@ -367,13 +391,13 @@ export default function Studio() {
           <h2 className={styles.sectionTitle} style={{ marginBottom: '40px' }}>
             Questions WordPress people actually ask
           </h2>
-          {FAQS.map(([q, a]) => (
-            <details key={q} className={styles.faqItem}>
+          {HOME_FAQS.map(({ question, answer }) => (
+            <details key={question} className={styles.faqItem}>
               <summary>
-                {q}
+                {question}
                 <span className={styles.faqPlus}>+</span>
               </summary>
-              <p className={styles.faqAnswer}>{a}</p>
+              <p className={styles.faqAnswer}>{answer}</p>
             </details>
           ))}
         </div>
@@ -401,7 +425,7 @@ export default function Studio() {
       {/* Footer */}
       <footer className={styles.footer}>
         <Link href="/" className={styles.logo} style={{ fontSize: '20px' }}>
-          FounderPostAI<sup>®</sup>
+          FounderPostAI
         </Link>
         <div className={styles.footerLinks}>
           <a href="#plugins">Plugins</a>
