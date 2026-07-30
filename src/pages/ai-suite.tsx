@@ -4,6 +4,7 @@ import SeoHead from '../components/SeoHead';
 import {
   AI_SUITE_DESCRIPTION,
   AI_SUITE_FAQS,
+  AI_SEO_CAPABILITIES,
   AI_SUITE_PRODUCTS,
   AI_SUITE_REQUIREMENTS,
   AI_SUITE_TITLE,
@@ -20,6 +21,7 @@ export default function AiSuite() {
         title={AI_SUITE_TITLE}
         description={AI_SUITE_DESCRIPTION}
         path="/ai-suite"
+        imageAlt="FounderPostAI AI SEO plugin for WordPress product overview"
       />
       <AiSuiteStructuredData />
 
@@ -41,11 +43,11 @@ export default function AiSuite() {
               FounderPostAI
             </Link>
             <nav aria-label="Product facts navigation" className="flex items-center gap-5 text-sm">
-              <a href="#compare" className="hidden hover:text-[#00749C] sm:inline">
-                Compare
+              <a href="#workflow" className="hidden hover:text-[#00749C] sm:inline">
+                Workflow
               </a>
-              <a href="#privacy" className="hidden hover:text-[#00749C] sm:inline">
-                Privacy
+              <a href="#installation" className="hidden hover:text-[#00749C] sm:inline">
+                Install
               </a>
               <a href="#questions" className="hidden hover:text-[#00749C] sm:inline">
                 FAQ
@@ -80,13 +82,14 @@ export default function AiSuite() {
                   className="mb-6 text-4xl font-bold leading-[1.06] tracking-tight md:text-6xl"
                   style={{ fontFamily: serif }}
                 >
-                  AI Suite for WordPress: product facts and technical overview
+                  AI SEO plugin for WordPress: titles, meta descriptions, and internal links
                 </h1>
                 <p className="max-w-3xl text-xl leading-relaxed text-[#1B1712]/75">
-                  <strong className="text-[#1B1712]">The short answer:</strong> FounderPostAI AI
-                  Suite is a three-plugin WordPress SEO system. Core supplies the shared runtime,
-                  the free SEO module supplies reviewable optimization suggestions, and SEO Pro
-                  adds whole-site bulk runs, scheduling, and auto-apply.
+                  <strong className="text-[#1B1712]">The short answer:</strong> FounderPostAI AI Suite
+                  generates reviewable search titles, meta descriptions, and safe internal-link
+                  suggestions from the content already published on your WordPress site. Core
+                  supplies the shared runtime, the free SEO module supplies the review workflow,
+                  and SEO Pro adds whole-site bulk runs, scheduling, and conservative auto-apply.
                 </p>
                 <p className="mt-6 text-sm text-[#1B1712]/60">
                   Product details checked against the current packaged releases on{' '}
@@ -124,6 +127,70 @@ export default function AiSuite() {
                     </div>
                   ))}
                 </dl>
+              </div>
+            </section>
+
+            <section id="workflow" aria-labelledby="workflow-heading" className="border-b border-[#1B1712]/15 bg-[#F7F4EE]">
+              <div className="mx-auto max-w-6xl px-6 py-16 md:py-24">
+                <div className="mb-12 max-w-3xl">
+                  <p
+                    className="mb-4 text-[11px] uppercase tracking-[0.22em] text-[#00749C]"
+                    style={{ fontFamily: mono }}
+                  >
+                    What the WordPress AI SEO plugin does
+                  </p>
+                  <h2
+                    id="workflow-heading"
+                    className="mb-5 text-3xl font-bold tracking-tight md:text-5xl"
+                    style={{ fontFamily: serif }}
+                  >
+                    A review-first SEO workflow for content teams that want useful automation.
+                  </h2>
+                  <p className="text-lg leading-relaxed text-[#1B1712]/70">
+                    AI Suite works from the live post, existing metadata, published internal-link
+                    candidates, and the brand context you save once. The gateway returns structured
+                    suggestions—not executable code—and WordPress validates each suggestion before
+                    it reaches the review queue.
+                  </p>
+                </div>
+
+                <div className="grid gap-6 lg:grid-cols-3">
+                  {AI_SEO_CAPABILITIES.map((capability) => (
+                    <article
+                      id={capability.id}
+                      key={capability.id}
+                      className="scroll-mt-8 border border-[#1B1712]/15 bg-white p-7"
+                    >
+                      <h3 className="mb-3 text-xl font-bold" style={{ fontFamily: serif }}>
+                        {capability.title}
+                      </h3>
+                      <p className="mb-5 leading-relaxed text-[#1B1712]/70">
+                        {capability.summary}
+                      </p>
+                      <ul className="space-y-2 text-sm leading-relaxed text-[#1B1712]/70">
+                        {capability.points.map((point) => (
+                          <li key={point} className="flex gap-2">
+                            <span aria-hidden="true" className="font-bold text-[#00749C]">✓</span>
+                            <span>{point}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </article>
+                  ))}
+                </div>
+
+                <aside className="mt-8 border-l-4 border-[#00749C] bg-white p-6">
+                  <h3 className="mb-2 text-lg font-bold">
+                    Why the internal-link workflow is deliberately constrained
+                  </h3>
+                  <p className="max-w-4xl leading-relaxed text-[#1B1712]/70">
+                    Generative models can invent URLs or suggest anchor text that is not present in
+                    a post. AI Suite prevents both failure modes: the model can choose only from a
+                    closed list of real published destinations, and the exact anchor phrase must
+                    already exist as ordinary text. The inserter skips headings, code, shortcodes,
+                    and existing links, then saves a WordPress revision before the write.
+                  </p>
+                </aside>
               </div>
             </section>
 
@@ -201,7 +268,7 @@ export default function AiSuite() {
                         href={product.downloadPath}
                         className="inline-block border border-[#1B1712]/30 px-5 py-2.5 text-sm font-bold hover:bg-[#1B1712] hover:text-white"
                       >
-                        Download {product.name} ↓
+                        Download {product.shortName} ↓
                       </a>
                     ) : (
                       <Link
@@ -249,6 +316,79 @@ export default function AiSuite() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </section>
+
+            <section id="installation" aria-labelledby="installation-heading" className="border-y border-[#1B1712]/15 bg-white">
+              <div className="mx-auto grid max-w-6xl gap-12 px-6 py-16 md:py-24 lg:grid-cols-[1.1fr_0.9fr]">
+                <div>
+                  <p
+                    className="mb-4 text-[11px] uppercase tracking-[0.22em] text-[#00749C]"
+                    style={{ fontFamily: mono }}
+                  >
+                    Installation and requirements
+                  </p>
+                  <h2
+                    id="installation-heading"
+                    className="mb-6 text-3xl font-bold tracking-tight md:text-4xl"
+                    style={{ fontFamily: serif }}
+                  >
+                    Install the free WordPress SEO plugins in a few minutes.
+                  </h2>
+                  <ol className="space-y-5">
+                    {[
+                      ['Download Core', 'Download AI Suite Core, then upload and activate it from Plugins → Add New → Upload Plugin.'],
+                      ['Connect the site', 'Open AI Suite → Connection, create a single-use connection code in FounderPostAI, and paste it into WordPress.'],
+                      ['Install SEO', 'Download and activate AI Suite SEO after Core. WordPress recognizes Core through the declared plugin dependency.'],
+                      ['Analyze and review', 'Run an analysis from a post or the SEO screen. Review titles, descriptions, and internal links before applying them.'],
+                    ].map(([title, text], index) => (
+                      <li key={title} className="grid grid-cols-[36px_1fr] gap-4">
+                        <span
+                          aria-hidden="true"
+                          className="flex h-9 w-9 items-center justify-center bg-[#1B1712] text-sm font-bold text-white"
+                          style={{ fontFamily: mono }}
+                        >
+                          {index + 1}
+                        </span>
+                        <div>
+                          <h3 className="mb-1 font-bold">{title}</h3>
+                          <p className="leading-relaxed text-[#1B1712]/70">{text}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+
+                <aside className="border border-[#1B1712]/15 bg-[#F7F4EE] p-7">
+                  <h3 className="mb-5 text-2xl font-bold" style={{ fontFamily: serif }}>
+                    WordPress compatibility
+                  </h3>
+                  <dl className="space-y-4 text-sm">
+                    {[
+                      ['WordPress', '6.5 or later'],
+                      ['PHP', '7.4 or later'],
+                      ['Editors', 'Block Editor and Classic Editor content'],
+                      ['SEO plugins', 'Yoast, Rank Math, All in One SEO, and SEOPress'],
+                      ['Job runners', 'Action Scheduler, loopback requests, or WP-Cron'],
+                      ['AI provider', 'Anthropic through managed processing or BYOK'],
+                    ].map(([term, value]) => (
+                      <div key={term} className="border-b border-[#1B1712]/10 pb-4 last:border-0 last:pb-0">
+                        <dt className="font-bold text-[#1B1712]">{term}</dt>
+                        <dd className="mt-1 leading-relaxed text-[#1B1712]/70">{value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <p className="mt-6 text-sm leading-relaxed text-[#1B1712]/65">
+                    Need help before installing? Email{' '}
+                    <a
+                      href="mailto:support@founderpostai.com"
+                      className="font-bold text-[#00749C] underline underline-offset-4"
+                    >
+                      support@founderpostai.com
+                    </a>
+                    .
+                  </p>
+                </aside>
               </div>
             </section>
 
@@ -329,7 +469,8 @@ export default function AiSuite() {
             </Link>
             <nav aria-label="Footer navigation" className="flex flex-wrap justify-center gap-5">
               <Link href="/">Home</Link>
-              <Link href="/#pricing">Pricing</Link>
+              <a href="#workflow">SEO workflow</a>
+              <a href="#installation">Installation</a>
               <Link href="/privacy">Privacy</Link>
               <Link href="/terms">Terms</Link>
               <a href="/llms.txt">LLM reference</a>

@@ -424,6 +424,50 @@
 .distributionNotice p {
   margin: 0;
 }
+.capabilityGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+.capabilityCard {
+  padding: 28px;
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  background: #ffffff;
+}
+.capabilityCard h3 {
+  margin: 0 0 12px;
+  font-family: 'Source Serif 4', serif;
+  font-size: 22px;
+  line-height: 1.2;
+}
+.capabilityCard p {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+.capabilityCard ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.capabilityCard li {
+  position: relative;
+  padding-left: 20px;
+}
+.capabilityCard li::before {
+  position: absolute;
+  left: 0;
+  color: #00749c;
+  content: '✓';
+  font-weight: 700;
+}
 .pluginGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -738,6 +782,7 @@
 }
 
 @media (max-width: 900px) {
+  .capabilityGrid,
   .pluginGrid,
   .pricingGrid {
     grid-template-columns: 1fr;

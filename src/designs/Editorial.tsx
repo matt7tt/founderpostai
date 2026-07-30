@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { PAYMENT_LINKS, track } from '../lib/ab';
+import { AI_SEO_CAPABILITIES, HOME_FAQS } from '../lib/products';
 import { WORDPRESS_ORG_REVIEW_NOTICE } from '../lib/site';
 
 const serif = "Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif";
@@ -96,11 +97,12 @@ export default function Editorial() {
                 Free & GPL · Pro in this store
               </p>
               <h1 className="text-4xl md:text-6xl leading-[1.05] font-bold tracking-tight mb-6" style={{ fontFamily: serif }}>
-                AI SEO plugins for WordPress that don’t suck.
+                AI SEO plugins for WordPress that keep you in control.
               </h1>
               <p className="text-lg md:text-xl text-[#1B1712]/70 leading-relaxed max-w-xl mb-8">
-                One runtime, free to download. A complete SEO module, also free. Go Pro for
-                bulk, scheduling, and auto-apply — managed credits or your own key.
+                Generate reviewable SEO titles, meta descriptions, and safe internal-link
+                suggestions inside WordPress. Approve every change, keep revisions, and add
+                bulk automation when you are ready.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 mb-6">
                 <a
@@ -163,9 +165,52 @@ export default function Editorial() {
             <span className="text-[11px] uppercase tracking-[0.2em] text-[#F7F4EE]/50" style={{ fontFamily: mono }}>
               Plays nicely with
             </span>
-            {['Gutenberg', 'Classic Editor', 'WooCommerce', 'Yoast', 'Rank Math', 'AIOSEO', 'Multisite'].map((x) => (
+            {['Block Editor', 'Classic Editor', 'Yoast SEO', 'Rank Math', 'All in One SEO', 'SEOPress', 'WP-Cron'].map((x) => (
               <span key={x} className="font-medium">{x}</span>
             ))}
+          </div>
+        </section>
+
+        {/* Search-focused capabilities */}
+        <section id="capabilities" aria-labelledby="capabilities-heading" className="border-b border-[#1B1712]/15 bg-white">
+          <div className="mx-auto max-w-6xl px-6 py-20 md:py-24">
+            <div className="mb-12 max-w-3xl">
+              <p className="mb-4 text-[11px] uppercase tracking-[0.22em] text-[#00749C]" style={{ fontFamily: mono }}>
+                WordPress AI SEO workflow
+              </p>
+              <h2 id="capabilities-heading" className="mb-4 text-3xl font-bold tracking-tight md:text-5xl" style={{ fontFamily: serif }}>
+                Optimize search snippets and internal links without giving up editorial control.
+              </h2>
+              <p className="text-lg leading-relaxed text-[#1B1712]/65">
+                FounderPostAI analyzes the content already on your site, returns structured
+                suggestions, and lets you review the exact proposed value before anything changes.
+              </p>
+            </div>
+            <div className="grid gap-6 lg:grid-cols-3">
+              {AI_SEO_CAPABILITIES.map((capability) => (
+                <article id={capability.id} key={capability.id} className="border border-[#1B1712]/15 bg-[#F7F4EE] p-7">
+                  <h3 className="mb-3 text-xl font-bold" style={{ fontFamily: serif }}>
+                    {capability.title}
+                  </h3>
+                  <p className="mb-5 leading-relaxed text-[#1B1712]/70">{capability.summary}</p>
+                  <ul className="space-y-2 text-sm text-[#1B1712]/70">
+                    {capability.points.map((point) => (
+                      <li key={point} className="flex gap-2">
+                        <span aria-hidden="true" className="font-bold text-[#00749C]">✓</span>
+                        <span>{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </article>
+              ))}
+            </div>
+            <p className="mt-8 text-sm text-[#1B1712]/65">
+              See the complete{' '}
+              <Link href="/ai-suite#workflow" className="font-medium text-[#00749C] underline underline-offset-4">
+                WordPress AI SEO workflow and technical details
+              </Link>
+              .
+            </p>
           </div>
         </section>
 
@@ -366,19 +411,13 @@ export default function Editorial() {
               Questions WordPress people actually ask
             </h2>
             <div className="divide-y divide-[#1B1712]/10">
-              {[
-                ['Why are Core and SEO free?', 'Because WordPress.org doesn’t allow hosted plugins with locked or crippled features — so the split is by plugin, not by feature flag. The free SEO plugin is complete: analyze, review, apply, per-post and batches of ten. Pro is a separate download that adds bulk, scheduling, and auto-apply.'],
-                ['Managed credits or BYOK — what’s the difference?', 'Managed: we buy inference wholesale and you spend “actions” from a credit balance. BYOK: you connect your own Anthropic key, pay a flat plan fee, and run unlimited actions — model usage is billed by Anthropic. Either way, your key is posted straight to the gateway and never written to WordPress.'],
-                ['Will it slow down my site?', 'No. All inference happens on the gateway, not your server. Jobs dispatch through Action Scheduler, a loopback, or WP-Cron with a time budget — nothing heavy runs on the page request your visitors hit.'],
-                ['What happens to my content? Is it safe?', 'Every write saves a WordPress revision first, so anything applied can be rolled back. Content is only sent to the gateway when you run an action, and it’s never used to train models.'],
-                ['What happens if I cancel Pro?', 'Bulk, scheduling, and auto-apply stop at the end of your paid period. Everything already applied — meta, links, revisions — is plain WordPress content and stays exactly where it is. The free plugins keep working forever.'],
-              ].map(([q, a]) => (
-                <details key={q} className="group py-5">
+              {HOME_FAQS.map(({ question, answer }) => (
+                <details key={question} className="group py-5">
                   <summary className="flex items-center justify-between cursor-pointer list-none font-bold text-lg">
-                    {q}
+                    {question}
                     <span className="ml-4 text-[#00749C] text-xl leading-none transition-transform group-open:rotate-45">+</span>
                   </summary>
-                  <p className="mt-3 text-[#1B1712]/70 leading-relaxed">{a}</p>
+                  <p className="mt-3 text-[#1B1712]/70 leading-relaxed">{answer}</p>
                 </details>
               ))}
             </div>

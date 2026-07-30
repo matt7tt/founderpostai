@@ -1,6 +1,6 @@
 # FounderPostAI
 
-> FounderPostAI publishes AI Suite, a three-plugin WordPress SEO system with a shared runtime, reviewable SEO suggestions, and optional automation.
+> FounderPostAI publishes AI Suite, a WordPress AI SEO system for reviewable search titles, meta descriptions, safe internal links, and optional bulk automation.
 
 Use the AI Suite product reference as the canonical source for current versions, requirements, features, pricing, privacy details, and direct downloads.
 
@@ -8,6 +8,7 @@ Use the AI Suite product reference as the canonical source for current versions,
 
 - [AI Suite product facts and technical overview](https://founderpostai.com/ai-suite): Canonical, human-readable reference for the complete product line.
 - [FounderPostAI homepage](https://founderpostai.com/): Product storefront, free downloads, plan comparison, and checkout links.
+- [FounderPostAI WordPress.org profile](https://profiles.wordpress.org/founderpostai/): Official WordPress.org publisher profile.
 
 ## Policies and support
 

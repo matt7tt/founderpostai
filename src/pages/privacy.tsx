@@ -1,15 +1,31 @@
 import Link from 'next/link';
+import PolicyStructuredData from '../components/PolicyStructuredData';
 import SeoHead from '../components/SeoHead';
 
 export default function Privacy() {
+  const description =
+    'How FounderPostAI handles purchases, connected WordPress sites, AI processing, analytics, provider keys, and data rights.';
+
   return (
     <>
       <SeoHead
         title="Privacy Policy | FounderPostAI"
-        description="How FounderPostAI handles purchases, connected WordPress sites, AI processing, analytics, provider keys, and data rights."
+        description={description}
         path="/privacy"
       />
+      <PolicyStructuredData
+        path="/privacy"
+        title="Privacy Policy | FounderPostAI"
+        description={description}
+        breadcrumbLabel="Privacy policy"
+        dateModified="2026-07-29T19:00:00-07:00"
+      />
       <div style={{ fontFamily: "'Inter', sans-serif", maxWidth: '680px', margin: '0 auto', padding: '64px 24px', color: '#0a0a0a', lineHeight: 1.7 }}>
+        <nav aria-label="Breadcrumb" style={{ marginBottom: '32px', fontSize: '14px' }}>
+          <Link href="/" style={{ color: '#6b6b6b' }}>FounderPostAI</Link>
+          <span aria-hidden="true"> / </span>
+          <span>Privacy policy</span>
+        </nav>
         <h1 style={{ letterSpacing: '-0.04em' }}>Privacy Policy</h1>
         <p style={{ color: '#6b6b6b' }}>Last updated: July 2026</p>
 
@@ -53,9 +69,11 @@ export default function Privacy() {
           record and content history from the gateway.
         </p>
 
-        <p style={{ marginTop: '48px' }}>
-          <Link href="/" style={{ color: '#6b6b6b' }}>← Back to founderpostai.com</Link>
-        </p>
+        <nav aria-label="Related pages" style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginTop: '48px', paddingTop: '24px', borderTop: '1px solid #e5e5e5' }}>
+          <Link href="/" style={{ color: '#6b6b6b' }}>FounderPostAI home</Link>
+          <Link href="/ai-suite" style={{ color: '#6b6b6b' }}>AI SEO plugin details</Link>
+          <Link href="/terms" style={{ color: '#6b6b6b' }}>Terms of service</Link>
+        </nav>
       </div>
     </>
   );

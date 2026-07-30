@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  poweredByHeader: false,
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -10,6 +11,15 @@ const nextConfig = {
   },
   env: {
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+  },
+  async redirects() {
+    return [
+      {
+        source: '/seo',
+        destination: '/ai-suite',
+        permanent: true,
+      },
+    ];
   },
   async headers() {
     const noIndexHeaders = [

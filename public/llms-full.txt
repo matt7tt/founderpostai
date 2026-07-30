@@ -7,7 +7,7 @@ Last verified against packaged releases: 2026-07-30
 
 ## Direct answer
 
-FounderPostAI AI Suite is a three-plugin WordPress SEO system. AI Suite Core supplies the shared runtime. AI Suite SEO supplies free, reviewable SEO suggestions. AI Suite SEO Pro adds whole-site bulk runs, scheduled re-optimization, and auto-apply.
+FounderPostAI AI Suite is a three-plugin WordPress AI SEO system. AI Suite Core supplies the shared runtime. AI Suite SEO supplies reviewable search titles, meta descriptions, and constrained internal links. AI Suite SEO Pro adds whole-site bulk runs, scheduled re-optimization, and conservative auto-apply.
 
 ## Shared requirements
 
@@ -38,6 +38,15 @@ FounderPostAI AI Suite is a three-plugin WordPress SEO system. AI Suite Core sup
 - Download: https://founderpostai.com/downloads/aisuite-seo.zip
 - Role: reviewable WordPress SEO suggestions
 - Capabilities: per-post analysis and batches of ten; suggestion review queue; titles and meta descriptions; block-aware internal links; a WordPress revision before every write
+
+## SEO workflow safeguards
+
+- Search titles and meta descriptions are shown beside the current value before application.
+- Internal-link destinations come from a closed list of real published posts and pages.
+- Suggested anchor text must already occur verbatim in the source content.
+- Link insertion avoids headings, code, shortcodes, and existing links.
+- Stale suggestions are rejected instead of overwriting newer manual edits.
+- The plugin returns and validates structured data; it does not generate or execute arbitrary code.
 
 ## AI Suite SEO Pro
 

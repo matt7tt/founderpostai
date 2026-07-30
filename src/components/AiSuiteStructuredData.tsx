@@ -4,40 +4,26 @@ import {
   AI_SUITE_URL,
   softwareApplicationStructuredData,
 } from '../lib/products';
-import { absoluteUrl, HOME_DESCRIPTION, SITE_NAME, SITE_URL } from '../lib/site';
+import {
+  absoluteUrl,
+  organizationStructuredData,
+  SITE_LAST_MODIFIED_ISO,
+  SITE_NAME,
+  SITE_URL,
+  SOCIAL_IMAGE_PATH,
+  websiteStructuredData,
+} from '../lib/site';
 
 const structuredData = {
   '@context': 'https://schema.org',
   '@graph': [
-    {
-      '@type': 'Organization',
-      '@id': `${SITE_URL}/#organization`,
-      name: SITE_NAME,
-      url: SITE_URL,
-      logo: {
-        '@type': 'ImageObject',
-        url: absoluteUrl('/brand-icon.png'),
-        width: 512,
-        height: 512,
-      },
-      email: 'support@founderpostai.com',
-    },
-    {
-      '@type': 'WebSite',
-      '@id': `${SITE_URL}/#website`,
-      url: SITE_URL,
-      name: SITE_NAME,
-      description: HOME_DESCRIPTION,
-      inLanguage: 'en-US',
-      publisher: {
-        '@id': `${SITE_URL}/#organization`,
-      },
-    },
+    organizationStructuredData(),
+    websiteStructuredData(),
     {
       '@type': 'WebPage',
       '@id': `${AI_SUITE_URL}#webpage`,
       url: AI_SUITE_URL,
-      name: 'AI Suite for WordPress: product facts and technical overview',
+      name: 'AI SEO plugin for WordPress: titles, meta descriptions, and internal links',
       description: AI_SUITE_DESCRIPTION,
       inLanguage: 'en-US',
       isPartOf: {
@@ -46,6 +32,24 @@ const structuredData = {
       about: softwareApplicationStructuredData().map((product) => ({
         '@id': product['@id'],
       })),
+      mainEntity: softwareApplicationStructuredData().map((product) => ({
+        '@id': product['@id'],
+      })),
+      hasPart: {
+        '@id': `${AI_SUITE_URL}#faq`,
+      },
+      breadcrumb: {
+        '@id': `${AI_SUITE_URL}#breadcrumbs`,
+      },
+      primaryImageOfPage: {
+        '@type': 'ImageObject',
+        '@id': `${AI_SUITE_URL}#primaryimage`,
+        url: absoluteUrl(SOCIAL_IMAGE_PATH),
+        contentUrl: absoluteUrl(SOCIAL_IMAGE_PATH),
+        width: 1200,
+        height: 630,
+      },
+      dateModified: SITE_LAST_MODIFIED_ISO,
       publisher: {
         '@id': `${SITE_URL}/#organization`,
       },
