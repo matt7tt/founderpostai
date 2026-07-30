@@ -36,7 +36,7 @@ class AISuite_Site_Auth {
 		$secret  = is_string( $secret ) ? trim( $secret ) : '';
 
 		if ( '' === $site_id || strlen( $site_id ) > 191 || strlen( $secret ) < 24 || strlen( $secret ) > 255 ) {
-			return new WP_Error( 'aisuite_bad_credentials', __( 'The gateway returned invalid site credentials.', 'aisuite-core' ) );
+			return new WP_Error( 'aisuite_bad_credentials', __( 'The gateway returned invalid site credentials.', 'founderpostai-ai-suite-core' ) );
 		}
 
 		update_option( self::OPT_SITE_ID, $site_id, false );
@@ -103,25 +103,25 @@ class AISuite_Site_Auth {
 	 */
 	public static function verify_inbound( $signature, $timestamp, $raw_body ) {
 		if ( ! self::is_connected() ) {
-			return new WP_Error( 'aisuite_not_connected', __( 'Site is not connected.', 'aisuite-core' ), array( 'status' => 401 ) );
+			return new WP_Error( 'aisuite_not_connected', __( 'Site is not connected.', 'founderpostai-ai-suite-core' ), array( 'status' => 401 ) );
 		}
 
 		if ( ! $signature || ! $timestamp ) {
-			return new WP_Error( 'aisuite_missing_signature', __( 'Missing signature headers.', 'aisuite-core' ), array( 'status' => 401 ) );
+			return new WP_Error( 'aisuite_missing_signature', __( 'Missing signature headers.', 'founderpostai-ai-suite-core' ), array( 'status' => 401 ) );
 		}
 
 		if ( ! preg_match( '/^\d{10,}$/', (string) $timestamp ) || ! preg_match( '/^[a-f0-9]{64}$/i', (string) $signature ) ) {
-			return new WP_Error( 'aisuite_bad_signature', __( 'Malformed signature headers.', 'aisuite-core' ), array( 'status' => 401 ) );
+			return new WP_Error( 'aisuite_bad_signature', __( 'Malformed signature headers.', 'founderpostai-ai-suite-core' ), array( 'status' => 401 ) );
 		}
 
 		if ( abs( time() - (int) $timestamp ) > self::MAX_SKEW ) {
-			return new WP_Error( 'aisuite_stale_signature', __( 'Signature timestamp is outside the accepted window.', 'aisuite-core' ), array( 'status' => 401 ) );
+			return new WP_Error( 'aisuite_stale_signature', __( 'Signature timestamp is outside the accepted window.', 'founderpostai-ai-suite-core' ), array( 'status' => 401 ) );
 		}
 
 		$expected = self::sign( $timestamp, $raw_body );
 
 		if ( ! hash_equals( $expected, (string) $signature ) ) {
-			return new WP_Error( 'aisuite_bad_signature', __( 'Signature verification failed.', 'aisuite-core' ), array( 'status' => 401 ) );
+			return new WP_Error( 'aisuite_bad_signature', __( 'Signature verification failed.', 'founderpostai-ai-suite-core' ), array( 'status' => 401 ) );
 		}
 
 		return true;

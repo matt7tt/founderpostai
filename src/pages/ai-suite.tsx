@@ -8,6 +8,7 @@ import {
   AI_SUITE_REQUIREMENTS,
   AI_SUITE_TITLE,
 } from '../lib/products';
+import { WORDPRESS_ORG_REVIEW_NOTICE } from '../lib/site';
 
 const serif = "Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif";
 const mono = "ui-monospace, 'SF Mono', Menlo, Consolas, monospace";
@@ -89,7 +90,7 @@ export default function AiSuite() {
                 </p>
                 <p className="mt-6 text-sm text-[#1B1712]/60">
                   Product details checked against the current packaged releases on{' '}
-                  <time dateTime="2026-07-29">July 29, 2026</time>.
+                  <time dateTime="2026-07-30">July 30, 2026</time>.
                 </p>
               </div>
             </header>
@@ -140,6 +141,20 @@ export default function AiSuite() {
                   runtime. The free plugins are direct downloads; paid access is sold by annual
                   plan.
                 </p>
+                <div
+                  role="note"
+                  className="mt-6 border border-[#00749C]/35 bg-[#52C5E8]/10 px-5 py-4"
+                >
+                  <p
+                    className="mb-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#00749C]"
+                    style={{ fontFamily: mono }}
+                  >
+                    WordPress.org status
+                  </p>
+                  <p className="text-sm leading-relaxed text-[#1B1712]/75">
+                    {WORDPRESS_ORG_REVIEW_NOTICE}
+                  </p>
+                </div>
               </div>
 
               <div className="grid gap-6 lg:grid-cols-3">

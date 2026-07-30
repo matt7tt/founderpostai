@@ -159,7 +159,7 @@ export default function Thanks() {
             <p style={{ margin: '0 0 16px', fontSize: '14px', color: '#6b6b6b', lineHeight: 1.5 }}>
               Bulk runs, scheduling, and auto-apply. Paste your license key after activating.
             </p>
-            <a href="/downloads/aisuite-seo-pro-1.0.1.zip" style={downloadBtn}>Download SEO Pro ↓</a>
+            <a href="/downloads/aisuite-seo-pro-1.0.2.zip" style={downloadBtn}>Download SEO Pro ↓</a>
           </div>
         </div>
 

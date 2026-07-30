@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { PAYMENT_LINKS, track } from '../lib/ab';
+import { WORDPRESS_ORG_REVIEW_NOTICE } from '../lib/site';
 
 const serif = "Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif";
 const mono = "ui-monospace, 'SF Mono', Menlo, Consolas, monospace";
@@ -184,6 +185,18 @@ export default function Editorial() {
             </p>
           </div>
 
+          <div
+            role="note"
+            className="mb-8 max-w-3xl border border-[#00749C]/35 bg-[#52C5E8]/10 px-5 py-4"
+          >
+            <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#00749C]" style={{ fontFamily: mono }}>
+              WordPress.org status
+            </p>
+            <p className="text-sm leading-relaxed text-[#1B1712]/75">
+              {WORDPRESS_ORG_REVIEW_NOTICE}
+            </p>
+          </div>
+
           <div className="grid md:grid-cols-3 gap-px bg-[#1B1712]/15 border border-[#1B1712]/15">
             {plugins.map((p) => (
               <article key={p.id} className="bg-[#F7F4EE] p-8 flex flex-col hover:bg-white transition-colors">
@@ -281,8 +294,8 @@ export default function Editorial() {
                 <li>✓ Block-aware internal link insertion</li>
                 <li>✓ BYOK — unlimited actions on your key</li>
               </ul>
-              <a href="/downloads/aisuite-core.zip" className="mt-auto block text-center border border-[#1B1712]/30 px-6 py-3 font-medium hover:border-[#1B1712] transition-colors">
-                Download the free plugins
+              <a href="#plugins" className="mt-auto block text-center border border-[#1B1712]/30 px-6 py-3 font-medium hover:border-[#1B1712] transition-colors">
+                Choose the free plugins
               </a>
             </div>
 

@@ -98,15 +98,15 @@ class AISuite_Billing {
 	 */
 	public static function validate_key_shape( $provider, $key ) {
 		if ( ! isset( self::PROVIDERS[ $provider ] ) ) {
-			return new WP_Error( 'aisuite_bad_provider', __( 'Unknown provider.', 'aisuite-core' ) );
+			return new WP_Error( 'aisuite_bad_provider', __( 'Unknown provider.', 'founderpostai-ai-suite-core' ) );
 		}
 
 		if ( strlen( $key ) < 20 ) {
-			return new WP_Error( 'aisuite_key_too_short', __( 'That does not look like a complete API key.', 'aisuite-core' ) );
+			return new WP_Error( 'aisuite_key_too_short', __( 'That does not look like a complete API key.', 'founderpostai-ai-suite-core' ) );
 		}
 
 		if ( ! preg_match( '/^[A-Za-z0-9_\-\.]+$/', $key ) ) {
-			return new WP_Error( 'aisuite_key_bad_chars', __( 'That key contains characters no provider uses. Check for a stray space or line break.', 'aisuite-core' ) );
+			return new WP_Error( 'aisuite_key_bad_chars', __( 'That key contains characters no provider uses. Check for a stray space or line break.', 'founderpostai-ai-suite-core' ) );
 		}
 
 		return true;

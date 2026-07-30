@@ -1,15 +1,15 @@
-=== AI Suite SEO ===
+=== FounderPostAI – AI Suite SEO ===
 Contributors: founderpostai
 Tags: seo, meta description, internal links, ai, content
 Requires at least: 6.5
-Requires Plugins: aisuite-core
+Requires Plugins: founderpostai-ai-suite-core
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.1.2
+Stable tag: 0.1.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Writes your search titles, meta descriptions, and internal links, then shows you each change before it goes live.
+Reviewable AI SEO titles, meta descriptions, and validated internal links with revisions before content changes.
 
 == Description ==
 
@@ -25,13 +25,43 @@ Every suggestion lands in a review queue showing the current value beside the pr
 
 If Yoast, Rank Math, All in One SEO, or SEOPress is active, AI Suite SEO leaves tag rendering to that plugin and passes approved titles and descriptions through its public integration filters.
 
+What makes it different:
+
+* Internal-link targets come from a closed list of real published posts on your site.
+* Suggested anchor text must occur verbatim in the source content before it can be applied.
+* Link insertion is block- and DOM-aware and avoids headings, code, existing links, and shortcodes.
+* Suggestions that became stale after analysis are rejected instead of overwriting newer edits.
+* Every content write creates a WordPress revision first.
+* All suggestions remain reviewable; there is no arbitrary PHP or JavaScript generation or execution.
+
+All functionality included in this plugin is available without a plugin license, feature key, trial period, or time limit. Manual 10-post batches are repeatable reliability chunks, not a total usage cutoff. Hosted AI service usage is described below.
+
+== Installation ==
+
+1. Install and activate FounderPostAI – AI Suite Core.
+2. Connect Core to the FounderPostAI service from AI Suite > Connection.
+3. Install and activate FounderPostAI – AI Suite SEO.
+4. Open AI Suite > SEO or use "Optimize with AI Suite" from a post or page row.
+
 == External services ==
 
-This plugin uses AI Suite Core to send content to the AI Suite gateway for processing. When you run an analysis, the post's title, plain-text content, excerpt, permalink, existing meta values, and a list of your published post titles and URLs (used as internal link candidates) are sent. Nothing is sent until you run an analysis.
+This plugin uses FounderPostAI – AI Suite Core to send content to the FounderPostAI AI Suite gateway. Running an analysis is an explicit administrator action.
 
-Service: AI Suite gateway (https://founderpostai.com)
-Terms of service: https://founderpostai.com/terms
-Privacy policy: https://founderpostai.com/privacy
+When an administrator runs an analysis, the post title, plain-text content, excerpt, permalink, existing meta values, saved brand context, and a list of published post titles and URLs used as internal-link candidates are sent. The gateway sends this input to the Anthropic API and returns structured SEO suggestions. Nothing is sent until an administrator runs an analysis.
+
+FounderPostAI AI Suite gateway:
+
+* Service: https://founderpostai.com/ai-suite
+* Terms: https://founderpostai.com/terms
+* Privacy: https://founderpostai.com/privacy
+
+Anthropic API:
+
+* Service: https://www.anthropic.com/api
+* Commercial terms: https://www.anthropic.com/legal/commercial-terms
+* Privacy: https://www.anthropic.com/legal/privacy
+
+The plugin does not download or execute code from either service. The gateway returns structured data, and the plugin validates field types, lengths, link targets, and anchor text before storing a suggestion.
 
 == Frequently Asked Questions ==
 
@@ -45,13 +75,22 @@ Yes. It detects Yoast, stops outputting duplicate tags, and passes approved titl
 
 = How many posts can I analyze? =
 
-As many as your monthly action allowance covers, or without limit if you are using your own provider key. Batch runs from this screen are capped at 10 posts at a time.
+There is no plugin-level total. For reliability, each manual batch queues up to 10 recent posts; you can run another batch for additional posts. Actual AI processing is subject to the managed allowance or Anthropic API usage associated with your chosen external-service billing mode.
 
 = What if the suggested link text isn't in my post? =
 
 Nothing is changed. Links are only inserted where the exact phrase appears as ordinary text — never inside headings, code, existing links, or shortcodes.
 
+= Is any included functionality locked behind a paid license? =
+
+No. Every feature and every line of functional code shipped in this plugin is available without a license check. A separately distributed add-on contains its own automation code for unattended whole-site runs, scheduling, and conservative auto-apply; it does not unlock dormant code in this plugin.
+
 == Changelog ==
+
+= 0.1.3 =
+* Added distinctive FounderPostAI directory branding and WordPress.org-aligned dependency metadata.
+* Added complete FounderPostAI and Anthropic service disclosures.
+* Documented the plugin's closed-target link validation, revision safety, and non-trialware behavior.
 
 = 0.1.2 =
 * Per-post queue claims now prevent simultaneous requests from charging twice for one analysis.

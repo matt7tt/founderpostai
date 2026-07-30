@@ -18,7 +18,7 @@ export const AI_SUITE_PRODUCTS = [
   {
     id: 'ai-suite-core',
     name: 'AI Suite Core',
-    version: '0.1.2',
+    version: '0.1.3',
     price: 'Free',
     priceValue: '0',
     audience: 'Every AI Suite installation',
@@ -35,7 +35,7 @@ export const AI_SUITE_PRODUCTS = [
   {
     id: 'ai-suite-seo',
     name: 'AI Suite SEO',
-    version: '0.1.2',
+    version: '0.1.3',
     price: 'Free',
     priceValue: '0',
     audience: 'Sites that want reviewable SEO suggestions',
@@ -52,7 +52,7 @@ export const AI_SUITE_PRODUCTS = [
   {
     id: 'ai-suite-seo-pro',
     name: 'AI Suite SEO Pro',
-    version: '1.0.1',
+    version: '1.0.2',
     price: '$79 per year',
     priceValue: '79',
     audience: 'One WordPress site that needs automation',
@@ -69,6 +69,11 @@ export const AI_SUITE_PRODUCTS = [
 ] as const;
 
 export const AI_SUITE_FAQS = [
+  {
+    question: 'How do I install the plugins while WordPress.org review is pending?',
+    answer:
+      'Download AI Suite Core and AI Suite SEO directly from FounderPostAI. In WordPress, open Plugins, choose Add New and then Upload Plugin. Install Core first, followed by SEO. The Core directory listing is awaiting WordPress.org review.',
+  },
   {
     question: 'What is FounderPostAI AI Suite?',
     answer:

@@ -1,50 +1,71 @@
-=== AI Suite Core ===
+=== FounderPostAI – AI Suite Core ===
 Contributors: founderpostai
 Tags: ai, automation, seo, content
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.1.2
+Stable tag: 0.1.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Shared runtime for AI Suite modules: account connection, credit balance, brand context, and the background job queue.
+Connect WordPress to AI services and share brand settings, account status, and a reliable background job queue across FounderPostAI modules.
 
 == Description ==
 
 AI Suite Core is the shared layer every AI Suite module runs on. Install it once and each module you add reuses the same connection, the same monthly action allowance, and the same description of your business.
 
-Core on its own does not modify your site. It provides:
+Core does not modify posts or pages. It provides:
 
-* One connection to your AI Suite account, with no API keys stored in WordPress
-* A credit meter showing actions remaining this month
+* One authenticated connection to your FounderPostAI account, with no AI provider keys stored in WordPress
+* A usage meter for the hosted AI service
 * Brand context — what your business does, who it sells to, tone, words to avoid — read by every module
-* A background job queue so long-running work never blocks the admin
-* A choice of billing: a monthly allowance of included actions, or a flat plan fee with your own AI provider key
+* A resilient background queue that uses Action Scheduler when available, then loopback requests, then WP-Cron
+* Signed requests and callbacks, retry handling, callback health checks, and polling for hosts that block callbacks
+* A choice of service billing: managed actions or your own Anthropic API key
+
+All functionality included in this plugin is available without a plugin license, feature key, trial period, or time limit. Managed-action allowances are usage limits of the external AI service, not locks on plugin code. The complete plugin is licensed under GPLv2 or later.
+
+== Installation ==
+
+1. Install and activate FounderPostAI – AI Suite Core.
+2. Open AI Suite > Connection in WordPress.
+3. Follow the link to the FounderPostAI dashboard and create a single-use connection code.
+4. Paste the code into WordPress and choose managed actions or your own Anthropic API key.
+5. Install a compatible AI Suite module, such as FounderPostAI – AI Suite SEO.
 
 == External services ==
 
-This plugin connects to the AI Suite gateway to process the content you submit.
+This plugin connects to the FounderPostAI AI Suite gateway. Connecting the site is an explicit administrator action.
 
-When you run an action in a module, that module sends the relevant content — for example a post's title and body — to the gateway, which returns a suggestion. Nothing is sent until you run an action. Your brand context is included with each request so results match your business.
+At connection time, the plugin sends the site URL, administrator email address, WordPress version, and PHP version to create the account record. After connection, it checks account and service status hourly.
 
-The plugin also sends your site URL, admin email, WordPress version, and PHP version once, at connection time, to create your account record. Account status is checked hourly.
+When an administrator runs an action in an AI Suite module, that module sends the relevant content — for example a post title and body — plus saved brand context to the gateway. The gateway sends that input to the Anthropic API and returns structured suggestions. Nothing is sent for AI processing until an administrator runs an action.
 
-If you choose to use your own AI provider key, the key is sent to the gateway, verified, and stored there. It is not saved in your WordPress database. You can also add it on your account dashboard instead, so it never passes through this site at all.
+If you choose BYOK service billing, your Anthropic API key is sent to the gateway, verified with Anthropic, and stored encrypted on the gateway. It is not saved in the WordPress database. You can instead enter it on the FounderPostAI dashboard so it never passes through this WordPress site.
 
-Service: AI Suite gateway (https://founderpostai.com)
-Terms of service: https://founderpostai.com/terms
-Privacy policy: https://founderpostai.com/privacy
+FounderPostAI AI Suite gateway:
+
+* Service: https://founderpostai.com/ai-suite
+* Terms: https://founderpostai.com/terms
+* Privacy: https://founderpostai.com/privacy
+
+Anthropic API:
+
+* Service: https://www.anthropic.com/api
+* Commercial terms: https://www.anthropic.com/legal/commercial-terms
+* Privacy: https://www.anthropic.com/legal/privacy
+
+The plugin does not download, install, or execute code from either service. Suggestions are returned as data and are validated by the installed module before storage or use.
 
 == Frequently Asked Questions ==
 
 = Do I need an account? =
 
-Yes. Core is free, and connecting is free. Actions draw from a monthly allowance.
+Yes. This plugin is a client for the substantive FounderPostAI hosted AI service, so a free FounderPostAI account and an explicit site connection are required. Service usage can use managed actions or your own Anthropic API key. No functionality included in the plugin code is unlocked by a license.
 
 = Does it store my API keys? =
 
-No provider key is stored in WordPress. Whether you use included actions or your own provider key, that provider credential lives on the gateway. WordPress holds only a site identifier and a signing secret used to authenticate this installation.
+No AI provider key is stored in WordPress. In BYOK mode the Anthropic key is encrypted and stored on the gateway. WordPress holds only a site identifier and a signing secret used to authenticate this installation.
 
 = Can I use my own Anthropic account? =
 
@@ -55,6 +76,11 @@ Yes. Switch billing to "Use my own API key" on the Connection screen, then add t
 Background work runs immediately in most cases. If your host blocks loopback requests, it falls back to WP-Cron, which only fires when someone visits your site. The Connection screen shows which method your site is using.
 
 == Changelog ==
+
+= 0.1.3 =
+* Added distinctive FounderPostAI directory branding and WordPress.org-aligned plugin metadata.
+* Added complete FounderPostAI and Anthropic service disclosures and suggested site privacy-policy text.
+* Clarified that hosted-service usage allowances do not restrict functionality included in the GPL plugin.
 
 = 0.1.2 =
 * Prevented duplicate queue runners from submitting or completing the same job twice.

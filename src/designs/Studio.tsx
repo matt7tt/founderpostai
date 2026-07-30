@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronUp } from 'lucide-react';
+import { WORDPRESS_ORG_REVIEW_NOTICE } from '../lib/site';
 import styles from '../styles/Studio.module.css';
 
 const TICKER_ITEMS = [
@@ -244,6 +245,10 @@ export default function Studio() {
           Core and SEO are complete, free products — no locked features, no license checks.
           Pro is a separate download that adds what the free plugin deliberately doesn’t contain.
         </p>
+        <div role="note" className={styles.distributionNotice}>
+          <strong>WordPress.org status</strong>
+          <p>{WORDPRESS_ORG_REVIEW_NOTICE}</p>
+        </div>
         <div className={styles.pluginGrid}>
           {PLUGINS.map((p) => (
             <article key={p.id} className={styles.pluginCard}>
@@ -302,8 +307,8 @@ export default function Studio() {
               <li>Block-aware internal link insertion</li>
               <li>BYOK — unlimited actions on your key</li>
             </ul>
-            <a href="/downloads/aisuite-core.zip" className={styles.priceButton}>
-              Download the free plugins
+            <a href="#plugins" className={styles.priceButton}>
+              Choose the free plugins
             </a>
           </div>
 

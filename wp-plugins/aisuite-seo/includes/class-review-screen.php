@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
 class AISuite_SEO_Review_Screen {
 
 	const CAP  = 'edit_posts';
-	const SLUG = 'aisuite-seo';
+	const SLUG = 'founderpostai-ai-suite-seo';
 
 	/** Free tier: how many posts one batch run may queue. */
 	const FREE_BATCH_LIMIT = 10;
@@ -28,7 +28,7 @@ class AISuite_SEO_Review_Screen {
 
 	public function menu() {
 		$pending = AISuite_SEO_Store::count( 'pending' );
-		$label   = __( 'SEO', 'aisuite-seo' );
+		$label   = __( 'SEO', 'founderpostai-ai-suite-seo' );
 
 		if ( $pending ) {
 			$label .= sprintf( ' <span class="awaiting-mod"><span class="pending-count">%d</span></span>', (int) $pending );
@@ -36,7 +36,7 @@ class AISuite_SEO_Review_Screen {
 
 		add_submenu_page(
 			'aisuite',
-			__( 'SEO', 'aisuite-seo' ),
+			__( 'SEO', 'founderpostai-ai-suite-seo' ),
 			$label,
 			self::CAP,
 			self::SLUG,
@@ -72,7 +72,7 @@ class AISuite_SEO_Review_Screen {
 		$actions['aisuite_seo'] = sprintf(
 			'<a href="%s">%s</a>',
 			esc_url( $url ),
-			esc_html__( 'Optimize with AI Suite', 'aisuite-seo' )
+			esc_html__( 'Optimize with AI Suite', 'founderpostai-ai-suite-seo' )
 		);
 
 		return $actions;
@@ -80,7 +80,7 @@ class AISuite_SEO_Review_Screen {
 
 	public function render() {
 		if ( ! current_user_can( self::CAP ) ) {
-			wp_die( esc_html__( 'You do not have permission to view this.', 'aisuite-seo' ) );
+			wp_die( esc_html__( 'You do not have permission to view this.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only filter.
@@ -104,7 +104,7 @@ class AISuite_SEO_Review_Screen {
 		$conflict    = AISuite_SEO_Meta_Output::conflicting_plugin();
 		?>
 		<div class="wrap aisuite-wrap">
-			<h1><?php esc_html_e( 'SEO review', 'aisuite-seo' ); ?></h1>
+			<h1><?php esc_html_e( 'SEO review', 'founderpostai-ai-suite-seo' ); ?></h1>
 
 			<?php $this->render_flash(); ?>
 
@@ -114,7 +114,7 @@ class AISuite_SEO_Review_Screen {
 						<?php
 						printf(
 							/* translators: %s: conflicting plugin name */
-							esc_html__( '%s is active, so it controls the tags on your pages. Approved AI Suite titles and descriptions are passed to it through its integration filters.', 'aisuite-seo' ),
+							esc_html__( '%s is active, so it controls the tags on your pages. Approved AI Suite titles and descriptions are passed to it through its integration filters.', 'founderpostai-ai-suite-seo' ),
 							'<strong>' . esc_html( $conflict ) . '</strong>'
 						);
 						?>
@@ -125,8 +125,8 @@ class AISuite_SEO_Review_Screen {
 			<?php if ( ! aisuite()->brand->is_complete() ) : ?>
 				<div class="notice notice-info">
 					<p>
-						<?php esc_html_e( 'Suggestions get noticeably better once brand context is filled in.', 'aisuite-seo' ); ?>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=aisuite' ) ); ?>"><?php esc_html_e( 'Add it now', 'aisuite-seo' ); ?></a>
+						<?php esc_html_e( 'Suggestions get noticeably better once brand context is filled in.', 'founderpostai-ai-suite-seo' ); ?>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=aisuite' ) ); ?>"><?php esc_html_e( 'Add it now', 'founderpostai-ai-suite-seo' ); ?></a>
 					</p>
 				</div>
 			<?php endif; ?>
@@ -134,9 +134,9 @@ class AISuite_SEO_Review_Screen {
 			<ul class="subsubsub">
 				<?php
 				foreach ( array(
-					'pending'  => __( 'Pending', 'aisuite-seo' ),
-					'approved' => __( 'Applied', 'aisuite-seo' ),
-					'rejected' => __( 'Dismissed', 'aisuite-seo' ),
+					'pending'  => __( 'Pending', 'founderpostai-ai-suite-seo' ),
+					'approved' => __( 'Applied', 'founderpostai-ai-suite-seo' ),
+					'rejected' => __( 'Dismissed', 'founderpostai-ai-suite-seo' ),
 					) as $key => $label ) :
 						$status_url = add_query_arg(
 							array(
@@ -185,8 +185,8 @@ class AISuite_SEO_Review_Screen {
 							'base'      => str_replace( '999999999', '%#%', $pagination_url ),
 							'current'   => $page_number,
 							'total'     => $total_pages,
-							'prev_text' => __( '&laquo; Previous', 'aisuite-seo' ),
-							'next_text' => __( 'Next &raquo;', 'aisuite-seo' ),
+							'prev_text' => __( '&laquo; Previous', 'founderpostai-ai-suite-seo' ),
+							'next_text' => __( 'Next &raquo;', 'founderpostai-ai-suite-seo' ),
 						)
 					)
 				);
@@ -198,12 +198,12 @@ class AISuite_SEO_Review_Screen {
 
 	protected function render_empty( $status ) {
 		if ( 'pending' !== $status ) {
-			printf( '<p>%s</p>', esc_html__( 'Nothing here yet.', 'aisuite-seo' ) );
+			printf( '<p>%s</p>', esc_html__( 'Nothing here yet.', 'founderpostai-ai-suite-seo' ) );
 			return;
 		}
 		?>
 		<div class="aisuite-empty">
-			<p><?php esc_html_e( 'No suggestions waiting. Pick a post and run an analysis to fill this queue.', 'aisuite-seo' ); ?></p>
+			<p><?php esc_html_e( 'No suggestions waiting. Pick a post and run an analysis to fill this queue.', 'founderpostai-ai-suite-seo' ); ?></p>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<?php wp_nonce_field( 'aisuite_seo_analyze_batch' ); ?>
 				<input type="hidden" name="action" value="aisuite_seo_analyze" />
@@ -212,7 +212,7 @@ class AISuite_SEO_Review_Screen {
 				submit_button(
 					sprintf(
 						/* translators: %d: number of posts */
-						__( 'Analyze my %d most recent posts', 'aisuite-seo' ),
+						__( 'Analyze my %d most recent posts', 'founderpostai-ai-suite-seo' ),
 						self::FREE_BATCH_LIMIT
 					),
 					'primary',
@@ -228,9 +228,9 @@ class AISuite_SEO_Review_Screen {
 	protected function render_card( $row, $status ) {
 		$post  = get_post( $row->post_id );
 		$label = array(
-			'title'          => __( 'Search title', 'aisuite-seo' ),
-			'description'    => __( 'Meta description', 'aisuite-seo' ),
-			'internal_links' => __( 'Internal links', 'aisuite-seo' ),
+			'title'          => __( 'Search title', 'founderpostai-ai-suite-seo' ),
+			'description'    => __( 'Meta description', 'founderpostai-ai-suite-seo' ),
+			'internal_links' => __( 'Internal links', 'founderpostai-ai-suite-seo' ),
 		);
 		?>
 		<article class="aisuite-card">
@@ -245,13 +245,13 @@ class AISuite_SEO_Review_Screen {
 
 			<div class="aisuite-diff">
 				<div class="aisuite-diff__side aisuite-diff__side--current">
-					<span class="aisuite-diff__label"><?php esc_html_e( 'Now', 'aisuite-seo' ); ?></span>
+					<span class="aisuite-diff__label"><?php esc_html_e( 'Now', 'founderpostai-ai-suite-seo' ); ?></span>
 					<div class="aisuite-diff__value">
-						<?php echo $row->current_value ? esc_html( $row->current_value ) : '<em>' . esc_html__( 'empty', 'aisuite-seo' ) . '</em>'; ?>
+						<?php echo $row->current_value ? esc_html( $row->current_value ) : '<em>' . esc_html__( 'empty', 'founderpostai-ai-suite-seo' ) . '</em>'; ?>
 					</div>
 				</div>
 				<div class="aisuite-diff__side aisuite-diff__side--suggested">
-					<span class="aisuite-diff__label"><?php esc_html_e( 'Suggested', 'aisuite-seo' ); ?></span>
+					<span class="aisuite-diff__label"><?php esc_html_e( 'Suggested', 'founderpostai-ai-suite-seo' ); ?></span>
 					<div class="aisuite-diff__value">
 						<?php echo wp_kses_post( $this->format_value( $row ) ); ?>
 					</div>
@@ -265,8 +265,8 @@ class AISuite_SEO_Review_Screen {
 
 			<?php if ( 'pending' === $status ) : ?>
 				<footer class="aisuite-card__actions">
-					<?php $this->render_resolve_button( $row->id, 'apply', __( 'Apply', 'aisuite-seo' ), 'button-primary' ); ?>
-					<?php $this->render_resolve_button( $row->id, 'reject', __( 'Dismiss', 'aisuite-seo' ), 'button-secondary' ); ?>
+					<?php $this->render_resolve_button( $row->id, 'apply', __( 'Apply', 'founderpostai-ai-suite-seo' ), 'button-primary' ); ?>
+					<?php $this->render_resolve_button( $row->id, 'reject', __( 'Dismiss', 'founderpostai-ai-suite-seo' ), 'button-secondary' ); ?>
 				</footer>
 			<?php endif; ?>
 		</article>
@@ -281,7 +281,7 @@ class AISuite_SEO_Review_Screen {
 		$links = json_decode( $row->suggested_value, true );
 
 		if ( empty( $links ) ) {
-			return esc_html__( 'No links', 'aisuite-seo' );
+			return esc_html__( 'No links', 'founderpostai-ai-suite-seo' );
 		}
 
 		$out = '<ul class="aisuite-links">';
@@ -314,7 +314,7 @@ class AISuite_SEO_Review_Screen {
 		$id = isset( $_POST['suggestion_id'] ) ? (int) $_POST['suggestion_id'] : 0;
 
 		if ( ! current_user_can( self::CAP ) ) {
-			wp_die( esc_html__( 'You do not have permission to do that.', 'aisuite-seo' ) );
+			wp_die( esc_html__( 'You do not have permission to do that.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		check_admin_referer( 'aisuite_seo_resolve_' . $id );
@@ -322,7 +322,7 @@ class AISuite_SEO_Review_Screen {
 		$decision = isset( $_POST['decision'] ) ? sanitize_key( wp_unslash( $_POST['decision'] ) ) : '';
 
 		if ( ! in_array( $decision, array( 'apply', 'reject' ), true ) ) {
-			$this->redirect( 'error', __( 'Unknown review decision.', 'aisuite-seo' ) );
+			$this->redirect( 'error', __( 'Unknown review decision.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		$optimizer = new AISuite_SEO_Optimizer( false );
@@ -338,7 +338,7 @@ class AISuite_SEO_Review_Screen {
 
 	public function handle_analyze() {
 		if ( ! current_user_can( self::CAP ) ) {
-			wp_die( esc_html__( 'You do not have permission to do that.', 'aisuite-seo' ) );
+			wp_die( esc_html__( 'You do not have permission to do that.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		$mode = isset( $_POST['mode'] ) ? sanitize_key( wp_unslash( $_POST['mode'] ) ) : 'single';
@@ -384,7 +384,7 @@ class AISuite_SEO_Review_Screen {
 		if ( ! $queued ) {
 			$this->redirect(
 				'error',
-				$blocked ? $blocked->get_error_message() : __( 'Nothing could be queued.', 'aisuite-seo' )
+				$blocked ? $blocked->get_error_message() : __( 'Nothing could be queued.', 'founderpostai-ai-suite-seo' )
 			);
 		}
 
@@ -418,12 +418,12 @@ class AISuite_SEO_Review_Screen {
 		switch ( $code ) {
 			case 'applied':
 				$type    = 'success';
-				$message = __( 'Applied. The post was updated and a revision was saved.', 'aisuite-seo' );
+				$message = __( 'Applied. The post was updated and a revision was saved.', 'founderpostai-ai-suite-seo' );
 				break;
 
 			case 'dismissed':
 				$type    = 'success';
-				$message = __( 'Dismissed.', 'aisuite-seo' );
+				$message = __( 'Dismissed.', 'founderpostai-ai-suite-seo' );
 				break;
 
 			case 'queued':
@@ -431,14 +431,14 @@ class AISuite_SEO_Review_Screen {
 				$type    = 'info';
 				$message = sprintf(
 					/* translators: %s: number of posts queued */
-					_n( 'Queued %s post. Suggestions appear here as it finishes.', 'Queued %s posts. Suggestions appear here as they finish.', $count, 'aisuite-seo' ),
+					_n( 'Queued %s post. Suggestions appear here as it finishes.', 'Queued %s posts. Suggestions appear here as they finish.', $count, 'founderpostai-ai-suite-seo' ),
 					number_format_i18n( $count )
 				);
 				break;
 
 			case 'error':
 				$type    = 'error';
-				$message = $detail ? $detail : __( 'Something went wrong.', 'aisuite-seo' );
+				$message = $detail ? $detail : __( 'Something went wrong.', 'founderpostai-ai-suite-seo' );
 				break;
 
 			default:
