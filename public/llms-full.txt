@@ -1,0 +1,55 @@
+# FounderPostAI AI Suite
+
+Canonical source: https://founderpostai.com/ai-suite
+Publisher: FounderPostAI
+Support: support@founderpostai.com
+Last verified against packaged releases: 2026-07-29
+
+## Direct answer
+
+FounderPostAI AI Suite is a three-plugin WordPress SEO system. AI Suite Core supplies the shared runtime. AI Suite SEO supplies free, reviewable SEO suggestions. AI Suite SEO Pro adds whole-site bulk runs, scheduled re-optimization, and auto-apply.
+
+## Shared requirements
+
+- Platform: WordPress 6.5 or later
+- Server: PHP 7.4 or later
+- Code license: GPL v2 or later
+- Current AI provider: Anthropic
+- Processing modes: managed inference credits or bring your own Anthropic API key
+
+## AI Suite Core
+
+- Current version: 0.1.2
+- Price: free
+- Download: https://founderpostai.com/downloads/aisuite-core.zip
+- Role: shared runtime for secure gateway connections, credits, brand context, and background AI jobs
+- Capabilities: signed gateway calls; managed credits or BYOK; shared brand context; background job queue with fallbacks
+
+## AI Suite SEO
+
+- Current version: 0.1.2
+- Price: free
+- Download: https://founderpostai.com/downloads/aisuite-seo.zip
+- Role: reviewable WordPress SEO suggestions
+- Capabilities: per-post analysis and batches of ten; suggestion review queue; titles and meta descriptions; block-aware internal links; a WordPress revision before every write
+
+## AI Suite SEO Pro
+
+- Current version: 1.0.1
+- SEO Pro price: $79 USD per year for one site
+- Agency price: $199 USD per year for unlimited sites owned or managed by the license holder
+- Role: WordPress SEO automation
+- Capabilities: whole-site bulk runs; scheduled re-optimization; auto-apply for trusted suggestion types; direct plugin updates
+
+## Data handling
+
+- WordPress content is sent to the FounderPostAI gateway only when a user runs an action.
+- A WordPress revision is saved before every content write.
+- FounderPostAI does not use customer content to train AI models.
+- In BYOK mode, the Anthropic API key is sent to the gateway and is not stored in the WordPress database.
+- Privacy policy: https://founderpostai.com/privacy
+- Terms of service: https://founderpostai.com/terms
+
+## Subscription behavior
+
+If an AI Suite SEO Pro subscription ends, bulk runs, scheduling, and auto-apply stop at the end of the paid period. Previously applied metadata, links, and revisions remain ordinary WordPress content. The free plugins continue to work.

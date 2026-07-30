@@ -42,8 +42,8 @@ export default function Privacy() {
 
         <h2>Third parties</h2>
         <p>
-          Stripe (payments), Anthropic/OpenAI (inference, with training opted out), Vercel
-          (hosting and analytics).
+          Stripe (payments), Anthropic (inference, with training opted out), Vercel (hosting and
+          analytics).
         </p>
 
         <h2>Your rights</h2>

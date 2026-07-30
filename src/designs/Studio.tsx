@@ -57,7 +57,7 @@ const PLUGINS = [
 
 const FAQS = [
   ['Why are Core and SEO free?', 'Because WordPress.org doesn’t allow hosted plugins with locked or crippled features — so the split is by plugin, not by feature flag. The free SEO plugin is complete: analyze, review, apply, per-post and batches of ten. Pro is a separate download that adds bulk, scheduling, and auto-apply.'],
-  ['Managed credits or BYOK — what’s the difference?', 'Managed: we buy inference wholesale and you spend “actions” from a credit balance. BYOK: you connect your own OpenAI/Anthropic key, pay a flat plan fee, and run unlimited actions — model usage is billed by your provider. Either way, your key is posted straight to the gateway and never written to WordPress.'],
+  ['Managed credits or BYOK — what’s the difference?', 'Managed: we buy inference wholesale and you spend “actions” from a credit balance. BYOK: you connect your own Anthropic key, pay a flat plan fee, and run unlimited actions — model usage is billed by Anthropic. Either way, your key is posted straight to the gateway and never written to WordPress.'],
   ['Will it slow down my site?', 'No. All inference happens on the gateway, not your server. Jobs dispatch through Action Scheduler, a loopback, or WP-Cron with a time budget — nothing heavy runs on the page request your visitors hit.'],
   ['What happens to my content? Is it safe?', 'Every write saves a WordPress revision first, so anything applied can be rolled back. Content is only sent to the gateway when you run an action, and it’s never used to train models.'],
   ['What happens if I cancel Pro?', 'Bulk, scheduling, and auto-apply stop at the end of your paid period. Everything already applied — meta, links, revisions — is plain WordPress content and stays exactly where it is. The free plugins keep working forever.'],
@@ -67,6 +67,7 @@ const DRAWER_LINKS = [
   { label: 'Plugins', href: '#plugins' },
   { label: 'Plans', href: '#pricing' },
   { label: 'FAQs', href: '#faq' },
+  { label: 'Product Facts', href: '/ai-suite' },
   { label: 'Account', href: '/login' },
   { label: 'Get in Touch', href: 'mailto:support@founderpostai.com' },
 ];
@@ -270,6 +271,13 @@ export default function Studio() {
             </article>
           ))}
         </div>
+        <p className={styles.sectionSub} style={{ marginTop: '28px', marginBottom: 0 }}>
+          Need exact versions, requirements, or data-handling details?{' '}
+          <Link href="/ai-suite" style={{ color: 'inherit', textDecoration: 'underline' }}>
+            Read the verified technical overview
+          </Link>
+          .
+        </p>
       </section>
 
       {/* Pricing */}
@@ -394,6 +402,7 @@ export default function Studio() {
           <a href="#plugins">Plugins</a>
           <a href="#pricing">Pricing</a>
           <a href="#faq">FAQ</a>
+          <Link href="/ai-suite">Product facts</Link>
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>
           <Link href="/login">Account</Link>
