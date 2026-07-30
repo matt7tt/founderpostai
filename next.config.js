@@ -47,6 +47,15 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: '/d97a56932540c852ee2be0b99ad69fc8.txt',
+        headers: [
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow, noarchive, nosnippet',
+          },
+        ],
+      },
       ...[
         '/login',
         '/signup',

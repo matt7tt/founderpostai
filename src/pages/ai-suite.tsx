@@ -43,6 +43,9 @@ export default function AiSuite() {
               FounderPostAI
             </Link>
             <nav aria-label="Product facts navigation" className="flex items-center gap-5 text-sm">
+              <Link href="/resources" className="hidden hover:text-[#00749C] sm:inline">
+                Resources
+              </Link>
               <a href="#workflow" className="hidden hover:text-[#00749C] sm:inline">
                 Workflow
               </a>
@@ -175,6 +178,12 @@ export default function AiSuite() {
                           </li>
                         ))}
                       </ul>
+                      <Link
+                        href={capability.resourcePath}
+                        className="mt-6 inline-block text-sm font-bold text-[#00749C] underline decoration-[#00749C]/30 underline-offset-4"
+                      >
+                        Read the practical guide →
+                      </Link>
                     </article>
                   ))}
                 </div>
@@ -471,6 +480,7 @@ export default function AiSuite() {
               <Link href="/">Home</Link>
               <a href="#workflow">SEO workflow</a>
               <a href="#installation">Installation</a>
+              <Link href="/resources">Resources</Link>
               <Link href="/privacy">Privacy</Link>
               <Link href="/terms">Terms</Link>
               <a href="/llms.txt">LLM reference</a>

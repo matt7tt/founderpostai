@@ -18,7 +18,7 @@ export default function Privacy() {
         title="Privacy Policy | FounderPostAI"
         description={description}
         breadcrumbLabel="Privacy policy"
-        dateModified="2026-07-29T19:00:00-07:00"
+        dateModified="2026-07-30T22:00:00-07:00"
       />
       <div style={{ fontFamily: "'Inter', sans-serif", maxWidth: '680px', margin: '0 auto', padding: '64px 24px', color: '#0a0a0a', lineHeight: 1.7 }}>
         <nav aria-label="Breadcrumb" style={{ marginBottom: '32px', fontSize: '14px' }}>
@@ -45,8 +45,11 @@ export default function Privacy() {
           an action.
         </p>
         <p>
-          <strong>On this website:</strong> anonymized usage analytics via Vercel Web Analytics.
-          No advertising trackers.
+          <strong>On this website:</strong> anonymized usage analytics via Vercel Web Analytics,
+          including page paths, referring domains, plugin-download clicks, pricing and checkout
+          clicks, support and outbound-link clicks, and the purchased plan after a successful
+          license lookup. We do not send payment details, license keys, content, URL query
+          parameters, or advertising identifiers to analytics. No advertising trackers.
         </p>
 
         <h2>What we never do</h2>
@@ -72,6 +75,7 @@ export default function Privacy() {
         <nav aria-label="Related pages" style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginTop: '48px', paddingTop: '24px', borderTop: '1px solid #e5e5e5' }}>
           <Link href="/" style={{ color: '#6b6b6b' }}>FounderPostAI home</Link>
           <Link href="/ai-suite" style={{ color: '#6b6b6b' }}>AI SEO plugin details</Link>
+          <Link href="/resources" style={{ color: '#6b6b6b' }}>WordPress SEO resources</Link>
           <Link href="/terms" style={{ color: '#6b6b6b' }}>Terms of service</Link>
         </nav>
       </div>

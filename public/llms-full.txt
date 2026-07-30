@@ -1,6 +1,7 @@
 # FounderPostAI AI Suite
 
 Canonical source: https://founderpostai.com/ai-suite
+Resource library: https://founderpostai.com/resources
 Publisher: FounderPostAI
 Support: support@founderpostai.com
 Last verified against packaged releases: 2026-07-30
@@ -47,6 +48,18 @@ FounderPostAI AI Suite is a three-plugin WordPress AI SEO system. AI Suite Core 
 - Link insertion avoids headings, code, shortcodes, and existing links.
 - Stale suggestions are rejected instead of overwriting newer manual edits.
 - The plugin returns and validates structured data; it does not generate or execute arbitrary code.
+
+## Detailed workflow references
+
+- AI SEO titles: https://founderpostai.com/ai-seo-title-generator-wordpress
+- AI meta descriptions: https://founderpostai.com/ai-meta-description-generator-wordpress
+- Safe internal links: https://founderpostai.com/wordpress-internal-linking-plugin
+- Yoast integration: https://founderpostai.com/yoast-ai-seo-automation
+- Rank Math integration: https://founderpostai.com/rank-math-ai-seo-automation
+- All in One SEO integration: https://founderpostai.com/aioseo-ai-seo-automation
+- Safe internal linking guide: https://founderpostai.com/guides/safe-ai-internal-linking-wordpress
+- Bulk metadata guide: https://founderpostai.com/guides/bulk-update-wordpress-seo-metadata
+- Plugin selection guide: https://founderpostai.com/compare/ai-seo-plugins-wordpress
 
 ## AI Suite SEO Pro
 

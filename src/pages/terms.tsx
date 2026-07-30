@@ -72,6 +72,7 @@ export default function Terms() {
         <nav aria-label="Related pages" style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginTop: '48px', paddingTop: '24px', borderTop: '1px solid #e5e5e5' }}>
           <Link href="/" style={{ color: '#6b6b6b' }}>FounderPostAI home</Link>
           <Link href="/ai-suite" style={{ color: '#6b6b6b' }}>AI SEO plugin details</Link>
+          <Link href="/resources" style={{ color: '#6b6b6b' }}>WordPress SEO resources</Link>
           <Link href="/privacy" style={{ color: '#6b6b6b' }}>Privacy policy</Link>
         </nav>
       </div>

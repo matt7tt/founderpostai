@@ -76,6 +76,7 @@ export default function Editorial() {
               <a href="#plugins" className="hidden sm:inline hover:text-[#00749C] transition-colors">Plugins</a>
               <a href="#pricing" className="hidden sm:inline hover:text-[#00749C] transition-colors">Pricing</a>
               <a href="#faq" className="hidden sm:inline hover:text-[#00749C] transition-colors">FAQ</a>
+              <Link href="/resources" className="hidden lg:inline hover:text-[#00749C] transition-colors">Resources</Link>
               <Link href="/ai-suite" className="hidden lg:inline hover:text-[#00749C] transition-colors">Product facts</Link>
               <a
                 href={PAYMENT_LINKS.pro}
@@ -201,6 +202,12 @@ export default function Editorial() {
                       </li>
                     ))}
                   </ul>
+                  <Link
+                    href={capability.resourcePath}
+                    className="mt-6 inline-block text-sm font-bold text-[#00749C] underline decoration-[#00749C]/30 underline-offset-4"
+                  >
+                    Read the {capability.id === 'internal-linking' ? 'internal linking' : capability.id.replace('-', ' ')} guide →
+                  </Link>
                 </article>
               ))}
             </div>
@@ -453,6 +460,7 @@ export default function Editorial() {
               <a href="#plugins" className="hover:text-[#00749C]">Plugins</a>
               <a href="#pricing" className="hover:text-[#00749C]">Pricing</a>
               <a href="#faq" className="hover:text-[#00749C]">FAQ</a>
+              <Link href="/resources" className="hover:text-[#00749C]">Resources</Link>
               <Link href="/ai-suite" className="hover:text-[#00749C]">Product facts</Link>
               <Link href="/privacy" className="hover:text-[#00749C]">Privacy</Link>
               <Link href="/terms" className="hover:text-[#00749C]">Terms</Link>

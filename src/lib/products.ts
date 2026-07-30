@@ -79,6 +79,7 @@ export const AI_SUITE_PRODUCTS = [
 export const AI_SEO_CAPABILITIES = [
   {
     id: 'seo-titles',
+    resourcePath: '/ai-seo-title-generator-wordpress',
     title: 'AI SEO titles that match the published page',
     summary:
       'Generate a concise search title from the post you actually published, then compare it with the current value before approving anything.',
@@ -90,6 +91,7 @@ export const AI_SEO_CAPABILITIES = [
   },
   {
     id: 'meta-descriptions',
+    resourcePath: '/ai-meta-description-generator-wordpress',
     title: 'Meta descriptions in your brand voice',
     summary:
       'Create useful search snippets that reflect the page, audience, tone, and phrases your business needs to avoid.',
@@ -101,6 +103,7 @@ export const AI_SEO_CAPABILITIES = [
   },
   {
     id: 'internal-linking',
+    resourcePath: '/wordpress-internal-linking-plugin',
     title: 'Safe WordPress internal-link suggestions',
     summary:
       'Suggest links only to real published pages, using anchor text that already appears verbatim in the source content.',
