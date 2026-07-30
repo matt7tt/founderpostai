@@ -1,21 +1,22 @@
 <?php
 /**
- * Plugin Name:       AI Suite SEO
- * Plugin URI:        https://founderpostai.com/seo
+ * Plugin Name:       FounderPostAI – AI Suite SEO
+ * Plugin URI:        https://founderpostai.com/ai-suite
  * Description:       Writes titles, meta descriptions, and internal links for your posts, then shows you the exact change before anything goes live.
- * Version:           0.1.2
+ * Version:           0.1.3
  * Requires at least: 6.5
  * Requires PHP:      7.4
- * Requires Plugins:  aisuite-core
+ * Requires Plugins:  founderpostai-ai-suite-core
  * Author:            FounderPostAI
+ * Author URI:        https://founderpostai.com
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       aisuite-seo
+ * Text Domain:       founderpostai-ai-suite-seo
  */
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'AISUITE_SEO_VERSION', '0.1.2' );
+define( 'AISUITE_SEO_VERSION', '0.1.3' );
 define( 'AISUITE_SEO_FILE', __FILE__ );
 define( 'AISUITE_SEO_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AISUITE_SEO_URL', plugin_dir_url( __FILE__ ) );
@@ -39,7 +40,7 @@ add_action(
 				function () {
 					printf(
 						'<div class="notice notice-error"><p>%s</p></div>',
-						esc_html__( 'AI Suite SEO needs AI Suite Core. Install and activate it to continue.', 'aisuite-seo' )
+						esc_html__( 'AI Suite SEO needs AI Suite Core. Install and activate it to continue.', 'founderpostai-ai-suite-seo' )
 					);
 				}
 			);
@@ -58,8 +59,8 @@ add_action(
 				$registry->register(
 					'seo',
 					array(
-						'name'         => __( 'SEO', 'aisuite-seo' ),
-						'description'  => __( 'Titles, meta descriptions, and internal links.', 'aisuite-seo' ),
+						'name'         => __( 'SEO', 'founderpostai-ai-suite-seo' ),
+						'description'  => __( 'Titles, meta descriptions, and internal links.', 'founderpostai-ai-suite-seo' ),
 						'settings_url' => admin_url( 'admin.php?page=aisuite-seo' ),
 						'job_types'    => array( 'seo.analyze_post', 'seo.internal_links' ),
 					)

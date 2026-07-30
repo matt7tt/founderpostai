@@ -1,12 +1,12 @@
 <?php
 /**
- * Plugin Name:       AI Suite SEO Pro
+ * Plugin Name:       FounderPostAI – AI Suite SEO Pro
  * Plugin URI:        https://founderpostai.com/seo
  * Description:       Adds site-wide bulk optimization, scheduled re-analysis, and auto-apply rules to AI Suite SEO.
- * Version:           1.0.1
+ * Version:           1.0.2
  * Requires at least: 6.5
  * Requires PHP:      7.4
- * Requires Plugins:  aisuite-core, aisuite-seo
+ * Requires Plugins:  founderpostai-ai-suite-core, founderpostai-ai-suite-seo
  * Author:            FounderPostAI
  * Author URI:        https://founderpostai.com
  * License:           GPL-2.0-or-later
@@ -20,7 +20,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'AISUITE_SEO_PRO_VERSION', '1.0.1' );
+define( 'AISUITE_SEO_PRO_VERSION', '1.0.2' );
 define( 'AISUITE_SEO_PRO_FILE', __FILE__ );
 
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-updater.php';

@@ -1,22 +1,23 @@
 <?php
 /**
- * Plugin Name:       AI Suite Core
- * Plugin URI:        https://founderpostai.com
+ * Plugin Name:       FounderPostAI – AI Suite Core
+ * Plugin URI:        https://founderpostai.com/ai-suite
  * Description:       Shared runtime for the AI Suite modules: account connection, credit balance, brand context, and the background job queue every module runs on.
- * Version:           0.1.2
+ * Version:           0.1.3
  * Requires at least: 6.5
  * Requires PHP:      7.4
  * Author:            FounderPostAI
+ * Author URI:        https://founderpostai.com
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       aisuite-core
+ * Text Domain:       founderpostai-ai-suite-core
  *
  * External service disclosure lives in readme.txt and on the Connection screen.
  */
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'AISUITE_CORE_VERSION', '0.1.2' );
+define( 'AISUITE_CORE_VERSION', '0.1.3' );
 define( 'AISUITE_CORE_FILE', __FILE__ );
 define( 'AISUITE_CORE_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AISUITE_CORE_URL', plugin_dir_url( __FILE__ ) );
@@ -100,6 +101,44 @@ function aisuite() {
 }
 
 add_action( 'plugins_loaded', 'aisuite', 5 );
+
+/**
+ * Suggest accurate disclosure text for the site's privacy policy.
+ */
+function aisuite_add_privacy_policy_content() {
+	if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
+		return;
+	}
+
+	$content = sprintf(
+		'<p>%1$s</p><p>%2$s</p><p>%3$s</p>',
+		esc_html__(
+			'When an administrator connects this site to FounderPostAI, the site URL, administrator email address, WordPress version, and PHP version are sent to the FounderPostAI AI Suite gateway.',
+			'founderpostai-ai-suite-core'
+		),
+		esc_html__(
+			'When an administrator runs an AI Suite action, the selected content and saved brand context are sent to the FounderPostAI gateway and processed by Anthropic to generate suggestions. Nothing is sent for AI processing until an administrator runs an action.',
+			'founderpostai-ai-suite-core'
+		),
+		wp_kses_post(
+			sprintf(
+				/* translators: 1: FounderPostAI privacy URL, 2: Anthropic privacy URL */
+				__(
+					'See the <a href="%1$s">FounderPostAI privacy policy</a> and the <a href="%2$s">Anthropic privacy policy</a> for details.',
+					'founderpostai-ai-suite-core'
+				),
+				esc_url( 'https://founderpostai.com/privacy' ),
+				esc_url( 'https://www.anthropic.com/legal/privacy' )
+			)
+		)
+	);
+
+	wp_add_privacy_policy_content(
+		__( 'FounderPostAI AI Suite', 'founderpostai-ai-suite-core' ),
+		wp_kses_post( $content )
+	);
+}
+add_action( 'admin_init', 'aisuite_add_privacy_policy_content' );
 
 register_activation_hook(
 	__FILE__,

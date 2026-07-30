@@ -2,6 +2,7 @@ import type { GetServerSideProps } from 'next';
 
 const urls = [
   'https://founderpostai.com/',
+  'https://founderpostai.com/ai-suite',
   'https://founderpostai.com/privacy',
   'https://founderpostai.com/terms',
 ];

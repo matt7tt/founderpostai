@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { PAYMENT_LINKS, track } from '../lib/ab';
+import { WORDPRESS_ORG_REVIEW_NOTICE } from '../lib/site';
 
 const serif = "Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif";
 const mono = "ui-monospace, 'SF Mono', Menlo, Consolas, monospace";
@@ -74,6 +75,7 @@ export default function Editorial() {
               <a href="#plugins" className="hidden sm:inline hover:text-[#00749C] transition-colors">Plugins</a>
               <a href="#pricing" className="hidden sm:inline hover:text-[#00749C] transition-colors">Pricing</a>
               <a href="#faq" className="hidden sm:inline hover:text-[#00749C] transition-colors">FAQ</a>
+              <Link href="/ai-suite" className="hidden lg:inline hover:text-[#00749C] transition-colors">Product facts</Link>
               <a
                 href={PAYMENT_LINKS.pro}
                 onClick={() => track('checkout_click', { design: 'editorial', plan: 'pro' })}
@@ -183,6 +185,18 @@ export default function Editorial() {
             </p>
           </div>
 
+          <div
+            role="note"
+            className="mb-8 max-w-3xl border border-[#00749C]/35 bg-[#52C5E8]/10 px-5 py-4"
+          >
+            <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[#00749C]" style={{ fontFamily: mono }}>
+              WordPress.org status
+            </p>
+            <p className="text-sm leading-relaxed text-[#1B1712]/75">
+              {WORDPRESS_ORG_REVIEW_NOTICE}
+            </p>
+          </div>
+
           <div className="grid md:grid-cols-3 gap-px bg-[#1B1712]/15 border border-[#1B1712]/15">
             {plugins.map((p) => (
               <article key={p.id} className="bg-[#F7F4EE] p-8 flex flex-col hover:bg-white transition-colors">
@@ -219,7 +233,12 @@ export default function Editorial() {
           </div>
 
           <p className="mt-6 text-sm text-[#1B1712]/70 text-center">
-            Every module: managed credits from us, or unlimited actions on your own provider key.
+            Every module: managed credits from us, or unlimited actions on your own provider
+            key.{' '}
+            <Link href="/ai-suite" className="font-medium text-[#00749C] underline underline-offset-4">
+              Read the verified technical overview
+            </Link>
+            .
           </p>
         </section>
 
@@ -275,8 +294,8 @@ export default function Editorial() {
                 <li>✓ Block-aware internal link insertion</li>
                 <li>✓ BYOK — unlimited actions on your key</li>
               </ul>
-              <a href="/downloads/aisuite-core.zip" className="mt-auto block text-center border border-[#1B1712]/30 px-6 py-3 font-medium hover:border-[#1B1712] transition-colors">
-                Download the free plugins
+              <a href="#plugins" className="mt-auto block text-center border border-[#1B1712]/30 px-6 py-3 font-medium hover:border-[#1B1712] transition-colors">
+                Choose the free plugins
               </a>
             </div>
 
@@ -349,7 +368,7 @@ export default function Editorial() {
             <div className="divide-y divide-[#1B1712]/10">
               {[
                 ['Why are Core and SEO free?', 'Because WordPress.org doesn’t allow hosted plugins with locked or crippled features — so the split is by plugin, not by feature flag. The free SEO plugin is complete: analyze, review, apply, per-post and batches of ten. Pro is a separate download that adds bulk, scheduling, and auto-apply.'],
-                ['Managed credits or BYOK — what’s the difference?', 'Managed: we buy inference wholesale and you spend “actions” from a credit balance. BYOK: you connect your own OpenAI/Anthropic key, pay a flat plan fee, and run unlimited actions — model usage is billed by your provider. Either way, your key is posted straight to the gateway and never written to WordPress.'],
+                ['Managed credits or BYOK — what’s the difference?', 'Managed: we buy inference wholesale and you spend “actions” from a credit balance. BYOK: you connect your own Anthropic key, pay a flat plan fee, and run unlimited actions — model usage is billed by Anthropic. Either way, your key is posted straight to the gateway and never written to WordPress.'],
                 ['Will it slow down my site?', 'No. All inference happens on the gateway, not your server. Jobs dispatch through Action Scheduler, a loopback, or WP-Cron with a time budget — nothing heavy runs on the page request your visitors hit.'],
                 ['What happens to my content? Is it safe?', 'Every write saves a WordPress revision first, so anything applied can be rolled back. Content is only sent to the gateway when you run an action, and it’s never used to train models.'],
                 ['What happens if I cancel Pro?', 'Bulk, scheduling, and auto-apply stop at the end of your paid period. Everything already applied — meta, links, revisions — is plain WordPress content and stays exactly where it is. The free plugins keep working forever.'],
@@ -395,6 +414,7 @@ export default function Editorial() {
               <a href="#plugins" className="hover:text-[#00749C]">Plugins</a>
               <a href="#pricing" className="hover:text-[#00749C]">Pricing</a>
               <a href="#faq" className="hover:text-[#00749C]">FAQ</a>
+              <Link href="/ai-suite" className="hover:text-[#00749C]">Product facts</Link>
               <Link href="/privacy" className="hover:text-[#00749C]">Privacy</Link>
               <Link href="/terms" className="hover:text-[#00749C]">Terms</Link>
               <Link href="/login" className="hover:text-[#00749C]">Account</Link>

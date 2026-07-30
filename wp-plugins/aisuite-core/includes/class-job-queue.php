@@ -95,7 +95,7 @@ class AISuite_Job_Queue {
 	 */
 	public function enqueue( $type, array $payload, array $context = array() ) {
 		if ( ! AISuite_Site_Auth::is_connected() ) {
-			return new WP_Error( 'aisuite_not_connected', __( 'Connect your AI Suite account before running this.', 'aisuite-core' ) );
+			return new WP_Error( 'aisuite_not_connected', __( 'Connect your AI Suite account before running this.', 'founderpostai-ai-suite-core' ) );
 		}
 
 		$open = $this->tracked();
@@ -103,7 +103,7 @@ class AISuite_Job_Queue {
 		if ( count( $open ) >= self::MAX_OPEN ) {
 			return new WP_Error(
 				'aisuite_queue_full',
-				__( 'Too many jobs are already waiting. Let the queue drain before adding more.', 'aisuite-core' )
+				__( 'Too many jobs are already waiting. Let the queue drain before adding more.', 'founderpostai-ai-suite-core' )
 			);
 		}
 
@@ -261,7 +261,7 @@ class AISuite_Job_Queue {
 			}
 
 			if ( ! is_wp_error( $result ) && ( empty( $result['job_id'] ) || ! is_scalar( $result['job_id'] ) ) ) {
-				$result = new WP_Error( 'aisuite_bad_job_response', __( 'The gateway accepted the job but did not return a job identifier.', 'aisuite-core' ) );
+				$result = new WP_Error( 'aisuite_bad_job_response', __( 'The gateway accepted the job but did not return a job identifier.', 'founderpostai-ai-suite-core' ) );
 			}
 
 			if ( is_wp_error( $result ) ) {
@@ -286,7 +286,7 @@ class AISuite_Job_Queue {
 			}
 
 			if ( isset( $result['status'] ) && 'failed' === $result['status'] ) {
-				$this->fail( $ref, isset( $result['error'] ) ? $result['error'] : __( 'Job failed.', 'aisuite-core' ) );
+				$this->fail( $ref, isset( $result['error'] ) ? $result['error'] : __( 'Job failed.', 'founderpostai-ai-suite-core' ) );
 				return;
 			}
 
@@ -373,7 +373,7 @@ class AISuite_Job_Queue {
 		if ( 'completed' === $status ) {
 			$this->complete( $ref, isset( $result['result'] ) ? (array) $result['result'] : array() );
 		} elseif ( 'failed' === $status ) {
-			$this->fail( $ref, isset( $result['error'] ) ? $result['error'] : __( 'Job failed.', 'aisuite-core' ) );
+			$this->fail( $ref, isset( $result['error'] ) ? $result['error'] : __( 'Job failed.', 'founderpostai-ai-suite-core' ) );
 		} else {
 			$this->schedule_reconcile( $ref, 300, 600 );
 		}
@@ -477,7 +477,7 @@ class AISuite_Job_Queue {
 			$age = time() - ( isset( $record['queued'] ) ? (int) $record['queued'] : 0 );
 
 			if ( $age > self::MAX_AGE ) {
-				$this->fail( $ref, __( 'This job timed out before a result came back.', 'aisuite-core' ) );
+				$this->fail( $ref, __( 'This job timed out before a result came back.', 'founderpostai-ai-suite-core' ) );
 				continue;
 			}
 		}

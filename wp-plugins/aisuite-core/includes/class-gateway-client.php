@@ -33,7 +33,7 @@ class AISuite_Gateway_Client {
 		$connect_token = trim( (string) $connect_token );
 
 		if ( '' === $connect_token ) {
-			return new WP_Error( 'aisuite_missing_token', __( 'Paste the connection code from your dashboard first.', 'aisuite-core' ) );
+			return new WP_Error( 'aisuite_missing_token', __( 'Paste the connection code from your dashboard first.', 'founderpostai-ai-suite-core' ) );
 		}
 
 		$body = array(
@@ -62,7 +62,7 @@ class AISuite_Gateway_Client {
 		}
 
 		if ( empty( $data['site_id'] ) || empty( $data['site_secret'] ) ) {
-			return new WP_Error( 'aisuite_bad_registration', __( 'The gateway did not return site credentials.', 'aisuite-core' ) );
+			return new WP_Error( 'aisuite_bad_registration', __( 'The gateway did not return site credentials.', 'founderpostai-ai-suite-core' ) );
 		}
 
 		$stored = AISuite_Site_Auth::store_credentials( $data['site_id'], $data['site_secret'] );
@@ -201,14 +201,14 @@ class AISuite_Gateway_Client {
 	 */
 	protected function request( $method, $path, array $body = null, $timeout = self::TIMEOUT ) {
 		if ( ! AISuite_Site_Auth::is_connected() ) {
-			return new WP_Error( 'aisuite_not_connected', __( 'Connect your AI Suite account before running this.', 'aisuite-core' ) );
+			return new WP_Error( 'aisuite_not_connected', __( 'Connect your AI Suite account before running this.', 'founderpostai-ai-suite-core' ) );
 		}
 
 		$raw       = null === $body ? '' : wp_json_encode( $body );
 		$timestamp = (string) time();
 
 		if ( false === $raw ) {
-			return new WP_Error( 'aisuite_json_encode', __( 'The request could not be encoded as JSON.', 'aisuite-core' ) );
+			return new WP_Error( 'aisuite_json_encode', __( 'The request could not be encoded as JSON.', 'founderpostai-ai-suite-core' ) );
 		}
 
 		$args = array(
@@ -252,7 +252,7 @@ class AISuite_Gateway_Client {
 		if ( 402 === $code ) {
 			return new WP_Error(
 				'aisuite_out_of_credits',
-				__( 'This account is out of credits. Add credits to keep running jobs.', 'aisuite-core' ),
+				__( 'This account is out of credits. Add credits to keep running jobs.', 'founderpostai-ai-suite-core' ),
 				array( 'status' => 402 )
 			);
 		}
@@ -260,7 +260,7 @@ class AISuite_Gateway_Client {
 		if ( 401 === $code || 403 === $code ) {
 			return new WP_Error(
 				'aisuite_unauthorized',
-				__( 'The gateway rejected this site\'s credentials. Reconnect on the AI Suite screen.', 'aisuite-core' ),
+				__( 'The gateway rejected this site\'s credentials. Reconnect on the AI Suite screen.', 'founderpostai-ai-suite-core' ),
 				array( 'status' => $code )
 			);
 		}
@@ -271,7 +271,7 @@ class AISuite_Gateway_Client {
 			} elseif ( is_array( $data ) && ! empty( $data['error'] ) && is_scalar( $data['error'] ) ) {
 				$message = sanitize_text_field( (string) $data['error'] );
 			} else {
-				$message = __( 'The gateway returned an unexpected response.', 'aisuite-core' );
+				$message = __( 'The gateway returned an unexpected response.', 'founderpostai-ai-suite-core' );
 			}
 
 			return new WP_Error( 'aisuite_gateway_error', $message, array( 'status' => $code ) );

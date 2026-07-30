@@ -82,18 +82,18 @@ class AISuite_REST_Callback {
 		$body = $request->get_json_params();
 
 		if ( empty( $body['idempotency_key'] ) ) {
-			return new WP_Error( 'aisuite_missing_ref', __( 'Missing idempotency_key.', 'aisuite-core' ), array( 'status' => 400 ) );
+			return new WP_Error( 'aisuite_missing_ref', __( 'Missing idempotency_key.', 'founderpostai-ai-suite-core' ), array( 'status' => 400 ) );
 		}
 
 		$ref    = sanitize_text_field( $body['idempotency_key'] );
 		$status = isset( $body['status'] ) ? sanitize_key( $body['status'] ) : 'completed';
 
 		if ( ! preg_match( '/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i', $ref ) ) {
-			return new WP_Error( 'aisuite_bad_ref', __( 'Invalid idempotency_key.', 'aisuite-core' ), array( 'status' => 400 ) );
+			return new WP_Error( 'aisuite_bad_ref', __( 'Invalid idempotency_key.', 'founderpostai-ai-suite-core' ), array( 'status' => 400 ) );
 		}
 
 		if ( ! in_array( $status, array( 'completed', 'failed' ), true ) ) {
-			return new WP_Error( 'aisuite_bad_status', __( 'Callback status must be completed or failed.', 'aisuite-core' ), array( 'status' => 400 ) );
+			return new WP_Error( 'aisuite_bad_status', __( 'Callback status must be completed or failed.', 'founderpostai-ai-suite-core' ), array( 'status' => 400 ) );
 		}
 
 		if ( isset( $body['account'] ) && is_array( $body['account'] ) ) {
@@ -101,7 +101,7 @@ class AISuite_REST_Callback {
 		}
 
 		if ( 'failed' === $status ) {
-			$message = isset( $body['error'] ) ? sanitize_text_field( $body['error'] ) : __( 'Job failed.', 'aisuite-core' );
+			$message = isset( $body['error'] ) ? sanitize_text_field( $body['error'] ) : __( 'Job failed.', 'founderpostai-ai-suite-core' );
 			aisuite()->jobs->fail( $ref, $message );
 		} else {
 			aisuite()->jobs->complete( $ref, isset( $body['result'] ) ? (array) $body['result'] : array() );
