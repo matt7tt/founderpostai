@@ -59,6 +59,12 @@ function get_permalink() {
 function get_posts() {
 	return array();
 }
+function get_post_types() {
+	return array( 'post', 'page' );
+}
+function apply_filters( $hook, $value ) {
+	return $value;
+}
 function get_post( $post_id ) {
 	return (object) array(
 		'ID'                => (int) $post_id,
@@ -74,6 +80,12 @@ function get_post_meta( $post_id, $key ) {
 	global $post_meta;
 	return isset( $post_meta[ $post_id ][ $key ] ) ? $post_meta[ $post_id ][ $key ] : '';
 }
+function update_post_meta( $post_id, $key, $value ) {
+	global $post_meta;
+	$post_meta[ $post_id ][ $key ] = $value;
+	return true;
+}
+function update_meta_cache() {}
 function add_post_meta( $post_id, $key, $value, $unique = false ) {
 	global $post_meta;
 	if ( $unique && isset( $post_meta[ $post_id ][ $key ] ) ) {
@@ -92,6 +104,8 @@ function aisuite() {
 	return (object) array( 'jobs' => $jobs );
 }
 
+require dirname( __DIR__, 2 ) . '/wp-plugins/aisuite-seo/includes/class-meta-adapter.php';
+require dirname( __DIR__, 2 ) . '/wp-plugins/aisuite-seo/includes/class-link-candidates.php';
 require dirname( __DIR__, 2 ) . '/wp-plugins/aisuite-seo/includes/class-optimizer.php';
 
 $optimizer = new AISuite_SEO_Optimizer( false );

@@ -63,6 +63,7 @@ const nextConfig = {
         '/upgrade',
         '/thanks',
         '/connect',
+        '/feedback-review',
         '/auth/:path*',
       ].map((source) => ({ source, headers: noIndexHeaders })),
     ];

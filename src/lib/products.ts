@@ -24,7 +24,7 @@ export const AI_SUITE_PRODUCTS = [
     id: 'ai-suite-core',
     name: 'FounderPostAI – AI Suite Core',
     shortName: 'AI Suite Core',
-    version: '0.1.3',
+    version: '0.1.4',
     price: 'Free',
     priceValue: '0',
     audience: 'Every AI Suite installation',
@@ -42,7 +42,7 @@ export const AI_SUITE_PRODUCTS = [
     id: 'ai-suite-seo',
     name: 'FounderPostAI – AI Suite SEO',
     shortName: 'AI Suite SEO',
-    version: '0.1.3',
+    version: '0.1.5',
     price: 'Free',
     priceValue: '0',
     audience: 'Sites that want reviewable SEO suggestions',
@@ -50,9 +50,9 @@ export const AI_SUITE_PRODUCTS = [
       'The free WordPress SEO module for titles, meta descriptions, reviewable suggestions, and block-aware internal links.',
     features: [
       'Per-post analysis and batches of ten',
-      'Suggestion review queue',
-      'Block-aware internal link insertion',
-      'A WordPress revision before every write',
+      'Site-wide SEO health dashboard',
+      'Native Yoast, Rank Math, AIOSEO, and SEOPress metadata',
+      'Whole-site relevance-ranked internal links',
     ],
     downloadPath: '/downloads/aisuite-seo.zip',
   },
@@ -60,7 +60,7 @@ export const AI_SUITE_PRODUCTS = [
     id: 'ai-suite-seo-pro',
     name: 'FounderPostAI – AI Suite SEO Pro',
     shortName: 'AI Suite SEO Pro',
-    version: '1.0.2',
+    version: '1.0.3',
     price: '$79 per year',
     priceValue: '79',
     audience: 'One WordPress site that needs automation',
@@ -97,7 +97,7 @@ export const AI_SEO_CAPABILITIES = [
       'Create useful search snippets that reflect the page, audience, tone, and phrases your business needs to avoid.',
     points: [
       'Works with Yoast, Rank Math, All in One SEO, and SEOPress',
-      'Keeps approved metadata in the active SEO plugin’s output path',
+      'Saves approved metadata into the active SEO plugin’s native fields',
       'Never replaces a newer manual edit with an older suggestion',
     ],
   },
@@ -108,7 +108,7 @@ export const AI_SEO_CAPABILITIES = [
     summary:
       'Suggest links only to real published pages, using anchor text that already appears verbatim in the source content.',
     points: [
-      'Closed target list prevents invented or broken destination URLs',
+      'Whole-site relevance ranking surfaces better destination pages',
       'Avoids headings, code, shortcodes, and existing links',
       'Creates a WordPress revision before changing post content',
     ],
@@ -124,7 +124,7 @@ export const HOME_FAQS = [
   {
     question: 'Does it work with my existing SEO plugin?',
     answer:
-      'Yes. When Yoast SEO, Rank Math, All in One SEO, or SEOPress is active, AI Suite routes approved titles and descriptions through that plugin’s public filters and avoids printing duplicate tags.',
+      'Yes. When Yoast SEO, Rank Math, All in One SEO, or SEOPress is active, AI Suite saves approved titles and descriptions into that plugin’s native metadata fields and avoids printing duplicate tags.',
   },
   {
     question: 'How are internal-link suggestions kept safe?',
@@ -167,7 +167,7 @@ export const AI_SUITE_FAQS = [
   {
     question: 'Does AI Suite SEO replace Yoast, Rank Math, AIOSEO, or SEOPress?',
     answer:
-      'It does not need to replace them. When one of those SEO plugins is active, AI Suite sends approved titles and meta descriptions through that plugin’s public integration filters and avoids printing duplicate tags. It can also output approved metadata on a site without another SEO plugin.',
+      'It does not need to replace them. When one of those SEO plugins is active, AI Suite saves approved titles and meta descriptions into that plugin’s native metadata fields and avoids printing duplicate tags. It can also output approved metadata on a site without another SEO plugin.',
   },
   {
     question: 'How does AI Suite prevent broken or invented internal links?',

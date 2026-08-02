@@ -18,7 +18,7 @@ export default function Privacy() {
         title="Privacy Policy | FounderPostAI"
         description={description}
         breadcrumbLabel="Privacy policy"
-        dateModified="2026-07-30T22:00:00-07:00"
+        dateModified="2026-08-02T18:00:00-07:00"
       />
       <div style={{ fontFamily: "'Inter', sans-serif", maxWidth: '680px', margin: '0 auto', padding: '64px 24px', color: '#0a0a0a', lineHeight: 1.7 }}>
         <nav aria-label="Breadcrumb" style={{ marginBottom: '32px', fontSize: '14px' }}>
@@ -27,7 +27,7 @@ export default function Privacy() {
           <span>Privacy policy</span>
         </nav>
         <h1 style={{ letterSpacing: '-0.04em' }}>Privacy Policy</h1>
-        <p style={{ color: '#6b6b6b' }}>Last updated: July 2026</p>
+        <p style={{ color: '#6b6b6b' }}>Last updated: August 2026</p>
 
         <h2>What we collect</h2>
         <p>
@@ -43,6 +43,13 @@ export default function Privacy() {
           post’s title and body, existing meta values, and a list of published post titles/URLs
           for internal-link suggestions), plus your brand context. Nothing is sent until you run
           an action.
+        </p>
+        <p>
+          <strong>When you send plugin feedback:</strong> your message, selected reply email,
+          plugin and software versions, and connected site identity are stored so we can
+          investigate bugs, reply when requested, and plan improvements. Feedback remains in our
+          review inbox until it is no longer useful for support or product planning, or you ask us
+          to delete it.
         </p>
         <p>
           <strong>On this website:</strong> anonymized usage analytics via Vercel Web Analytics,
@@ -62,7 +69,7 @@ export default function Privacy() {
         <h2>Third parties</h2>
         <p>
           Stripe (payments), Anthropic (inference, with training opted out), Vercel (hosting and
-          analytics).
+          analytics), and Upstash (durable gateway and feedback storage).
         </p>
 
         <h2>Your rights</h2>

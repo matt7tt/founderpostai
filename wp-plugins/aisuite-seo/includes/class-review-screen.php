@@ -105,6 +105,10 @@ class AISuite_SEO_Review_Screen {
 		?>
 		<div class="wrap aisuite-wrap">
 			<h1><?php esc_html_e( 'SEO review', 'founderpostai-ai-suite-seo' ); ?></h1>
+			<a class="page-title-action" href="<?php echo esc_url( admin_url( 'admin.php?page=' . AISuite_SEO_Health_Screen::SLUG ) ); ?>"><?php esc_html_e( 'SEO health', 'founderpostai-ai-suite-seo' ); ?></a>
+			<?php if ( class_exists( 'AISuite_Feedback' ) && current_user_can( AISuite_Feedback::CAP ) ) : ?>
+				<a class="page-title-action" href="<?php echo esc_url( AISuite_Feedback::url( 'seo' ) ); ?>"><?php esc_html_e( 'Send feedback', 'founderpostai-ai-suite-seo' ); ?></a>
+			<?php endif; ?>
 
 			<?php $this->render_flash(); ?>
 
@@ -114,7 +118,7 @@ class AISuite_SEO_Review_Screen {
 						<?php
 						printf(
 							/* translators: %s: conflicting plugin name */
-							esc_html__( '%s is active, so it controls the tags on your pages. Approved AI Suite titles and descriptions are passed to it through its integration filters.', 'founderpostai-ai-suite-seo' ),
+							esc_html__( '%s is active, so approved AI Suite titles and descriptions are saved directly to its native metadata fields.', 'founderpostai-ai-suite-seo' ),
 							'<strong>' . esc_html( $conflict ) . '</strong>'
 						);
 						?>

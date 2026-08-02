@@ -5,8 +5,8 @@ export const HOME_TITLE = 'AI SEO Plugin for WordPress | FounderPostAI';
 export const HOME_DESCRIPTION =
   'Generate reviewable SEO titles, meta descriptions, and safe internal links in WordPress. Download Core and SEO free; add bulk automation with Pro.';
 export const SOCIAL_IMAGE_PATH = '/og-image.png';
-export const SITE_LAST_MODIFIED = '2026-07-30';
-export const SITE_LAST_MODIFIED_ISO = '2026-07-30T22:00:00-07:00';
+export const SITE_LAST_MODIFIED = '2026-08-02';
+export const SITE_LAST_MODIFIED_ISO = '2026-08-02T18:00:00-07:00';
 export const WORDPRESS_ORG_REVIEW_NOTICE =
   'FounderPostAI – AI Suite Core is awaiting WordPress.org review. Until the directory listing is approved, install Core and SEO from the direct ZIP downloads using Plugins → Add New → Upload Plugin.';
 

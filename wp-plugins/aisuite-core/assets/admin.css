@@ -180,3 +180,24 @@
 .aisuite-meter--byok .aisuite-meter__count {
 	color: var(--aisuite-accent);
 }
+
+/* Feedback */
+
+.aisuite-feedback-intro {
+	max-width: 680px;
+	font-size: 15px;
+}
+
+.aisuite-feedback-panel {
+	padding-bottom: 20px;
+}
+
+.aisuite-feedback-panel .form-table {
+	margin-top: 0;
+}
+
+.aisuite-feedback-disclosure {
+	max-width: 680px;
+	padding-top: 12px;
+	border-top: 1px solid var(--aisuite-line);
+}

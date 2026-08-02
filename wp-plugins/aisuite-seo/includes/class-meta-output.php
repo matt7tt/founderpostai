@@ -16,8 +16,8 @@ class AISuite_SEO_Meta_Output {
 		add_action( 'wp_head', array( $this, 'output' ), 1 );
 		add_filter( 'document_title_parts', array( $this, 'filter_title' ) );
 
-		// When another SEO plugin owns wp_head, feed it the approved AI Suite
-		// values through its public filters instead of printing duplicate tags.
+		// These filters cover provider caches and metadata approved by versions
+		// before native adapters existed. Native storage remains authoritative.
 		add_filter( 'wpseo_title', array( $this, 'integration_title' ) );
 		add_filter( 'wpseo_metadesc', array( $this, 'integration_description' ) );
 		add_filter( 'rank_math/frontend/title', array( $this, 'integration_title' ) );
@@ -32,20 +32,9 @@ class AISuite_SEO_Meta_Output {
 	 * @return string|false Name of the conflicting plugin, or false.
 	 */
 	public static function conflicting_plugin() {
-		$conflicts = array(
-			'Yoast SEO'   => 'WPSEO_VERSION',
-			'Rank Math'   => 'RANK_MATH_VERSION',
-			'All in One SEO' => 'AIOSEO_VERSION',
-			'SEOPress'    => 'SEOPRESS_VERSION',
-		);
+		$provider = AISuite_SEO_Meta_Adapter::provider();
 
-		foreach ( $conflicts as $name => $constant ) {
-			if ( defined( $constant ) ) {
-				return $name;
-			}
-		}
-
-		return false;
+		return AISuite_SEO_Meta_Adapter::PROVIDER_AISUITE === $provider ? false : AISuite_SEO_Meta_Adapter::label( $provider );
 	}
 
 	protected function should_output() {
@@ -80,7 +69,22 @@ class AISuite_SEO_Meta_Output {
 			return $current;
 		}
 
-		$custom = get_post_meta( get_queried_object_id(), $meta_key, true );
+		$post_id = get_queried_object_id();
+		$field   = AISuite_SEO_Optimizer::META_TITLE === $meta_key ? 'title' : 'description';
+
+		$custom = get_post_meta( $post_id, $meta_key, true );
+		$marker = get_post_meta( $post_id, AISuite_SEO_Meta_Adapter::provider_key( $field ), true );
+
+		if ( AISuite_SEO_Meta_Adapter::provider() === $marker ) {
+			$native = AISuite_SEO_Meta_Adapter::read( $post_id, $field );
+
+			// A later manual edit (including clearing the field) wins. When the
+			// values still match, return the mirror to cover a stale provider
+			// index/cache immediately after the native write.
+			return '' !== trim( (string) $custom ) && (string) $native === (string) $custom ? (string) $custom : $current;
+		}
+
+		// Compatibility for values approved before native adapters existed.
 
 		return '' !== trim( (string) $custom ) ? (string) $custom : $current;
 	}

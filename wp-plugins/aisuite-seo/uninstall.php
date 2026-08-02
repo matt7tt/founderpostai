@@ -18,9 +18,11 @@ if ( class_exists( 'AISuite_SEO_Store' ) ) {
 }
 
 // Bookkeeping meta only.
-foreach ( array( '_aisuite_seo_analyzed', '_aisuite_seo_error', '_aisuite_seo_queued' ) as $aisuite_seo_meta_key ) {
+foreach ( array( '_aisuite_seo_analyzed', '_aisuite_seo_error', '_aisuite_seo_queued', '_aisuite_seo_meta_provider', '_aisuite_seo_title_provider', '_aisuite_seo_description_provider' ) as $aisuite_seo_meta_key ) {
 	delete_post_meta_by_key( $aisuite_seo_meta_key );
 }
+
+delete_transient( 'aisuite_seo_health_snapshot' );
 
 // Remove any stale per-suggestion mutex left by an interrupted apply request.
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery

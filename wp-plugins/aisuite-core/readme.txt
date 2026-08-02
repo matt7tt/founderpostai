@@ -4,7 +4,7 @@ Tags: ai, automation, seo, content
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.1.3
+Stable tag: 0.1.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,7 @@ Core does not modify posts or pages. It provides:
 * A resilient background queue that uses Action Scheduler when available, then loopback requests, then WP-Cron
 * Signed requests and callbacks, retry handling, callback health checks, and polling for hosts that block callbacks
 * A choice of service billing: managed actions or your own Anthropic API key
+* A direct feedback form for bug reports, ideas, and general product feedback
 
 All functionality included in this plugin is available without a plugin license, feature key, trial period, or time limit. Managed-action allowances are usage limits of the external AI service, not locks on plugin code. The complete plugin is licensed under GPLv2 or later.
 
@@ -42,6 +43,8 @@ At connection time, the plugin sends the site URL, administrator email address, 
 When an administrator runs an action in an AI Suite module, that module sends the relevant content — for example a post title and body — plus saved brand context to the gateway. The gateway sends that input to the Anthropic API and returns structured suggestions. Nothing is sent for AI processing until an administrator runs an action.
 
 If you choose BYOK service billing, your Anthropic API key is sent to the gateway, verified with Anthropic, and stored encrypted on the gateway. It is not saved in the WordPress database. You can instead enter it on the FounderPostAI dashboard so it never passes through this WordPress site.
+
+When an administrator explicitly submits the Feedback form, the selected plugin, feedback type, message, optional reply email, plugin version, WordPress version, PHP version, and connected site identity are sent to the FounderPostAI gateway. They are stored in a private review inbox for support and product planning. No feedback is sent automatically.
 
 FounderPostAI AI Suite gateway:
 
@@ -76,6 +79,11 @@ Yes. Switch billing to "Use my own API key" on the Connection screen, then add t
 Background work runs immediately in most cases. If your host blocks loopback requests, it falls back to WP-Cron, which only fires when someone visits your site. The Connection screen shows which method your site is using.
 
 == Changelog ==
+
+= 0.1.4 =
+* Added a one-screen feedback form for bugs, improvement ideas, and general feedback.
+* Feedback is authenticated with the existing site connection, rate-limited, and sent only after an administrator explicitly submits it.
+* Added a disconnected-site email fallback and updated privacy disclosures.
 
 = 0.1.3 =
 * Added distinctive FounderPostAI directory branding and WordPress.org-aligned plugin metadata.

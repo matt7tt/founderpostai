@@ -175,7 +175,7 @@ export default function Resources() {
               </h1>
               <p className="max-w-3xl text-xl leading-relaxed text-[#1B1712]/75">
                 Learn how reviewable titles, meta descriptions, constrained internal links,
-                integration filters, and bounded bulk automation work before you apply them to a
+                native metadata adapters, and bounded bulk automation work before you apply them to a
                 live WordPress site.
               </p>
             </div>

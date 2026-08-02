@@ -88,10 +88,10 @@ export const SEARCH_PAGES: SearchPage[] = [
       {
         title: 'Keep one plugin responsible for frontend metadata',
         body:
-          'When an established SEO plugin is active, AI Suite does not print a second competing set of tags. Approved values are passed through the integration filters that plugin exposes so the active SEO plugin continues to own the page head.',
+          'When an established SEO plugin is active, AI Suite does not print a second competing set of tags. Approved values are saved into that plugin’s native metadata fields so it continues to own the page head and its normal editor remains accurate.',
         bullets: [
           'Avoids duplicate meta-description output',
-          'Works through public filters for four common SEO plugins',
+          'Uses native metadata adapters for four common SEO plugins',
           'Can output its own metadata when no supported SEO plugin is active',
         ],
       },
@@ -505,7 +505,7 @@ export const SEARCH_PAGES: SearchPage[] = [
     eyebrow: 'FounderPostAI + All in One SEO',
     h1: 'Add a review-first AI workflow to All in One SEO',
     directAnswer:
-      'When All in One SEO is active, FounderPostAI passes approved title and description values through AIOSEO’s public filters and avoids printing its own competing tags. Editors gain a structured AI review queue without replacing the existing SEO plugin.',
+      'When All in One SEO is active, FounderPostAI saves approved title and description values into AIOSEO’s native post model and avoids printing its own competing tags. Editors gain a structured AI review queue without replacing the existing SEO plugin.',
     bestFor: 'AIOSEO users who want grounded suggestions and recoverable content changes',
     worksWith: 'All in One SEO on singular WordPress posts and pages',
     outcome: 'AI-assisted titles and descriptions delivered through AIOSEO’s output path',
