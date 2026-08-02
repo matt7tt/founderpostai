@@ -3,6 +3,9 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import SeoHead from '../components/SeoHead';
 import { track } from '../lib/ab';
+import { AI_SUITE_PRODUCTS } from '../lib/products';
+
+const SEO_PRO = AI_SUITE_PRODUCTS.find((product) => product.id === 'ai-suite-seo-pro')!;
 
 const card: React.CSSProperties = {
   background: '#ffffff',
@@ -163,7 +166,7 @@ export default function Thanks() {
             <p style={{ margin: '0 0 16px', fontSize: '14px', color: '#6b6b6b', lineHeight: 1.5 }}>
               Bulk runs, scheduling, and auto-apply. Paste your license key after activating.
             </p>
-            <a href="/downloads/aisuite-seo-pro-1.0.2.zip" style={downloadBtn}>Download SEO Pro ↓</a>
+            <a href={`/downloads/aisuite-seo-pro-${SEO_PRO.version}.zip`} style={downloadBtn}>Download SEO Pro ↓</a>
           </div>
         </div>
 
