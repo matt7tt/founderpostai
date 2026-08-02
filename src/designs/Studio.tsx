@@ -59,6 +59,7 @@ const DRAWER_LINKS = [
   { label: 'Plugins', href: '#plugins' },
   { label: 'Plans', href: '#pricing' },
   { label: 'FAQs', href: '#faq' },
+  { label: 'Resources', href: '/resources' },
   { label: 'Product Facts', href: '/ai-suite' },
   { label: 'Account', href: '/login' },
   { label: 'Get in Touch', href: 'mailto:support@founderpostai.com' },
@@ -249,6 +250,9 @@ export default function Studio() {
                   <li key={point}>{point}</li>
                 ))}
               </ul>
+              <Link href={capability.resourcePath} className={styles.capabilityLink}>
+                Read the practical guide →
+              </Link>
             </article>
           ))}
         </div>
@@ -431,6 +435,7 @@ export default function Studio() {
           <a href="#plugins">Plugins</a>
           <a href="#pricing">Pricing</a>
           <a href="#faq">FAQ</a>
+          <Link href="/resources">Resources</Link>
           <Link href="/ai-suite">Product facts</Link>
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>

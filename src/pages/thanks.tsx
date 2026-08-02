@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import SeoHead from '../components/SeoHead';
+import { track } from '../lib/ab';
 
 const card: React.CSSProperties = {
   background: '#ffffff',
@@ -41,7 +42,10 @@ export default function Thanks() {
 
     fetch(`/api/license?session_id=${encodeURIComponent(sessionId)}`)
       .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-      .then(setLicense)
+      .then((data: LicenseData) => {
+        setLicense(data);
+        track('purchase_confirmed', { plan: data.planLabel });
+      })
       .catch(() => setLicenseError(true));
   }, [router.isReady, router.query.session_id]);
 

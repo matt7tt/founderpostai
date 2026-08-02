@@ -3,7 +3,7 @@
  * Plugin Name:       FounderPostAI – AI Suite Core
  * Plugin URI:        https://founderpostai.com/ai-suite
  * Description:       Shared runtime for the AI Suite modules: account connection, credit balance, brand context, and the background job queue every module runs on.
- * Version:           0.1.3
+ * Version:           0.1.4
  * Requires at least: 6.5
  * Requires PHP:      7.4
  * Author:            FounderPostAI
@@ -17,7 +17,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'AISUITE_CORE_VERSION', '0.1.3' );
+define( 'AISUITE_CORE_VERSION', '0.1.4' );
 define( 'AISUITE_CORE_FILE', __FILE__ );
 define( 'AISUITE_CORE_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AISUITE_CORE_URL', plugin_dir_url( __FILE__ ) );
@@ -48,6 +48,7 @@ require_once AISUITE_CORE_DIR . 'includes/class-rest-callback.php';
 require_once AISUITE_CORE_DIR . 'includes/class-brand-context.php';
 require_once AISUITE_CORE_DIR . 'includes/class-modules.php';
 require_once AISUITE_CORE_DIR . 'includes/class-admin.php';
+require_once AISUITE_CORE_DIR . 'includes/class-feedback.php';
 
 /**
  * Single entry point every module talks to.
@@ -87,6 +88,7 @@ final class AISuite_Core {
 
 		new AISuite_REST_Callback();
 		new AISuite_Admin( $this );
+		new AISuite_Feedback( $this );
 	}
 
 	/** True when the site has completed the connection handshake. */
@@ -111,7 +113,7 @@ function aisuite_add_privacy_policy_content() {
 	}
 
 	$content = sprintf(
-		'<p>%1$s</p><p>%2$s</p><p>%3$s</p>',
+		'<p>%1$s</p><p>%2$s</p><p>%3$s</p><p>%4$s</p>',
 		esc_html__(
 			'When an administrator connects this site to FounderPostAI, the site URL, administrator email address, WordPress version, and PHP version are sent to the FounderPostAI AI Suite gateway.',
 			'founderpostai-ai-suite-core'
@@ -130,6 +132,10 @@ function aisuite_add_privacy_policy_content() {
 				esc_url( 'https://founderpostai.com/privacy' ),
 				esc_url( 'https://www.anthropic.com/legal/privacy' )
 			)
+		),
+		esc_html__(
+			'If an administrator submits plugin feedback, the message, selected reply email, plugin and software versions, and connected site identity are sent to FounderPostAI for support and product planning.',
+			'founderpostai-ai-suite-core'
 		)
 	);
 

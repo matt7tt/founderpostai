@@ -3,7 +3,7 @@
  * Plugin Name:       FounderPostAI – AI Suite SEO Pro
  * Plugin URI:        https://founderpostai.com/seo
  * Description:       Adds site-wide bulk optimization, scheduled re-analysis, and auto-apply rules to AI Suite SEO.
- * Version:           1.0.2
+ * Version:           1.0.3
  * Requires at least: 6.5
  * Requires PHP:      7.4
  * Requires Plugins:  founderpostai-ai-suite-core, founderpostai-ai-suite-seo
@@ -20,7 +20,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'AISUITE_SEO_PRO_VERSION', '1.0.2' );
+define( 'AISUITE_SEO_PRO_VERSION', '1.0.3' );
 define( 'AISUITE_SEO_PRO_FILE', __FILE__ );
 
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-updater.php';
@@ -74,10 +74,31 @@ class AISuite_SEO_Pro {
 		add_action( self::CRON_HOOK, array( $this, 'sweep' ) );
 		add_action( self::CONTINUE_HOOK, array( $this, 'continue_bulk' ) );
 		add_action( 'aisuite_job_completed_seo.analyze_post', array( $this, 'maybe_auto_apply' ), 20, 2 );
+		add_filter( 'plugin_action_links_' . plugin_basename( AISUITE_SEO_PRO_FILE ), array( $this, 'plugin_action_links' ) );
 
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) && $this->settings()['schedule_enabled'] ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::CRON_HOOK );
 		}
+	}
+
+	/**
+	 * Add a preselected feedback shortcut on the Plugins screen.
+	 *
+	 * @param array $links Existing plugin action links.
+	 * @return array
+	 */
+	public function plugin_action_links( $links ) {
+		if ( class_exists( 'AISuite_Feedback' ) ) {
+			array_unshift(
+				$links,
+				sprintf(
+					'<a href="%1$s">%2$s</a>',
+					esc_url( AISuite_Feedback::url( 'seo-pro' ) ),
+					esc_html__( 'Send feedback', 'aisuite-seo-pro' )
+				)
+			);
+		}
+		return $links;
 	}
 
 	public function settings() {
@@ -119,6 +140,9 @@ class AISuite_SEO_Pro {
 		?>
 		<div class="wrap aisuite-wrap">
 			<h1><?php esc_html_e( 'SEO Pro', 'aisuite-seo-pro' ); ?></h1>
+			<?php if ( class_exists( 'AISuite_Feedback' ) ) : ?>
+				<a class="page-title-action" href="<?php echo esc_url( AISuite_Feedback::url( 'seo-pro' ) ); ?>"><?php esc_html_e( 'Send feedback', 'aisuite-seo-pro' ); ?></a>
+			<?php endif; ?>
 
 			<div class="aisuite-panel">
 				<h2><?php esc_html_e( 'Automation', 'aisuite-seo-pro' ); ?></h2>

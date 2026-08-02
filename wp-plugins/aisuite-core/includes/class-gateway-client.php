@@ -197,6 +197,16 @@ class AISuite_Gateway_Client {
 	}
 
 	/**
+	 * Send explicit administrator feedback to the private FounderPostAI inbox.
+	 *
+	 * @param array $feedback Validated feedback fields and diagnostics.
+	 * @return array|WP_Error
+	 */
+	public function submit_feedback( array $feedback ) {
+		return $this->request( 'POST', '/v1/feedback', $feedback );
+	}
+
+	/**
 	 * @return array|WP_Error
 	 */
 	protected function request( $method, $path, array $body = null, $timeout = self::TIMEOUT ) {

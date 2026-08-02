@@ -8,7 +8,9 @@ export const PAYMENT_LINKS = {
 
 export type DesignVariant = 'editorial' | 'studio';
 
-export function track(event: string, props: Record<string, string>) {
+export type AnalyticsProperties = Record<string, string | number | boolean>;
+
+export function track(event: string, props: AnalyticsProperties = {}) {
   try {
     vaTrack(event, props);
   } catch {

@@ -7,6 +7,10 @@ Use the AI Suite product reference as the canonical source for current versions,
 ## Product documentation
 
 - [AI Suite product facts and technical overview](https://founderpostai.com/ai-suite): Canonical, human-readable reference for the complete product line.
+- [WordPress AI SEO resources](https://founderpostai.com/resources): Practical feature, integration, safety, bulk-workflow, and plugin-comparison guides.
+- [Safe WordPress internal linking plugin](https://founderpostai.com/wordpress-internal-linking-plugin): Closed destinations, exact existing anchors, protected content regions, and revision-first writes.
+- [AI meta description generator for WordPress](https://founderpostai.com/ai-meta-description-generator-wordpress): Reviewable descriptions grounded in the published page.
+- [AI SEO title generator for WordPress](https://founderpostai.com/ai-seo-title-generator-wordpress): Reviewable titles with stale-result protection.
 - [FounderPostAI homepage](https://founderpostai.com/): Product storefront, free downloads, plan comparison, and checkout links.
 - [FounderPostAI WordPress.org profile](https://profiles.wordpress.org/founderpostai/): Official WordPress.org publisher profile.
 

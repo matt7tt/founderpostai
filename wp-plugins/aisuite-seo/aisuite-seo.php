@@ -3,7 +3,7 @@
  * Plugin Name:       FounderPostAI – AI Suite SEO
  * Plugin URI:        https://founderpostai.com/ai-suite
  * Description:       Writes titles, meta descriptions, and internal links for your posts, then shows you the exact change before anything goes live.
- * Version:           0.1.3
+ * Version:           0.1.5
  * Requires at least: 6.5
  * Requires PHP:      7.4
  * Requires Plugins:  founderpostai-ai-suite-core
@@ -16,16 +16,19 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'AISUITE_SEO_VERSION', '0.1.3' );
+define( 'AISUITE_SEO_VERSION', '0.1.5' );
 define( 'AISUITE_SEO_FILE', __FILE__ );
 define( 'AISUITE_SEO_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AISUITE_SEO_URL', plugin_dir_url( __FILE__ ) );
 
 require_once AISUITE_SEO_DIR . 'includes/class-store.php';
 require_once AISUITE_SEO_DIR . 'includes/class-link-inserter.php';
+require_once AISUITE_SEO_DIR . 'includes/class-link-candidates.php';
+require_once AISUITE_SEO_DIR . 'includes/class-meta-adapter.php';
 require_once AISUITE_SEO_DIR . 'includes/class-optimizer.php';
 require_once AISUITE_SEO_DIR . 'includes/class-meta-output.php';
 require_once AISUITE_SEO_DIR . 'includes/class-review-screen.php';
+require_once AISUITE_SEO_DIR . 'includes/class-health-screen.php';
 
 register_activation_hook( __FILE__, array( 'AISuite_SEO_Store', 'install' ) );
 
@@ -52,6 +55,24 @@ add_action(
 		new AISuite_SEO_Optimizer();
 		new AISuite_SEO_Meta_Output();
 		new AISuite_SEO_Review_Screen();
+		new AISuite_SEO_Health_Screen();
+
+		add_filter(
+			'plugin_action_links_' . plugin_basename( AISUITE_SEO_FILE ),
+			function ( $links ) {
+				if ( class_exists( 'AISuite_Feedback' ) ) {
+					array_unshift(
+						$links,
+						sprintf(
+							'<a href="%1$s">%2$s</a>',
+							esc_url( AISuite_Feedback::url( 'seo' ) ),
+							esc_html__( 'Send feedback', 'founderpostai-ai-suite-seo' )
+						)
+					);
+				}
+				return $links;
+			}
+		);
 
 		add_action(
 			'aisuite_register_modules',

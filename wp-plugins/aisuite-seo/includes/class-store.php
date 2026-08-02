@@ -237,6 +237,26 @@ class AISuite_SEO_Store {
 		return $count;
 	}
 
+	/** @return array<int,int> Pending suggestion counts keyed by post ID. */
+	public static function pending_counts_by_post() {
+		global $wpdb;
+
+		if ( ! self::table_exists() ) {
+			return array();
+		}
+
+		$table = self::table();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT post_id, COUNT(*) AS total FROM %i WHERE status = %s GROUP BY post_id', $table, 'pending' ) );
+		$out  = array();
+
+		foreach ( (array) $rows as $row ) {
+			$out[ (int) $row->post_id ] = (int) $row->total;
+		}
+
+		return $out;
+	}
+
 	/** Counts are cached; any write must clear them. */
 	public static function flush_counts() {
 		foreach ( array( 'pending', 'approved', 'rejected' ) as $status ) {

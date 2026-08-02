@@ -5,7 +5,7 @@ Requires at least: 6.5
 Requires Plugins: founderpostai-ai-suite-core
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.1.3
+Stable tag: 0.1.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -23,16 +23,18 @@ Run an analysis on a post and AI Suite SEO returns:
 
 Every suggestion lands in a review queue showing the current value beside the proposed one and a one-line reason. Nothing touches your content until you click Apply, and applying an internal-link change saves a revision first, so it is always reversible.
 
-If Yoast, Rank Math, All in One SEO, or SEOPress is active, AI Suite SEO leaves tag rendering to that plugin and passes approved titles and descriptions through its public integration filters.
+If Yoast, Rank Math, All in One SEO, or SEOPress is active, AI Suite SEO leaves tag rendering to that plugin and saves approved titles and descriptions directly into its native metadata fields.
 
 What makes it different:
 
 * Internal-link targets come from a closed list of real published posts on your site.
+* Whole-site candidate retrieval ranks topical relevance before the AI selects a link, rather than considering only the newest posts.
 * Suggested anchor text must occur verbatim in the source content before it can be applied.
 * Link insertion is block- and DOM-aware and avoids headings, code, existing links, and shortcodes.
 * Suggestions that became stale after analysis are rejected instead of overwriting newer edits.
 * Every content write creates a WordPress revision first.
 * All suggestions remain reviewable; there is no arbitrary PHP or JavaScript generation or execution.
+* A site-wide SEO health dashboard tracks coverage, missing metadata, stale or failed analyses, orphaned content, link counts, and pending suggestions.
 
 All functionality included in this plugin is available without a plugin license, feature key, trial period, or time limit. Manual 10-post batches are repeatable reliability chunks, not a total usage cutoff. Hosted AI service usage is described below.
 
@@ -42,10 +44,13 @@ All functionality included in this plugin is available without a plugin license,
 2. Connect Core to the FounderPostAI service from AI Suite > Connection.
 3. Install and activate FounderPostAI – AI Suite SEO.
 4. Open AI Suite > SEO or use "Optimize with AI Suite" from a post or page row.
+5. Use Send feedback on the SEO screen for a bug report, improvement idea, or general feedback.
 
 == External services ==
 
 This plugin uses FounderPostAI – AI Suite Core to send content to the FounderPostAI AI Suite gateway. Running an analysis is an explicit administrator action.
+
+The SEO screen also links to Core's feedback form with AI Suite SEO preselected. Feedback is sent only when an administrator explicitly submits that form. The form's exact data disclosure is documented in AI Suite Core and shown immediately before submission.
 
 When an administrator runs an analysis, the post title, plain-text content, excerpt, permalink, existing meta values, saved brand context, and a list of published post titles and URLs used as internal-link candidates are sent. The gateway sends this input to the Anthropic API and returns structured SEO suggestions. Nothing is sent until an administrator runs an analysis.
 
@@ -71,7 +76,7 @@ No. Every suggestion waits for approval.
 
 = Does it work alongside Yoast? =
 
-Yes. It detects Yoast, stops outputting duplicate tags, and passes approved titles and descriptions to Yoast through its documented filters.
+Yes. It detects Yoast, stops outputting duplicate tags, and writes approved titles and descriptions through Yoast's native metadata API. Rank Math, All in One SEO, and SEOPress have native adapters too.
 
 = How many posts can I analyze? =
 
@@ -86,6 +91,16 @@ Nothing is changed. Links are only inserted where the exact phrase appears as or
 No. Every feature and every line of functional code shipped in this plugin is available without a license check. A separately distributed add-on contains its own automation code for unattended whole-site runs, scheduling, and conservative auto-apply; it does not unlock dormant code in this plugin.
 
 == Changelog ==
+
+= 0.1.5 =
+* Added native metadata adapters for Yoast SEO, Rank Math, All in One SEO, and SEOPress.
+* Added a site-wide SEO health dashboard with actionable filters and internal-link counts.
+* Internal-link candidates now come from relevance-ranked whole-site retrieval instead of the 60 most recently modified posts.
+* Native metadata remains editable in the active SEO plugin while an AI Suite mirror preserves portability.
+
+= 0.1.4 =
+* Added direct Send feedback links on the SEO review screen and Plugins screen.
+* The shared form preselects AI Suite SEO so bug reports and improvement ideas are easy to classify.
 
 = 0.1.3 =
 * Added distinctive FounderPostAI directory branding and WordPress.org-aligned dependency metadata.

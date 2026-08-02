@@ -121,3 +121,9 @@ Add all environment variables in Vercel project settings.
 
 - Legacy LinkedIn-SaaS routes remain in the repository but are not linked from the plugin storefront.
 - The plugin gateway requires Redis; it deliberately does not fall back to process memory.
+
+## Plugin feedback inbox
+
+Connected plugin sites can submit bugs, feature ideas, and general feedback from **AI Suite → Feedback**. Submissions are authenticated with the site's existing signing secret, rate-limited, and stored durably in Upstash Redis.
+
+Set `FEEDBACK_ADMIN_PASSWORD` to a unique value of at least 12 characters, then open `/feedback-review` to review submissions, add private notes, and move each item through new, reviewing, planned, resolved, or spam. The inbox uses `FEEDBACK_ADMIN_SESSION_SECRET`, `NEXTAUTH_SECRET`, or the existing `GATEWAY_KMS_KEY` (in that order) to sign its private session. The route is deliberately unlinked, no-indexed, uncached, and protected by an HttpOnly same-site cookie.

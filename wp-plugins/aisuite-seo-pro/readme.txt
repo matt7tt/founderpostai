@@ -4,7 +4,7 @@ Tags: seo, ai, automation, bulk optimization
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,11 @@ AI Suite Core and AI Suite SEO must both be installed and active.
 5. Open AI Suite > SEO Pro and enter the license key from your receipt.
 
 == Changelog ==
+
+= 1.0.3 =
+
+* Added direct feedback links on the SEO Pro settings and Plugins screens.
+* Reports use Core's authenticated feedback form with SEO Pro preselected.
 
 = 1.0.2 =
 

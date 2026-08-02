@@ -74,8 +74,8 @@ class AISuite_SEO_Optimizer {
 			'content'      => wp_strip_all_tags( $post->post_content ),
 			'excerpt'      => $post->post_excerpt,
 			'current_meta' => array(
-				'title'       => (string) get_post_meta( $post_id, self::META_TITLE, true ),
-				'description' => (string) get_post_meta( $post_id, self::META_DESCRIPTION, true ),
+				'title'       => $this->current_value( $post_id, 'title' ),
+				'description' => $this->current_value( $post_id, 'description' ),
 			),
 			'link_targets' => $this->link_candidates( $post_id ),
 		);
@@ -97,38 +97,7 @@ class AISuite_SEO_Optimizer {
 	 * this category.
 	 */
 	protected function link_candidates( $exclude_id, $limit = 60 ) {
-		$posts = get_posts(
-			array(
-				'post_type'        => array( 'post', 'page' ),
-				'post_status'      => 'publish',
-				// Fetch one extra and skip the current post below. A
-				// post__not_in query is unnecessarily expensive on large sites.
-				'posts_per_page'   => $limit + 1,
-				'orderby'          => 'modified',
-				'order'            => 'DESC',
-				'suppress_filters' => false,
-			)
-		);
-
-		$candidates = array();
-
-		foreach ( $posts as $post ) {
-			if ( (int) $post->ID === (int) $exclude_id ) {
-				continue;
-			}
-
-			$candidates[] = array(
-				'id'    => $post->ID,
-				'title' => $post->post_title,
-				'url'   => get_permalink( $post ),
-			);
-
-			if ( count( $candidates ) >= $limit ) {
-				break;
-			}
-		}
-
-		return $candidates;
+		return AISuite_SEO_Link_Candidates::select( $exclude_id, $limit );
 	}
 
 	/**
@@ -208,6 +177,9 @@ class AISuite_SEO_Optimizer {
 		delete_post_meta( $post_id, '_aisuite_seo_error' );
 		delete_post_meta( $post_id, self::META_QUEUED );
 		update_post_meta( $post_id, '_aisuite_seo_analyzed', time() );
+		if ( class_exists( 'AISuite_SEO_Health_Screen' ) ) {
+			AISuite_SEO_Health_Screen::invalidate();
+		}
 	}
 
 	public function receive_failure( $message, $context ) {
@@ -256,14 +228,7 @@ class AISuite_SEO_Optimizer {
 	}
 
 	public function current_value( $post_id, $field ) {
-		switch ( $field ) {
-			case 'title':
-				return (string) get_post_meta( $post_id, self::META_TITLE, true );
-			case 'description':
-				return (string) get_post_meta( $post_id, self::META_DESCRIPTION, true );
-			default:
-				return '';
-		}
+		return AISuite_SEO_Meta_Adapter::read( $post_id, $field );
 	}
 
 	/**
@@ -300,11 +265,11 @@ class AISuite_SEO_Optimizer {
 
 			switch ( $row->field ) {
 				case 'title':
-					$updated = update_post_meta( $row->post_id, self::META_TITLE, $this->truncate( sanitize_text_field( $row->suggested_value ), 60 ) );
+					$updated = AISuite_SEO_Meta_Adapter::write( $row->post_id, 'title', $this->truncate( sanitize_text_field( $row->suggested_value ), 60 ) );
 					break;
 
 				case 'description':
-					$updated = update_post_meta( $row->post_id, self::META_DESCRIPTION, $this->truncate( sanitize_text_field( $row->suggested_value ), 155 ) );
+					$updated = AISuite_SEO_Meta_Adapter::write( $row->post_id, 'description', $this->truncate( sanitize_text_field( $row->suggested_value ), 155 ) );
 					break;
 
 				case 'internal_links':
@@ -320,12 +285,20 @@ class AISuite_SEO_Optimizer {
 					return new WP_Error( 'aisuite_seo_unknown_field', __( 'Unknown suggestion type.', 'founderpostai-ai-suite-seo' ) );
 			}
 
+			if ( is_wp_error( $updated ) ) {
+				return $updated;
+			}
+
 			if ( false === $updated ) {
 				return new WP_Error( 'aisuite_seo_write_failed', __( 'WordPress could not save that change. The suggestion remains pending so you can try again.', 'founderpostai-ai-suite-seo' ) );
 			}
 
 			if ( ! AISuite_SEO_Store::resolve( $suggestion_id, 'approved' ) ) {
 				return new WP_Error( 'aisuite_seo_resolved', __( 'That suggestion was handled by another request.', 'founderpostai-ai-suite-seo' ) );
+			}
+
+			if ( class_exists( 'AISuite_SEO_Health_Screen' ) ) {
+				AISuite_SEO_Health_Screen::invalidate();
 			}
 
 			return true;
@@ -356,6 +329,10 @@ class AISuite_SEO_Optimizer {
 
 			if ( ! AISuite_SEO_Store::resolve( $suggestion_id, 'rejected' ) ) {
 				return new WP_Error( 'aisuite_seo_resolved', __( 'That suggestion was handled by another request.', 'founderpostai-ai-suite-seo' ) );
+			}
+
+			if ( class_exists( 'AISuite_SEO_Health_Screen' ) ) {
+				AISuite_SEO_Health_Screen::invalidate();
 			}
 
 			return true;

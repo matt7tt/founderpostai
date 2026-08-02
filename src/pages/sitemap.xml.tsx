@@ -1,10 +1,16 @@
 import type { GetServerSideProps } from 'next';
+import { SEARCH_PAGES } from '../lib/search-content';
 import { SITE_LAST_MODIFIED, SITE_URL } from '../lib/site';
 
 const urls = [
   { loc: `${SITE_URL}/`, lastmod: SITE_LAST_MODIFIED },
   { loc: `${SITE_URL}/ai-suite`, lastmod: SITE_LAST_MODIFIED },
-  { loc: `${SITE_URL}/privacy`, lastmod: '2026-07-29' },
+  { loc: `${SITE_URL}/resources`, lastmod: SITE_LAST_MODIFIED },
+  ...SEARCH_PAGES.map((page) => ({
+    loc: `${SITE_URL}${page.path}`,
+    lastmod: SITE_LAST_MODIFIED,
+  })),
+  { loc: `${SITE_URL}/privacy`, lastmod: SITE_LAST_MODIFIED },
   { loc: `${SITE_URL}/terms`, lastmod: '2026-07-29' },
 ];
 
