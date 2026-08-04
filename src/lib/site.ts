@@ -1,14 +1,16 @@
 export const SITE_NAME = 'FounderPostAI';
 export const SITE_ALTERNATE_NAME = 'Founder Post AI';
 export const SITE_URL = 'https://founderpostai.com';
+export const WORDPRESS_ORG_CORE_URL =
+  'https://wordpress.org/plugins/founderpostai-ai-suite-core/';
 export const HOME_TITLE = 'AI SEO Plugin for WordPress | FounderPostAI';
 export const HOME_DESCRIPTION =
-  'Generate reviewable SEO titles, meta descriptions, and safe internal links in WordPress. Download Core and SEO free; add bulk automation with Pro.';
+  'Generate reviewable SEO titles, meta descriptions, and safe internal links in WordPress. Install Core free from WordPress.org, add SEO, and automate with Pro.';
 export const SOCIAL_IMAGE_PATH = '/og-image.png';
-export const SITE_LAST_MODIFIED = '2026-08-02';
-export const SITE_LAST_MODIFIED_ISO = '2026-08-02T18:00:00-07:00';
-export const WORDPRESS_ORG_REVIEW_NOTICE =
-  'FounderPostAI – AI Suite Core is awaiting WordPress.org review. Until the directory listing is approved, install Core and SEO from the direct ZIP downloads using Plugins → Add New → Upload Plugin.';
+export const SITE_LAST_MODIFIED = '2026-08-03';
+export const SITE_LAST_MODIFIED_ISO = '2026-08-03T19:00:00-07:00';
+export const WORDPRESS_ORG_STATUS_NOTICE =
+  'FounderPostAI – AI Suite Core is available free from the official WordPress.org Plugin Directory. Install it from Plugins → Add Plugin by searching for “FounderPostAI”, then upload the free SEO module from FounderPostAI.';
 
 export function absoluteUrl(path: string = '/'): string {
   return new URL(path, SITE_URL).toString();

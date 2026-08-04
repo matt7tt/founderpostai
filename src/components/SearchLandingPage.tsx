@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { useEffect } from 'react';
 import { track } from '../lib/ab';
 import { relatedSearchPages, type SearchPage } from '../lib/search-content';
+import { WORDPRESS_ORG_CORE_URL } from '../lib/site';
 import SearchPageStructuredData from './SearchPageStructuredData';
 import SeoHead from './SeoHead';
 
@@ -100,10 +101,10 @@ export default function SearchLandingPage({ page }: { page: SearchPage }) {
                 </p>
                 <div className="mt-7 flex flex-wrap gap-3">
                   <a
-                    href="/downloads/aisuite-core.zip"
+                    href={WORDPRESS_ORG_CORE_URL}
                     className="bg-[#00749C] px-5 py-3 text-sm font-bold text-white hover:bg-[#005d7e]"
                   >
-                    Download Core free ↓
+                    Get Core on WordPress.org →
                   </a>
                   <a
                     href="/downloads/aisuite-seo.zip"
@@ -396,14 +397,14 @@ export default function SearchLandingPage({ page }: { page: SearchPage }) {
                   Try the review workflow on a real WordPress page.
                 </h2>
                 <p className="mx-auto mb-7 max-w-2xl text-lg leading-relaxed text-white">
-                  AI Suite Core and SEO are free, GPL-licensed direct downloads. Install Core first,
-                  then add SEO and review every suggestion before applying it.
+                  AI Suite Core is free on WordPress.org, and SEO is a free GPL-licensed download.
+                  Install Core first, then add SEO and review every suggestion before applying it.
                 </p>
                 <a
-                  href="/downloads/aisuite-core.zip"
+                  href={WORDPRESS_ORG_CORE_URL}
                   className="inline-block bg-white px-7 py-3.5 font-bold text-[#1B1712] hover:bg-[#F7F4EE]"
                 >
-                  Download Core free ↓
+                  Get Core on WordPress.org →
                 </a>
               </div>
             </section>

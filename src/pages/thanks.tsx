@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import SeoHead from '../components/SeoHead';
 import { track } from '../lib/ab';
 import { AI_SUITE_PRODUCTS } from '../lib/products';
+import { WORDPRESS_ORG_CORE_URL } from '../lib/site';
 
 const SEO_PRO = AI_SUITE_PRODUCTS.find((product) => product.id === 'ai-suite-seo-pro')!;
 
@@ -148,7 +149,7 @@ export default function Thanks() {
             <p style={{ margin: '0 0 16px', fontSize: '14px', color: '#6b6b6b', lineHeight: 1.5 }}>
               The runtime: connection, credits, and brand context. Required by everything else.
             </p>
-            <a href="/downloads/aisuite-core.zip" style={downloadBtn}>Download Core ↓</a>
+            <a href={WORDPRESS_ORG_CORE_URL} style={downloadBtn}>Get Core on WordPress.org →</a>
           </div>
 
           <div style={card}>

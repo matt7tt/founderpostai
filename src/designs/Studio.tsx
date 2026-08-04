@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronUp } from 'lucide-react';
 import { AI_SEO_CAPABILITIES, HOME_FAQS } from '../lib/products';
-import { WORDPRESS_ORG_REVIEW_NOTICE } from '../lib/site';
+import { WORDPRESS_ORG_CORE_URL, WORDPRESS_ORG_STATUS_NOTICE } from '../lib/site';
 import styles from '../styles/Studio.module.css';
 
 const TICKER_ITEMS = [
@@ -27,11 +27,11 @@ const TRUSTED = [
 
 const PLUGINS = [
   {
-    id: 'FREE · DIRECT DOWNLOAD',
+    id: 'FREE · WORDPRESS.ORG',
     name: 'AI Suite Core',
     tagline: 'The runtime every module builds on',
     price: 'Free',
-    download: '/downloads/aisuite-core.zip',
+    download: WORDPRESS_ORG_CORE_URL,
     desc: 'Connection, credits, brand context, and a three-tier job queue (Action Scheduler → loopback → WP-Cron). One shared embedding index of your site that every module retrieves against.',
     features: ['Signed gateway calls, both directions', 'Credits meter or BYOK — your key is never stored in WordPress', 'Brand context shared across modules', 'Reconcile poll for firewalled hosts'],
   },
@@ -275,7 +275,7 @@ export default function Studio() {
         </p>
         <div role="note" className={styles.distributionNotice}>
           <strong>WordPress.org status</strong>
-          <p>{WORDPRESS_ORG_REVIEW_NOTICE}</p>
+          <p>{WORDPRESS_ORG_STATUS_NOTICE}</p>
         </div>
         <div className={styles.pluginGrid}>
           {PLUGINS.map((p) => (

@@ -9,7 +9,7 @@ import {
   AI_SUITE_REQUIREMENTS,
   AI_SUITE_TITLE,
 } from '../lib/products';
-import { WORDPRESS_ORG_REVIEW_NOTICE } from '../lib/site';
+import { WORDPRESS_ORG_STATUS_NOTICE } from '../lib/site';
 
 const serif = "Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif";
 const mono = "ui-monospace, 'SF Mono', Menlo, Consolas, monospace";
@@ -96,7 +96,7 @@ export default function AiSuite() {
                 </p>
                 <p className="mt-6 text-sm text-[#1B1712]/60">
                   Product details checked against the current packaged releases on{' '}
-                  <time dateTime="2026-07-30">July 30, 2026</time>.
+                  <time dateTime="2026-08-03">August 3, 2026</time>.
                 </p>
               </div>
             </header>
@@ -214,8 +214,8 @@ export default function AiSuite() {
                 </h2>
                 <p className="text-lg leading-relaxed text-[#1B1712]/70">
                   Install AI Suite Core first. AI Suite SEO and SEO Pro build on that shared
-                  runtime. The free plugins are direct downloads; paid access is sold by annual
-                  plan.
+                  runtime. Core is available from WordPress.org, SEO is a free direct download,
+                  and paid access is sold by annual plan.
                 </p>
                 <div
                   role="note"
@@ -228,7 +228,7 @@ export default function AiSuite() {
                     WordPress.org status
                   </p>
                   <p className="text-sm leading-relaxed text-[#1B1712]/75">
-                    {WORDPRESS_ORG_REVIEW_NOTICE}
+                    {WORDPRESS_ORG_STATUS_NOTICE}
                   </p>
                 </div>
               </div>
@@ -346,7 +346,7 @@ export default function AiSuite() {
                   </h2>
                   <ol className="space-y-5">
                     {[
-                      ['Download Core', 'Download AI Suite Core, then upload and activate it from Plugins → Add New → Upload Plugin.'],
+                      ['Install Core', 'In WordPress, open Plugins → Add Plugin, search for “FounderPostAI”, then install and activate AI Suite Core.'],
                       ['Connect the site', 'Open AI Suite → Connection, create a single-use connection code in FounderPostAI, and paste it into WordPress.'],
                       ['Install SEO', 'Download and activate AI Suite SEO after Core. WordPress recognizes Core through the declared plugin dependency.'],
                       ['Analyze and review', 'Run an analysis from a post or the SEO screen. Review titles, descriptions, and internal links before applying them.'],

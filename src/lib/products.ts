@@ -3,6 +3,7 @@ import {
   SITE_LAST_MODIFIED_ISO,
   SITE_URL,
   SOCIAL_IMAGE_PATH,
+  WORDPRESS_ORG_CORE_URL,
 } from './site';
 
 export const AI_SUITE_PATH = '/ai-suite';
@@ -36,7 +37,7 @@ export const AI_SUITE_PRODUCTS = [
       'Shared brand context',
       'Background job queue with fallbacks',
     ],
-    downloadPath: '/downloads/aisuite-core.zip',
+    downloadPath: WORDPRESS_ORG_CORE_URL,
   },
   {
     id: 'ai-suite-seo',
@@ -155,9 +156,9 @@ export const HOME_FAQS = [
 
 export const AI_SUITE_FAQS = [
   {
-    question: 'How do I install the plugins while WordPress.org review is pending?',
+    question: 'How do I install the free plugins?',
     answer:
-      'Download AI Suite Core and AI Suite SEO directly from FounderPostAI. In WordPress, open Plugins, choose Add New and then Upload Plugin. Install Core first, followed by SEO. The Core directory listing is awaiting WordPress.org review.',
+      'Install AI Suite Core from the official WordPress.org Plugin Directory by searching for “FounderPostAI” under Plugins → Add Plugin. Then download AI Suite SEO from FounderPostAI and upload it under Plugins → Add Plugin → Upload Plugin.',
   },
   {
     question: 'What is FounderPostAI AI Suite?',
@@ -192,7 +193,7 @@ export const AI_SUITE_FAQS = [
   {
     question: 'Are the FounderPostAI WordPress plugins free?',
     answer:
-      'AI Suite Core and AI Suite SEO are free direct downloads with no license checks. AI Suite SEO Pro costs $79 per year for one site. The Agency plan costs $199 per year for unlimited sites managed by the license holder.',
+      'AI Suite Core is free on WordPress.org, and AI Suite SEO is a free direct download with no license checks. AI Suite SEO Pro costs $79 per year for one site. The Agency plan costs $199 per year for unlimited sites managed by the license holder.',
   },
   {
     question: 'What happens to WordPress content during AI processing?',
