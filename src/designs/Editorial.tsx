@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { PAYMENT_LINKS, track } from '../lib/ab';
 import { AI_SEO_CAPABILITIES, HOME_FAQS } from '../lib/products';
-import { WORDPRESS_ORG_REVIEW_NOTICE } from '../lib/site';
+import { WORDPRESS_ORG_CORE_URL, WORDPRESS_ORG_STATUS_NOTICE } from '../lib/site';
 
 const serif = "Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif";
 const mono = "ui-monospace, 'SF Mono', Menlo, Consolas, monospace";
@@ -19,7 +19,7 @@ const plugins = [
       'Brand context shared across modules',
       'Reconcile poll for firewalled hosts',
     ],
-    cta: { label: 'Download Core ↓', href: '/downloads/aisuite-core.zip', track: null },
+    cta: { label: 'Get Core on WordPress.org →', href: WORDPRESS_ORG_CORE_URL, track: null },
   },
   {
     id: '02',
@@ -245,7 +245,7 @@ export default function Editorial() {
               WordPress.org status
             </p>
             <p className="text-sm leading-relaxed text-[#1B1712]/75">
-              {WORDPRESS_ORG_REVIEW_NOTICE}
+              {WORDPRESS_ORG_STATUS_NOTICE}
             </p>
           </div>
 

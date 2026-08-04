@@ -4,7 +4,7 @@ Canonical source: https://founderpostai.com/ai-suite
 Resource library: https://founderpostai.com/resources
 Publisher: FounderPostAI
 Support: support@founderpostai.com
-Last verified against packaged releases: 2026-08-02
+Last verified against packaged releases: 2026-08-03
 
 ## Direct answer
 
@@ -20,15 +20,16 @@ FounderPostAI AI Suite is a three-plugin WordPress AI SEO system. AI Suite Core 
 
 ## Distribution status
 
-- FounderPostAI – AI Suite Core is awaiting WordPress.org review.
-- Until the directory listing is approved, Core and SEO are available as direct ZIP downloads from FounderPostAI.
-- Install Core first, then SEO, using WordPress admin: Plugins > Add New > Upload Plugin.
+- FounderPostAI – AI Suite Core is available from the official WordPress.org Plugin Directory.
+- Install Core from WordPress admin by opening Plugins > Add Plugin and searching for “FounderPostAI”.
+- AI Suite SEO remains available as a free direct ZIP download from FounderPostAI; install it after Core using Plugins > Add Plugin > Upload Plugin.
 
 ## AI Suite Core
 
 - Current version: 0.1.4
 - Price: free
-- Download: https://founderpostai.com/downloads/aisuite-core.zip
+- Directory: https://wordpress.org/plugins/founderpostai-ai-suite-core/
+- Download: https://downloads.wordpress.org/plugin/founderpostai-ai-suite-core.0.1.4.zip
 - Role: shared runtime for secure gateway connections, credits, brand context, and background AI jobs
 - Capabilities: signed gateway calls; managed credits or BYOK; shared brand context; background job queue with fallbacks
 

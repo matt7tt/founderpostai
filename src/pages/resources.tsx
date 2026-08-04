@@ -12,6 +12,7 @@ import {
   organizationStructuredData,
   SITE_LAST_MODIFIED_ISO,
   SITE_URL,
+  WORDPRESS_ORG_CORE_URL,
   websiteStructuredData,
 } from '../lib/site';
 
@@ -241,10 +242,10 @@ export default function Resources() {
                 suggestions that improve the actual WordPress content.
               </p>
               <a
-                href="/downloads/aisuite-core.zip"
+                href={WORDPRESS_ORG_CORE_URL}
                 className="inline-block bg-[#F7F4EE] px-7 py-3.5 font-bold text-[#1B1712] hover:bg-[#52C5E8]"
               >
-                Download Core free ↓
+                Get Core on WordPress.org →
               </a>
             </div>
           </section>
