@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 class AISuite_SEO_Store {
 
-	const DB_VERSION = '2';
+	const DB_VERSION = '3';
 	const DB_OPTION  = 'aisuite_seo_db_version';
 
 	public static function table() {
@@ -48,6 +48,10 @@ class AISuite_SEO_Store {
 		) {$charset};";
 
 		dbDelta( $sql );
+
+		if ( class_exists( 'AISuite_SEO_Site_Index' ) ) {
+			AISuite_SEO_Site_Index::install();
+		}
 
 		wp_cache_delete( 'aisuite_seo_table', 'aisuite' );
 		update_option( self::DB_OPTION, self::DB_VERSION, false );
@@ -91,6 +95,10 @@ class AISuite_SEO_Store {
 		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) );
 
 		delete_option( self::DB_OPTION );
+
+		if ( class_exists( 'AISuite_SEO_Site_Index' ) ) {
+			AISuite_SEO_Site_Index::drop();
+		}
 	}
 
 	/**
@@ -374,5 +382,45 @@ class AISuite_SEO_Store {
 		}
 
 		return 1 === $updated;
+	}
+
+	/**
+	 * Dismiss an older pending field after a successful focused regeneration
+	 * returns no replacement (for example, no safe internal link exists).
+	 *
+	 * @param int    $post_id Post owning the pending field.
+	 * @param string $field   Valid suggestion field.
+	 * @return int Number of rows dismissed.
+	 */
+	public static function dismiss_pending_field( $post_id, $field ) {
+		global $wpdb;
+
+		$field = sanitize_key( $field );
+		if ( ! self::table_exists() || ! in_array( $field, AISuite_SEO_Optimizer::FIELDS, true ) ) {
+			return 0;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- custom queue-table state transition.
+		$updated = $wpdb->update(
+			self::table(),
+			array(
+				'status'      => 'rejected',
+				'resolved_at' => current_time( 'mysql', true ),
+				'resolved_by' => get_current_user_id(),
+			),
+			array(
+				'post_id' => (int) $post_id,
+				'field'   => $field,
+				'status'  => 'pending',
+			),
+			array( '%s', '%s', '%d' ),
+			array( '%d', '%s', '%s' )
+		);
+
+		if ( $updated ) {
+			self::flush_counts();
+		}
+
+		return (int) $updated;
 	}
 }

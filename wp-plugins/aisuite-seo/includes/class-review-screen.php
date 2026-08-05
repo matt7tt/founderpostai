@@ -21,6 +21,8 @@ class AISuite_SEO_Review_Screen {
 		add_action( 'admin_menu', array( $this, 'menu' ), 20 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'assets' ) );
 		add_action( 'admin_post_aisuite_seo_resolve', array( $this, 'handle_resolve' ) );
+		add_action( 'admin_post_aisuite_seo_bulk_apply', array( $this, 'handle_bulk_apply' ) );
+		add_action( 'admin_post_aisuite_seo_regenerate', array( $this, 'handle_regenerate' ) );
 		add_action( 'admin_post_aisuite_seo_analyze', array( $this, 'handle_analyze' ) );
 		add_filter( 'post_row_actions', array( $this, 'row_action' ), 10, 2 );
 		add_filter( 'page_row_actions', array( $this, 'row_action' ), 10, 2 );
@@ -62,6 +64,9 @@ class AISuite_SEO_Review_Screen {
 				'tooShort'    => __( 'Could use more detail', 'founderpostai-ai-suite-seo' ),
 				'tooLong'     => __( 'May be truncated', 'founderpostai-ai-suite-seo' ),
 				'confirmUndo' => __( 'Restore the exact value from before this change?', 'founderpostai-ai-suite-seo' ),
+				'confirmBulk' => __( 'Apply every selected suggestion? Each item still receives stale-value and permission checks.', 'founderpostai-ai-suite-seo' ),
+				'selected'    => __( 'selected', 'founderpostai-ai-suite-seo' ),
+				'maxBulk'     => __( 'You can apply up to 20 suggestions at once.', 'founderpostai-ai-suite-seo' ),
 			)
 		);
 	}
@@ -174,6 +179,10 @@ class AISuite_SEO_Review_Screen {
 				<?php endforeach; ?>
 			</ul>
 
+			<?php if ( 'pending' === $status && $total ) : ?>
+				<?php $this->render_bulk_toolbar(); ?>
+			<?php endif; ?>
+
 			<div class="aisuite-review">
 				<?php if ( empty( $suggestions ) ) : ?>
 					<?php $this->render_empty( $status ); ?>
@@ -254,7 +263,12 @@ class AISuite_SEO_Review_Screen {
 		?>
 		<article class="aisuite-card">
 			<header class="aisuite-card__head">
-				<span class="aisuite-card__field"><?php echo esc_html( isset( $label[ $row->field ] ) ? $label[ $row->field ] : $row->field ); ?></span>
+				<span class="aisuite-card__field">
+					<?php if ( 'pending' === $status ) : ?>
+						<input type="checkbox" class="aisuite-bulk-checkbox" name="suggestion_ids[]" value="<?php echo esc_attr( $row->id ); ?>" form="aisuite-bulk-apply" aria-label="<?php esc_attr_e( 'Select suggestion for bulk apply', 'founderpostai-ai-suite-seo' ); ?>" />
+					<?php endif; ?>
+					<?php echo esc_html( isset( $label[ $row->field ] ) ? $label[ $row->field ] : $row->field ); ?>
+				</span>
 				<?php if ( $post ) : ?>
 					<a class="aisuite-card__post" href="<?php echo esc_url( get_edit_post_link( $post->ID ) ); ?>">
 						<?php echo esc_html( get_the_title( $post ) ); ?>
@@ -291,6 +305,7 @@ class AISuite_SEO_Review_Screen {
 			<?php endif; ?>
 
 			<?php if ( 'pending' === $status ) : ?>
+				<?php $this->render_refine_form( $row ); ?>
 				<footer class="aisuite-card__actions">
 					<?php $this->render_apply_button( $row ); ?>
 					<?php $this->render_resolve_button( $row->id, 'reject', __( 'Dismiss', 'founderpostai-ai-suite-seo' ), 'button-secondary' ); ?>
@@ -332,7 +347,6 @@ class AISuite_SEO_Review_Screen {
 
 	/** Render an editable title or description tied to its Apply form. */
 	protected function render_suggestion_editor( $row ) {
-		$form_id    = 'aisuite-apply-' . (int) $row->id;
 		$metric_id  = 'aisuite-metric-' . (int) $row->id;
 		$is_title   = 'title' === $row->field;
 		$max_chars  = $is_title ? 60 : 155;
@@ -340,9 +354,9 @@ class AISuite_SEO_Review_Screen {
 		$value      = (string) $row->suggested_value;
 		?>
 		<?php if ( $is_title ) : ?>
-			<input type="text" class="widefat aisuite-suggestion-editor" name="suggested_value" value="<?php echo esc_attr( $value ); ?>" maxlength="<?php echo esc_attr( $max_chars ); ?>" required form="<?php echo esc_attr( $form_id ); ?>" aria-describedby="<?php echo esc_attr( $metric_id ); ?>" data-aisuite-suggestion data-field="title" data-max-chars="<?php echo esc_attr( $max_chars ); ?>" data-max-pixels="<?php echo esc_attr( $max_pixels ); ?>" />
+			<input type="text" class="widefat aisuite-suggestion-editor" value="<?php echo esc_attr( $value ); ?>" maxlength="<?php echo esc_attr( $max_chars ); ?>" required aria-describedby="<?php echo esc_attr( $metric_id ); ?>" data-aisuite-suggestion data-suggestion-id="<?php echo esc_attr( $row->id ); ?>" data-field="title" data-max-chars="<?php echo esc_attr( $max_chars ); ?>" data-max-pixels="<?php echo esc_attr( $max_pixels ); ?>" />
 		<?php else : ?>
-			<textarea class="widefat aisuite-suggestion-editor" name="suggested_value" rows="3" maxlength="<?php echo esc_attr( $max_chars ); ?>" required form="<?php echo esc_attr( $form_id ); ?>" aria-describedby="<?php echo esc_attr( $metric_id ); ?>" data-aisuite-suggestion data-field="description" data-max-chars="<?php echo esc_attr( $max_chars ); ?>" data-max-pixels="<?php echo esc_attr( $max_pixels ); ?>"><?php echo esc_textarea( $value ); ?></textarea>
+			<textarea class="widefat aisuite-suggestion-editor" rows="3" maxlength="<?php echo esc_attr( $max_chars ); ?>" required aria-describedby="<?php echo esc_attr( $metric_id ); ?>" data-aisuite-suggestion data-suggestion-id="<?php echo esc_attr( $row->id ); ?>" data-field="description" data-max-chars="<?php echo esc_attr( $max_chars ); ?>" data-max-pixels="<?php echo esc_attr( $max_pixels ); ?>"><?php echo esc_textarea( $value ); ?></textarea>
 		<?php endif; ?>
 		<span class="aisuite-suggestion-metric" id="<?php echo esc_attr( $metric_id ); ?>" aria-live="polite"></span>
 		<?php
@@ -376,8 +390,43 @@ class AISuite_SEO_Review_Screen {
 			<input type="hidden" name="action" value="aisuite_seo_resolve" />
 			<input type="hidden" name="suggestion_id" value="<?php echo esc_attr( $row->id ); ?>" />
 			<input type="hidden" name="decision" value="apply" />
+			<?php if ( in_array( $row->field, array( 'title', 'description' ), true ) ) : ?>
+				<input type="hidden" name="suggested_value" value="<?php echo esc_attr( $row->suggested_value ); ?>" data-aisuite-apply-value="<?php echo esc_attr( $row->id ); ?>" />
+			<?php endif; ?>
 			<button type="submit" class="button button-primary"><?php esc_html_e( 'Apply reviewed change', 'founderpostai-ai-suite-seo' ); ?></button>
 		</form>
+		<?php
+	}
+
+	/** Bulk apply form; JavaScript serializes reviewed edits at submit time. */
+	protected function render_bulk_toolbar() {
+		?>
+		<div class="aisuite-bulk-toolbar">
+			<label><input type="checkbox" data-aisuite-select-all /> <?php esc_html_e( 'Select this page', 'founderpostai-ai-suite-seo' ); ?></label>
+			<form id="aisuite-bulk-apply" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" data-aisuite-bulk-form>
+				<?php wp_nonce_field( 'aisuite_seo_bulk_apply' ); ?>
+				<input type="hidden" name="action" value="aisuite_seo_bulk_apply" />
+				<button type="submit" class="button button-primary" disabled data-aisuite-bulk-submit><?php esc_html_e( 'Apply selected', 'founderpostai-ai-suite-seo' ); ?> <span data-aisuite-selected-count>(0)</span></button>
+			</form>
+			<span class="description"><?php esc_html_e( 'Up to 20 at once. Newer manual edits are never overwritten.', 'founderpostai-ai-suite-seo' ); ?></span>
+		</div>
+		<?php
+	}
+
+	/** Per-suggestion regeneration with optional human direction. */
+	protected function render_refine_form( $row ) {
+		?>
+		<details class="aisuite-refine">
+			<summary><?php esc_html_e( 'Regenerate or refine', 'founderpostai-ai-suite-seo' ); ?></summary>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<?php wp_nonce_field( 'aisuite_seo_regenerate_' . $row->id ); ?>
+				<input type="hidden" name="action" value="aisuite_seo_regenerate" />
+				<input type="hidden" name="suggestion_id" value="<?php echo esc_attr( $row->id ); ?>" />
+				<label for="aisuite-refine-<?php echo esc_attr( $row->id ); ?>"><?php esc_html_e( 'Optional direction', 'founderpostai-ai-suite-seo' ); ?></label>
+				<input type="text" class="regular-text" id="aisuite-refine-<?php echo esc_attr( $row->id ); ?>" name="instruction" maxlength="500" placeholder="<?php esc_attr_e( 'Example: make it more specific and less promotional', 'founderpostai-ai-suite-seo' ); ?>" />
+				<button type="submit" class="button"><?php esc_html_e( 'Generate another version', 'founderpostai-ai-suite-seo' ); ?></button>
+			</form>
+		</details>
 		<?php
 	}
 
@@ -447,6 +496,83 @@ class AISuite_SEO_Review_Screen {
 		}
 
 		$this->redirect( 'apply' === $decision ? 'applied' : 'dismissed' );
+	}
+
+	/** Apply a bounded selection, preserving per-item stale and capability checks. */
+	public function handle_bulk_apply() {
+		if ( ! current_user_can( self::CAP ) ) {
+			wp_die( esc_html__( 'You do not have permission to do that.', 'founderpostai-ai-suite-seo' ) );
+		}
+
+		check_admin_referer( 'aisuite_seo_bulk_apply' );
+
+		$ids    = isset( $_POST['suggestion_ids'] ) && is_array( $_POST['suggestion_ids'] ) ? array_map( 'absint', wp_unslash( $_POST['suggestion_ids'] ) ) : array();
+		$ids    = array_slice( array_values( array_unique( array_filter( $ids ) ) ), 0, 20 );
+		$values = isset( $_POST['reviewed_values'] ) && is_array( $_POST['reviewed_values'] ) ? map_deep( wp_unslash( $_POST['reviewed_values'] ), 'sanitize_text_field' ) : array();
+
+		if ( empty( $ids ) ) {
+			$this->redirect( 'error', __( 'Select at least one suggestion.', 'founderpostai-ai-suite-seo' ) );
+		}
+
+		$optimizer = new AISuite_SEO_Optimizer( false );
+		$applied   = 0;
+		$failed    = 0;
+
+		foreach ( $ids as $id ) {
+			$row    = AISuite_SEO_Store::get( $id );
+			$edited = null;
+
+			if ( $row && in_array( $row->field, array( 'title', 'description' ), true ) && isset( $values[ $id ] ) && is_scalar( $values[ $id ] ) ) {
+				$edited = sanitize_text_field( (string) $values[ $id ] );
+			}
+
+			$result = $optimizer->apply( $id, true, $edited );
+			if ( is_wp_error( $result ) ) {
+				++$failed;
+			} else {
+				++$applied;
+			}
+		}
+
+		$this->redirect( 'bulk_applied', $applied . ',' . $failed );
+	}
+
+	/** Re-run analysis with an optional field-specific instruction. */
+	public function handle_regenerate() {
+		$id = isset( $_POST['suggestion_id'] ) ? (int) $_POST['suggestion_id'] : 0;
+
+		if ( ! current_user_can( self::CAP ) ) {
+			wp_die( esc_html__( 'You do not have permission to do that.', 'founderpostai-ai-suite-seo' ) );
+		}
+
+		check_admin_referer( 'aisuite_seo_regenerate_' . $id );
+		$row = AISuite_SEO_Store::get( $id );
+
+		if ( ! $row || 'pending' !== $row->status || ! current_user_can( 'edit_post', $row->post_id ) ) {
+			$this->redirect( 'error', __( 'That suggestion can no longer be regenerated.', 'founderpostai-ai-suite-seo' ) );
+		}
+
+		if ( isset( $_POST['instruction'] ) && ! is_string( $_POST['instruction'] ) ) {
+			$this->redirect( 'error', __( 'The refinement direction is invalid.', 'founderpostai-ai-suite-seo' ) );
+		}
+
+		$instruction = isset( $_POST['instruction'] ) ? sanitize_text_field( wp_unslash( $_POST['instruction'] ) ) : '';
+		$instruction = function_exists( 'mb_substr' ) ? mb_substr( $instruction, 0, 500, 'UTF-8' ) : substr( $instruction, 0, 500 );
+		$optimizer   = new AISuite_SEO_Optimizer( false );
+		$result      = $optimizer->analyze(
+			$row->post_id,
+			true,
+			array(
+				'focus'       => $row->field,
+				'instruction' => $instruction,
+			)
+		);
+
+		if ( is_wp_error( $result ) ) {
+			$this->redirect( 'error', $result->get_error_message() );
+		}
+
+		$this->redirect( 'queued', '1' );
 	}
 
 	public function handle_analyze() {
@@ -584,6 +710,19 @@ class AISuite_SEO_Review_Screen {
 			case 'undone':
 				$type    = 'success';
 				$message = __( 'Undone. The exact previous value was restored.', 'founderpostai-ai-suite-seo' );
+				break;
+
+			case 'bulk_applied':
+				$parts   = array_map( 'absint', explode( ',', $detail ) );
+				$applied = isset( $parts[0] ) ? $parts[0] : 0;
+				$failed  = isset( $parts[1] ) ? $parts[1] : 0;
+				$type    = $failed ? 'warning' : 'success';
+				$message = sprintf(
+					/* translators: 1: applied count, 2: safely skipped count */
+					__( 'Applied %1$d selected suggestions. Safely skipped %2$d that were stale, invalid, or unavailable.', 'founderpostai-ai-suite-seo' ),
+					$applied,
+					$failed
+				);
 				break;
 
 			case 'dismissed':

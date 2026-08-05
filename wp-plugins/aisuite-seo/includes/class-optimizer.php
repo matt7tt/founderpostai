@@ -33,15 +33,16 @@ class AISuite_SEO_Optimizer {
 	 * Queue a post for analysis. Sends the content the gateway needs and nothing
 	 * more — no user emails, no unrelated meta.
 	 *
-	 * @param int  $post_id      Post to analyze.
-	 * @param bool $enforce_caps Check the current user's rights. Pass false only
-	 *                           for work started by cron or a gateway callback,
-	 *                           where there is no current user at all — an
-	 *                           unconditional check there fails every time and
-	 *                           silently disables scheduled runs.
+	 * @param int   $post_id      Post to analyze.
+	 * @param bool  $enforce_caps Check the current user's rights. Pass false only
+	 *                            for work started by cron or a gateway callback,
+	 *                            where there is no current user at all — an
+	 *                            unconditional check there fails every time and
+	 *                            silently disables scheduled runs.
+	 * @param array $review_request Optional focus and human refinement direction.
 	 * @return string|WP_Error Local job reference.
 	 */
-	public function analyze( $post_id, $enforce_caps = true ) {
+	public function analyze( $post_id, $enforce_caps = true, array $review_request = array() ) {
 		$post = get_post( $post_id );
 
 		if ( ! $post || 'trash' === $post->post_status ) {
@@ -69,25 +70,31 @@ class AISuite_SEO_Optimizer {
 		}
 
 		$payload = array(
-			'post_id'      => (int) $post_id,
-			'permalink'    => get_permalink( $post ),
-			'post_type'    => $post->post_type,
-			'title'        => $post->post_title,
-			'content'      => wp_strip_all_tags( $post->post_content ),
-			'excerpt'      => $post->post_excerpt,
-			'current_meta' => array(
+			'post_id'        => (int) $post_id,
+			'permalink'      => get_permalink( $post ),
+			'post_type'      => $post->post_type,
+			'title'          => $post->post_title,
+			'content'        => wp_strip_all_tags( $post->post_content ),
+			'excerpt'        => $post->post_excerpt,
+			'current_meta'   => array(
 				'title'       => $this->current_value( $post_id, 'title' ),
 				'description' => $this->current_value( $post_id, 'description' ),
 			),
-			'link_targets' => $this->link_candidates( $post_id ),
+			'link_targets'   => $this->link_candidates( $post_id ),
+			'review_request' => array(
+				'focus'       => isset( $review_request['focus'] ) && in_array( $review_request['focus'], self::FIELDS, true ) ? $review_request['focus'] : 'all',
+				'instruction' => isset( $review_request['instruction'] ) ? $this->truncate( sanitize_text_field( $review_request['instruction'] ), 500 ) : '',
+			),
 		);
 
 		$ref = aisuite()->jobs->enqueue(
 			'seo.analyze_post',
 			$payload,
 			array(
-				'post_id'       => (int) $post_id,
-				'analysis_hash' => self::analysis_hash( $post ),
+				'post_id'        => (int) $post_id,
+				'analysis_hash'  => self::analysis_hash( $post ),
+				'review_focus'   => ! empty( $review_request ) && isset( $review_request['focus'] ) ? sanitize_key( $review_request['focus'] ) : '',
+				'replace_review' => ! empty( $review_request ),
 			)
 		);
 
@@ -124,8 +131,9 @@ class AISuite_SEO_Optimizer {
 			return;
 		}
 
-		$suggestions  = isset( $result['suggestions'] ) ? (array) $result['suggestions'] : array();
-		$store_failed = false;
+		$suggestions   = isset( $result['suggestions'] ) ? (array) $result['suggestions'] : array();
+		$store_failed  = false;
+		$stored_fields = array();
 
 		foreach ( $suggestions as $suggestion ) {
 			if ( ! is_array( $suggestion ) ) {
@@ -175,12 +183,25 @@ class AISuite_SEO_Optimizer {
 
 			if ( ! $stored ) {
 				$store_failed = true;
+			} else {
+				$stored_fields[ $field ] = true;
 			}
 		}
 
 		if ( $store_failed ) {
 			$this->receive_failure( __( 'A suggestion could not be saved. Check the site database and run the analysis again.', 'founderpostai-ai-suite-seo' ), $context );
 			return;
+		}
+
+		if ( ! empty( $context['replace_review'] ) ) {
+			$focus  = isset( $context['review_focus'] ) ? sanitize_key( $context['review_focus'] ) : 'all';
+			$fields = in_array( $focus, self::FIELDS, true ) ? array( $focus ) : self::FIELDS;
+
+			foreach ( $fields as $field ) {
+				if ( empty( $stored_fields[ $field ] ) ) {
+					AISuite_SEO_Store::dismiss_pending_field( $post_id, $field );
+				}
+			}
 		}
 
 		delete_post_meta( $post_id, self::META_ERROR );

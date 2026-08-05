@@ -159,6 +159,69 @@
 	margin-left: 4px;
 }
 
+.aisuite-bulk-toolbar {
+	align-items: center;
+	background: #fff;
+	border: 1px solid var(--aisuite-line, #dcdcde);
+	clear: both;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin: 14px 0;
+	padding: 10px 14px;
+}
+
+.aisuite-bulk-toolbar form {
+	display: inline-flex;
+}
+
+.aisuite-card__field {
+	align-items: center;
+	display: inline-flex;
+	gap: 7px;
+}
+
+.aisuite-refine {
+	border-top: 1px solid var(--aisuite-line, #dcdcde);
+	padding: 10px 16px;
+}
+
+.aisuite-refine summary {
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.aisuite-refine form {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 10px;
+}
+
+.aisuite-refine label {
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.aisuite-gsc-connect {
+	max-width: 760px;
+}
+
+.aisuite-gsc-table {
+	margin: 12px 0 28px;
+}
+
+.aisuite-gsc-table td,
+.aisuite-gsc-table th {
+	vertical-align: top;
+}
+
+.aisuite-gsc-table td:nth-child(2) {
+	max-width: 300px;
+	overflow-wrap: anywhere;
+}
+
 .aisuite-empty {
 	background: #fff;
 	border: 1px dashed var(--aisuite-line, #dcdcde);

@@ -23,6 +23,7 @@ Core does not modify posts or pages. It provides:
 * Signed requests and callbacks, retry handling, callback health checks, and polling for hosts that block callbacks
 * A choice of service billing: managed actions or your own Anthropic API key
 * A direct feedback form for bug reports, ideas, and general product feedback
+* An encrypted gateway connection for optional read-only Google Search Console reporting used by compatible modules
 
 All functionality included in this plugin is available without a plugin license, feature key, trial period, or time limit. Managed-action allowances are usage limits of the external AI service, not locks on plugin code. The complete plugin is licensed under GPLv2 or later.
 
@@ -46,6 +47,8 @@ If you choose BYOK service billing, your Anthropic API key is sent to the gatewa
 
 When an administrator explicitly submits the Feedback form, the selected plugin, feedback type, message, optional reply email, plugin version, WordPress version, PHP version, and connected site identity are sent to the FounderPostAI gateway. They are stored in a private review inbox for support and product planning. No feedback is sent automatically.
 
+When an administrator explicitly connects Google Search Console from a compatible module, the browser is sent to Google's OAuth consent screen with the read-only Search Console scope. Google sends the gateway an access token and refresh token. The refresh token is encrypted on the gateway and is never stored in WordPress. The gateway uses it to list accessible Search Console properties and retrieve the selected property's finalized queries, pages, clicks, impressions, click-through rates, and average positions. Search Console data is returned to the WordPress dashboard and is not sent to an AI model. Disconnecting removes the gateway-held Google token.
+
 FounderPostAI AI Suite gateway:
 
 * Service: https://founderpostai.com/ai-suite
@@ -57,6 +60,12 @@ Anthropic API:
 * Service: https://www.anthropic.com/api
 * Commercial terms: https://www.anthropic.com/legal/commercial-terms
 * Privacy: https://www.anthropic.com/legal/privacy
+
+Google Search Console API (optional):
+
+* Service: https://search.google.com/search-console
+* API terms: https://developers.google.com/terms/api-services-user-data-policy
+* Privacy: https://policies.google.com/privacy
 
 The plugin does not download, install, or execute code from either service. Suggestions are returned as data and are validated by the installed module before storage or use.
 

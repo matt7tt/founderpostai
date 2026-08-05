@@ -113,7 +113,7 @@ function aisuite_add_privacy_policy_content() {
 	}
 
 	$content = sprintf(
-		'<p>%1$s</p><p>%2$s</p><p>%3$s</p><p>%4$s</p>',
+		'<p>%1$s</p><p>%2$s</p><p>%3$s</p><p>%4$s</p><p>%5$s</p>',
 		esc_html__(
 			'When an administrator connects this site to FounderPostAI, the site URL, administrator email address, WordPress version, and PHP version are sent to the FounderPostAI AI Suite gateway.',
 			'founderpostai-ai-suite-core'
@@ -135,6 +135,10 @@ function aisuite_add_privacy_policy_content() {
 		),
 		esc_html__(
 			'If an administrator submits plugin feedback, the message, selected reply email, plugin and software versions, and connected site identity are sent to FounderPostAI for support and product planning.',
+			'founderpostai-ai-suite-core'
+		),
+		esc_html__(
+			'If an administrator connects Google Search Console, Google grants the FounderPostAI gateway read-only access. The encrypted refresh token and selected property are stored on the gateway; search performance is shown in WordPress and is not sent to an AI model. Disconnecting removes the Google token.',
 			'founderpostai-ai-suite-core'
 		)
 	);

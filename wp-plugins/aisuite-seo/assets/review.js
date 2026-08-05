@@ -47,6 +47,12 @@
 				target.textContent = value;
 			}
 		}
+
+		var suggestionId = editor.getAttribute( 'data-suggestion-id' );
+		var applyValue = suggestionId ? document.querySelector( '[data-aisuite-apply-value="' + suggestionId + '"]' ) : null;
+		if ( applyValue ) {
+			applyValue.value = value;
+		}
 	}
 
 	document.querySelectorAll( '[data-aisuite-suggestion]' ).forEach( function ( editor ) {
@@ -63,4 +69,59 @@
 			}
 		} );
 	} );
+
+	var bulkForm = document.querySelector( '[data-aisuite-bulk-form]' );
+	var bulkBoxes = Array.from( document.querySelectorAll( '.aisuite-bulk-checkbox' ) );
+	var selectAll = document.querySelector( '[data-aisuite-select-all]' );
+
+	function updateBulk() {
+		var checked = bulkBoxes.filter( function ( box ) { return box.checked; } );
+		if ( checked.length > 20 ) {
+			checked[ checked.length - 1 ].checked = false;
+			window.alert( labels.maxBulk || 'You can apply up to 20 suggestions at once.' );
+			checked = bulkBoxes.filter( function ( box ) { return box.checked; } );
+		}
+		var submit = document.querySelector( '[data-aisuite-bulk-submit]' );
+		var count = document.querySelector( '[data-aisuite-selected-count]' );
+
+		if ( submit ) {
+			submit.disabled = 0 === checked.length;
+		}
+		if ( count ) {
+			count.textContent = '(' + checked.length + ' ' + ( labels.selected || '' ) + ')';
+		}
+		if ( selectAll ) {
+			selectAll.checked = bulkBoxes.length > 0 && checked.length === bulkBoxes.length;
+			selectAll.indeterminate = checked.length > 0 && checked.length < bulkBoxes.length;
+		}
+	}
+
+	bulkBoxes.forEach( function ( box ) { box.addEventListener( 'change', updateBulk ); } );
+	if ( selectAll ) {
+		selectAll.addEventListener( 'change', function () {
+			bulkBoxes.forEach( function ( box, index ) { box.checked = selectAll.checked && index < 20; } );
+			updateBulk();
+		} );
+	}
+
+	if ( bulkForm ) {
+		bulkForm.addEventListener( 'submit', function ( event ) {
+			var checked = bulkBoxes.filter( function ( box ) { return box.checked; } ).slice( 0, 20 );
+			bulkForm.querySelectorAll( '[data-aisuite-generated-bulk-value]' ).forEach( function ( input ) { input.remove(); } );
+			checked.forEach( function ( box ) {
+				var editor = document.querySelector( '[data-aisuite-suggestion][data-suggestion-id="' + box.value + '"]' );
+				if ( editor ) {
+					var input = document.createElement( 'input' );
+					input.type = 'hidden';
+					input.name = 'reviewed_values[' + box.value + ']';
+					input.value = editor.value.trim();
+					input.setAttribute( 'data-aisuite-generated-bulk-value', '' );
+					bulkForm.appendChild( input );
+				}
+			} );
+			if ( ! checked.length || ! window.confirm( labels.confirmBulk || 'Apply selected suggestions?' ) ) {
+				event.preventDefault();
+			}
+		} );
+	}
 }() );

@@ -52,6 +52,13 @@ export default function Privacy() {
           to delete it.
         </p>
         <p>
+          <strong>When you connect Google Search Console:</strong> Google grants the gateway a
+          read-only refresh token, which is stored encrypted. The selected property and its
+          search queries, pages, clicks, impressions, click-through rates, and average positions
+          are retrieved only to provide the WordPress search-performance dashboard. Search
+          Console data is not sent to an AI model. Disconnecting removes the stored Google token.
+        </p>
+        <p>
           <strong>On this website:</strong> anonymized usage analytics via Vercel Web Analytics,
           including page paths, referring domains, plugin-download clicks, pricing and checkout
           clicks, support and outbound-link clicks, and the purchased plan after a successful
@@ -68,8 +75,9 @@ export default function Privacy() {
 
         <h2>Third parties</h2>
         <p>
-          Stripe (payments), Anthropic (inference, with training opted out), Vercel (hosting and
-          analytics), and Upstash (durable gateway and feedback storage).
+          Stripe (payments), Anthropic (inference, with training opted out), Google (optional
+          read-only Search Console data), Vercel (hosting and analytics), and Upstash (durable
+          gateway, OAuth token, and feedback storage).
         </p>
 
         <h2>Your rights</h2>
