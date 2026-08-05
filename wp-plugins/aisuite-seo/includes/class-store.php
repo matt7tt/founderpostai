@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 class AISuite_SEO_Store {
 
-	const DB_VERSION = '1';
+	const DB_VERSION = '2';
 	const DB_OPTION  = 'aisuite_seo_db_version';
 
 	public static function table() {
@@ -33,11 +33,15 @@ class AISuite_SEO_Store {
 			field VARCHAR(32) NOT NULL,
 			current_value LONGTEXT NULL,
 			suggested_value LONGTEXT NULL,
+			rollback_value LONGTEXT NULL,
+			applied_value LONGTEXT NULL,
 			rationale TEXT NULL,
 			status VARCHAR(16) NOT NULL DEFAULT 'pending',
 			created_at DATETIME NOT NULL,
 			resolved_at DATETIME NULL,
 			resolved_by BIGINT UNSIGNED NULL,
+			undo_at DATETIME NULL,
+			undo_by BIGINT UNSIGNED NULL,
 			PRIMARY KEY  (id),
 			KEY post_field (post_id, field),
 			KEY status_created (status, created_at)
@@ -259,9 +263,87 @@ class AISuite_SEO_Store {
 
 	/** Counts are cached; any write must clear them. */
 	public static function flush_counts() {
-		foreach ( array( 'pending', 'approved', 'rejected' ) as $status ) {
+		foreach ( array( 'pending', 'approved', 'rejected', 'undone' ) as $status ) {
 			wp_cache_delete( 'aisuite_seo_count_' . $status, 'aisuite' );
 		}
+	}
+
+	/**
+	 * Resolve an applied suggestion and atomically journal its exact rollback.
+	 *
+	 * @param int    $id              Suggestion ID.
+	 * @param string $suggested_value Final reviewed suggestion.
+	 * @param string $rollback_value  Exact value before the write.
+	 * @param string $applied_value   Exact metadata or content fingerprint after the write.
+	 * @return bool
+	 */
+	public static function resolve_applied( $id, $suggested_value, $rollback_value, $applied_value ) {
+		global $wpdb;
+
+		if ( ! self::table_exists() ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- custom queue-table write; flush_counts() invalidates its cache below.
+		$updated = $wpdb->update(
+			self::table(),
+			array(
+				'suggested_value' => (string) $suggested_value,
+				'rollback_value'  => (string) $rollback_value,
+				'applied_value'   => (string) $applied_value,
+				'status'          => 'approved',
+				'resolved_at'     => current_time( 'mysql', true ),
+				'resolved_by'     => get_current_user_id(),
+			),
+			array(
+				'id'     => (int) $id,
+				'status' => 'pending',
+			),
+			array( '%s', '%s', '%s', '%s', '%s', '%d' ),
+			array( '%d', '%s' )
+		);
+
+		if ( $updated ) {
+			self::flush_counts();
+		}
+
+		return 1 === $updated;
+	}
+
+	/**
+	 * Mark a safely rolled-back application as undone.
+	 *
+	 * @param int $id Suggestion ID.
+	 * @return bool
+	 */
+	public static function mark_undone( $id ) {
+		global $wpdb;
+
+		if ( ! self::table_exists() ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- custom queue-table write; flush_counts() invalidates its cache below.
+		$updated = $wpdb->update(
+			self::table(),
+			array(
+				'status'  => 'undone',
+				'undo_at' => current_time( 'mysql', true ),
+				'undo_by' => get_current_user_id(),
+			),
+			array(
+				'id'     => (int) $id,
+				'status' => 'approved',
+			),
+			array( '%s', '%s', '%d' ),
+			array( '%d', '%s' )
+		);
+
+		if ( $updated ) {
+			self::flush_counts();
+		}
+
+		return 1 === $updated;
 	}
 
 	public static function resolve( $id, $status ) {

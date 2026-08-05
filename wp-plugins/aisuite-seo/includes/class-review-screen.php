@@ -51,6 +51,19 @@ class AISuite_SEO_Review_Screen {
 
 		wp_enqueue_style( 'aisuite-admin', AISUITE_CORE_URL . 'assets/admin.css', array(), AISUITE_CORE_VERSION );
 		wp_enqueue_style( 'aisuite-seo-review', AISUITE_SEO_URL . 'assets/review.css', array( 'aisuite-admin' ), AISUITE_SEO_VERSION );
+		wp_enqueue_script( 'aisuite-seo-review', AISUITE_SEO_URL . 'assets/review.js', array(), AISUITE_SEO_VERSION, true );
+		wp_localize_script(
+			'aisuite-seo-review',
+			'AISuiteSEOReview',
+			array(
+				'characters'  => __( 'characters', 'founderpostai-ai-suite-seo' ),
+				'pixels'      => __( 'px wide', 'founderpostai-ai-suite-seo' ),
+				'goodFit'     => __( 'Good search-result fit', 'founderpostai-ai-suite-seo' ),
+				'tooShort'    => __( 'Could use more detail', 'founderpostai-ai-suite-seo' ),
+				'tooLong'     => __( 'May be truncated', 'founderpostai-ai-suite-seo' ),
+				'confirmUndo' => __( 'Restore the exact value from before this change?', 'founderpostai-ai-suite-seo' ),
+			)
+		);
 	}
 
 	public function row_action( $actions, $post ) {
@@ -86,7 +99,7 @@ class AISuite_SEO_Review_Screen {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only filter.
 		$status = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : 'pending';
 
-		if ( ! in_array( $status, array( 'pending', 'approved', 'rejected' ), true ) ) {
+		if ( ! in_array( $status, array( 'pending', 'approved', 'rejected', 'undone' ), true ) ) {
 			$status = 'pending';
 		}
 
@@ -140,8 +153,9 @@ class AISuite_SEO_Review_Screen {
 				foreach ( array(
 					'pending'  => __( 'Pending', 'founderpostai-ai-suite-seo' ),
 					'approved' => __( 'Applied', 'founderpostai-ai-suite-seo' ),
+					'undone'   => __( 'Undone', 'founderpostai-ai-suite-seo' ),
 					'rejected' => __( 'Dismissed', 'founderpostai-ai-suite-seo' ),
-					) as $key => $label ) :
+				) as $key => $label ) :
 						$status_url = add_query_arg(
 							array(
 								'page'   => self::SLUG,
@@ -149,7 +163,7 @@ class AISuite_SEO_Review_Screen {
 							),
 							admin_url( 'admin.php' )
 						);
-						?>
+					?>
 						<li>
 							<a href="<?php echo esc_url( $status_url ); ?>"
 								class="<?php echo $status === $key ? 'current' : ''; ?>">
@@ -230,8 +244,9 @@ class AISuite_SEO_Review_Screen {
 	}
 
 	protected function render_card( $row, $status ) {
-		$post  = get_post( $row->post_id );
-		$label = array(
+		$post     = get_post( $row->post_id );
+		$editable = 'pending' === $status && in_array( $row->field, array( 'title', 'description' ), true );
+		$label    = array(
 			'title'          => __( 'Search title', 'founderpostai-ai-suite-seo' ),
 			'description'    => __( 'Meta description', 'founderpostai-ai-suite-seo' ),
 			'internal_links' => __( 'Internal links', 'founderpostai-ai-suite-seo' ),
@@ -255,13 +270,21 @@ class AISuite_SEO_Review_Screen {
 					</div>
 				</div>
 				<div class="aisuite-diff__side aisuite-diff__side--suggested">
-					<span class="aisuite-diff__label"><?php esc_html_e( 'Suggested', 'founderpostai-ai-suite-seo' ); ?></span>
+					<span class="aisuite-diff__label"><?php echo $editable ? esc_html__( 'Suggested — edit before applying', 'founderpostai-ai-suite-seo' ) : esc_html__( 'Suggested', 'founderpostai-ai-suite-seo' ); ?></span>
 					<div class="aisuite-diff__value">
-						<?php echo wp_kses_post( $this->format_value( $row ) ); ?>
+						<?php if ( $editable ) : ?>
+							<?php $this->render_suggestion_editor( $row ); ?>
+						<?php else : ?>
+							<?php echo wp_kses_post( $this->format_value( $row ) ); ?>
+						<?php endif; ?>
 					</div>
 				</div>
 
 			</div>
+
+			<?php if ( $editable && $post ) : ?>
+				<?php $this->render_serp_preview( $row, $post ); ?>
+			<?php endif; ?>
 
 			<?php if ( $row->rationale ) : ?>
 				<p class="aisuite-card__why"><?php echo esc_html( $row->rationale ); ?></p>
@@ -269,8 +292,13 @@ class AISuite_SEO_Review_Screen {
 
 			<?php if ( 'pending' === $status ) : ?>
 				<footer class="aisuite-card__actions">
-					<?php $this->render_resolve_button( $row->id, 'apply', __( 'Apply', 'founderpostai-ai-suite-seo' ), 'button-primary' ); ?>
+					<?php $this->render_apply_button( $row ); ?>
 					<?php $this->render_resolve_button( $row->id, 'reject', __( 'Dismiss', 'founderpostai-ai-suite-seo' ), 'button-secondary' ); ?>
+				</footer>
+			<?php elseif ( 'approved' === $status && $this->has_rollback( $row ) ) : ?>
+				<footer class="aisuite-card__actions">
+					<?php $this->render_resolve_button( $row->id, 'undo', __( 'Undo this change', 'founderpostai-ai-suite-seo' ), 'button-secondary', true ); ?>
+					<span class="description"><?php esc_html_e( 'Undo is blocked if the live value changed afterward.', 'founderpostai-ai-suite-seo' ); ?></span>
 				</footer>
 			<?php endif; ?>
 		</article>
@@ -302,14 +330,74 @@ class AISuite_SEO_Review_Screen {
 		return $out . '</ul>';
 	}
 
-	protected function render_resolve_button( $id, $decision, $label, $class ) {
+	/** Render an editable title or description tied to its Apply form. */
+	protected function render_suggestion_editor( $row ) {
+		$form_id    = 'aisuite-apply-' . (int) $row->id;
+		$metric_id  = 'aisuite-metric-' . (int) $row->id;
+		$is_title   = 'title' === $row->field;
+		$max_chars  = $is_title ? 60 : 155;
+		$max_pixels = $is_title ? 600 : 920;
+		$value      = (string) $row->suggested_value;
+		?>
+		<?php if ( $is_title ) : ?>
+			<input type="text" class="widefat aisuite-suggestion-editor" name="suggested_value" value="<?php echo esc_attr( $value ); ?>" maxlength="<?php echo esc_attr( $max_chars ); ?>" required form="<?php echo esc_attr( $form_id ); ?>" aria-describedby="<?php echo esc_attr( $metric_id ); ?>" data-aisuite-suggestion data-field="title" data-max-chars="<?php echo esc_attr( $max_chars ); ?>" data-max-pixels="<?php echo esc_attr( $max_pixels ); ?>" />
+		<?php else : ?>
+			<textarea class="widefat aisuite-suggestion-editor" name="suggested_value" rows="3" maxlength="<?php echo esc_attr( $max_chars ); ?>" required form="<?php echo esc_attr( $form_id ); ?>" aria-describedby="<?php echo esc_attr( $metric_id ); ?>" data-aisuite-suggestion data-field="description" data-max-chars="<?php echo esc_attr( $max_chars ); ?>" data-max-pixels="<?php echo esc_attr( $max_pixels ); ?>"><?php echo esc_textarea( $value ); ?></textarea>
+		<?php endif; ?>
+		<span class="aisuite-suggestion-metric" id="<?php echo esc_attr( $metric_id ); ?>" aria-live="polite"></span>
+		<?php
+	}
+
+	/** Render a Google-style preview that follows the editable field. */
+	protected function render_serp_preview( $row, $post ) {
+		$current_title       = AISuite_SEO_Meta_Adapter::read( $post->ID, 'title' );
+		$current_description = AISuite_SEO_Meta_Adapter::read( $post->ID, 'description' );
+		$preview_title       = 'title' === $row->field ? $row->suggested_value : $current_title;
+		$preview_description = 'description' === $row->field ? $row->suggested_value : $current_description;
+		$preview_title       = $preview_title ? $preview_title : get_the_title( $post );
+		$preview_source      = $post->post_excerpt ? $post->post_excerpt : $post->post_content;
+		$preview_description = $preview_description ? $preview_description : wp_trim_words( wp_strip_all_tags( $preview_source ), 24, '…' );
+		?>
+		<div class="aisuite-serp-preview" data-aisuite-serp>
+			<span class="aisuite-diff__label"><?php esc_html_e( 'Search preview', 'founderpostai-ai-suite-seo' ); ?></span>
+			<div class="aisuite-serp-preview__url"><?php echo esc_html( get_permalink( $post ) ); ?></div>
+			<div class="aisuite-serp-preview__title" data-serp-title><?php echo esc_html( $preview_title ); ?></div>
+			<div class="aisuite-serp-preview__description" data-serp-description><?php echo esc_html( $preview_description ); ?></div>
+		</div>
+		<?php
+	}
+
+	/** Apply form; editable fields elsewhere on the card target this form ID. */
+	protected function render_apply_button( $row ) {
+		$form_id = 'aisuite-apply-' . (int) $row->id;
+		?>
+		<form id="<?php echo esc_attr( $form_id ); ?>" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<?php wp_nonce_field( 'aisuite_seo_resolve_' . $row->id ); ?>
+			<input type="hidden" name="action" value="aisuite_seo_resolve" />
+			<input type="hidden" name="suggestion_id" value="<?php echo esc_attr( $row->id ); ?>" />
+			<input type="hidden" name="decision" value="apply" />
+			<button type="submit" class="button button-primary"><?php esc_html_e( 'Apply reviewed change', 'founderpostai-ai-suite-seo' ); ?></button>
+		</form>
+		<?php
+	}
+
+	/** Whether this applied row was created after rollback journaling existed. */
+	protected function has_rollback( $row ) {
+		return property_exists( $row, 'rollback_value' ) && property_exists( $row, 'applied_value' ) && null !== $row->rollback_value && null !== $row->applied_value;
+	}
+
+	protected function render_resolve_button( $id, $decision, $label, $class, $confirm = false ) {
 		?>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<?php wp_nonce_field( 'aisuite_seo_resolve_' . $id ); ?>
 			<input type="hidden" name="action" value="aisuite_seo_resolve" />
 			<input type="hidden" name="suggestion_id" value="<?php echo esc_attr( $id ); ?>" />
 			<input type="hidden" name="decision" value="<?php echo esc_attr( $decision ); ?>" />
-			<button type="submit" class="button <?php echo esc_attr( $class ); ?>"><?php echo esc_html( $label ); ?></button>
+			<button type="submit" class="button <?php echo esc_attr( $class ); ?>"
+			<?php
+			if ( $confirm ) :
+				?>
+				data-aisuite-confirm-undo<?php endif; ?>><?php echo esc_html( $label ); ?></button>
 		</form>
 		<?php
 	}
@@ -325,16 +413,37 @@ class AISuite_SEO_Review_Screen {
 
 		$decision = isset( $_POST['decision'] ) ? sanitize_key( wp_unslash( $_POST['decision'] ) ) : '';
 
-		if ( ! in_array( $decision, array( 'apply', 'reject' ), true ) ) {
+		if ( ! in_array( $decision, array( 'apply', 'reject', 'undo' ), true ) ) {
 			$this->redirect( 'error', __( 'Unknown review decision.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		$optimizer = new AISuite_SEO_Optimizer( false );
 
-		$result = 'apply' === $decision ? $optimizer->apply( $id ) : $optimizer->reject( $id );
+		switch ( $decision ) {
+			case 'apply':
+				if ( isset( $_POST['suggested_value'] ) && ! is_string( $_POST['suggested_value'] ) ) {
+					$this->redirect( 'error', __( 'The edited suggestion is invalid.', 'founderpostai-ai-suite-seo' ) );
+				}
+
+				$edited_value = isset( $_POST['suggested_value'] ) ? sanitize_text_field( wp_unslash( $_POST['suggested_value'] ) ) : null;
+				$result       = $optimizer->apply( $id, true, $edited_value );
+				break;
+
+			case 'undo':
+				$result = $optimizer->undo( $id );
+				break;
+
+			default:
+				$result = $optimizer->reject( $id );
+				break;
+		}
 
 		if ( is_wp_error( $result ) ) {
 			$this->redirect( 'error', $result->get_error_message() );
+		}
+
+		if ( 'undo' === $decision ) {
+			$this->redirect( 'undone', '', 'undone' );
 		}
 
 		$this->redirect( 'apply' === $decision ? 'applied' : 'dismissed' );
@@ -469,7 +578,12 @@ class AISuite_SEO_Review_Screen {
 		switch ( $code ) {
 			case 'applied':
 				$type    = 'success';
-				$message = __( 'Applied. The post was updated and a revision was saved.', 'founderpostai-ai-suite-seo' );
+				$message = __( 'Applied. The reviewed change is now live.', 'founderpostai-ai-suite-seo' );
+				break;
+
+			case 'undone':
+				$type    = 'success';
+				$message = __( 'Undone. The exact previous value was restored.', 'founderpostai-ai-suite-seo' );
 				break;
 
 			case 'dismissed':
@@ -508,17 +622,23 @@ class AISuite_SEO_Review_Screen {
 		);
 	}
 
-	protected function redirect( $code, $detail = '' ) {
+	protected function redirect( $code, $detail = '', $status = '' ) {
 		if ( '' !== $detail ) {
 			set_transient( $this->detail_key(), (string) $detail, MINUTE_IN_SECONDS );
 		}
 
+		$query = array(
+			'page'        => self::SLUG,
+			'aisuite_msg' => $code,
+		);
+
+		if ( $status ) {
+			$query['status'] = sanitize_key( $status );
+		}
+
 		wp_safe_redirect(
 			add_query_arg(
-				array(
-					'page'        => self::SLUG,
-					'aisuite_msg' => $code,
-				),
+				$query,
 				admin_url( 'admin.php' )
 			)
 		);
