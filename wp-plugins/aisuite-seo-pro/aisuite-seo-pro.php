@@ -3,7 +3,7 @@
  * Plugin Name:       FounderPostAI – AI Suite SEO Pro
  * Plugin URI:        https://founderpostai.com/seo
  * Description:       Adds site-wide bulk optimization, scheduled re-analysis, and auto-apply rules to AI Suite SEO.
- * Version:           1.0.3
+ * Version:           1.0.4
  * Requires at least: 6.5
  * Requires PHP:      7.4
  * Requires Plugins:  founderpostai-ai-suite-core, founderpostai-ai-suite-seo
@@ -20,7 +20,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'AISUITE_SEO_PRO_VERSION', '1.0.3' );
+define( 'AISUITE_SEO_PRO_VERSION', '1.0.4' );
 define( 'AISUITE_SEO_PRO_FILE', __FILE__ );
 
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-updater.php';
@@ -345,17 +345,12 @@ class AISuite_SEO_Pro {
 					continue;
 				}
 
-				$analyzed = (int) get_post_meta( $post_id, '_aisuite_seo_analyzed', true );
-				$modified = strtotime( $post->post_modified_gmt . ' GMT' );
-
-				if ( $analyzed && $modified && $modified <= $analyzed ) {
+				if ( AISuite_SEO_Optimizer::is_current( $post ) ) {
 					$cursor = $post_id;
 					continue; // Unchanged since its last analysis.
 				}
 
-				$in_flight = (int) get_post_meta( $post_id, AISuite_SEO_Optimizer::META_QUEUED, true );
-
-				if ( $in_flight && time() - $in_flight < DAY_IN_SECONDS ) {
+				if ( AISuite_SEO_Optimizer::is_queued( $post_id ) ) {
 					$cursor = $post_id;
 					continue; // An analysis is already queued or running.
 				}

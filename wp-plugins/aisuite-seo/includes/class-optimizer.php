@@ -14,6 +14,8 @@ class AISuite_SEO_Optimizer {
 	const META_TITLE       = '_aisuite_seo_title';
 	const META_DESCRIPTION = '_aisuite_seo_description';
 	const META_INDEXED     = '_aisuite_seo_indexed_hash';
+	const META_ANALYZED    = '_aisuite_seo_analyzed';
+	const META_ERROR       = '_aisuite_seo_error';
 	const META_QUEUED      = '_aisuite_seo_queued';
 	const APPLY_LOCK       = 'aisuite_seo_apply_lock_';
 
@@ -80,7 +82,14 @@ class AISuite_SEO_Optimizer {
 			'link_targets' => $this->link_candidates( $post_id ),
 		);
 
-		$ref = aisuite()->jobs->enqueue( 'seo.analyze_post', $payload, array( 'post_id' => (int) $post_id ) );
+		$ref = aisuite()->jobs->enqueue(
+			'seo.analyze_post',
+			$payload,
+			array(
+				'post_id'       => (int) $post_id,
+				'analysis_hash' => self::analysis_hash( $post ),
+			)
+		);
 
 		if ( is_wp_error( $ref ) ) {
 			delete_post_meta( $post_id, self::META_QUEUED );
@@ -174,9 +183,10 @@ class AISuite_SEO_Optimizer {
 			return;
 		}
 
-		delete_post_meta( $post_id, '_aisuite_seo_error' );
+		delete_post_meta( $post_id, self::META_ERROR );
 		delete_post_meta( $post_id, self::META_QUEUED );
-		update_post_meta( $post_id, '_aisuite_seo_analyzed', time() );
+		$analysis_hash = isset( $context['analysis_hash'] ) ? (string) $context['analysis_hash'] : '';
+		self::mark_current( $post_id, $analysis_hash );
 		if ( class_exists( 'AISuite_SEO_Health_Screen' ) ) {
 			AISuite_SEO_Health_Screen::invalidate();
 		}
@@ -187,8 +197,114 @@ class AISuite_SEO_Optimizer {
 
 		if ( $post_id ) {
 			delete_post_meta( $post_id, self::META_QUEUED );
-			update_post_meta( $post_id, '_aisuite_seo_error', sanitize_text_field( $message ) );
+			update_post_meta( $post_id, self::META_ERROR, sanitize_text_field( $message ) );
 		}
+	}
+
+	/**
+	 * Fingerprint the exact post fields used to request an analysis.
+	 *
+	 * HTML is stripped because that is what the gateway receives. Adding an
+	 * approved link therefore does not make an otherwise unchanged analysis
+	 * look stale, while edits to visible copy, metadata, or the permalink do.
+	 *
+	 * @param int|WP_Post $post         Post ID or object.
+	 * @param array|null  $current_meta Optional preloaded title and description.
+	 * @return string SHA-256 hash, or an empty string when the post is missing.
+	 */
+	public static function analysis_hash( $post, $current_meta = null ) {
+		$post = get_post( $post );
+
+		if ( ! $post ) {
+			return '';
+		}
+
+		if ( ! is_array( $current_meta ) ) {
+			$current_meta = array(
+				'title'       => AISuite_SEO_Meta_Adapter::read( $post->ID, 'title' ),
+				'description' => AISuite_SEO_Meta_Adapter::read( $post->ID, 'description' ),
+			);
+		}
+
+		$input = array(
+			'post_type'  => (string) $post->post_type,
+			'title'      => (string) $post->post_title,
+			'content'    => wp_strip_all_tags( (string) $post->post_content ),
+			'excerpt'    => (string) $post->post_excerpt,
+			'permalink'  => (string) get_permalink( $post ),
+			'meta_title' => isset( $current_meta['title'] ) ? (string) $current_meta['title'] : '',
+			'meta_desc'  => isset( $current_meta['description'] ) ? (string) $current_meta['description'] : '',
+		);
+
+		return hash( 'sha256', wp_json_encode( $input ) );
+	}
+
+	/**
+	 * Record the content fingerprint represented by a completed analysis.
+	 *
+	 * The request-time hash is preferred so an edit made while the job is in
+	 * flight remains correctly flagged for another analysis.
+	 *
+	 * @param int    $post_id      Analyzed post.
+	 * @param string $request_hash Optional request-time SHA-256 hash.
+	 */
+	public static function mark_current( $post_id, $request_hash = '' ) {
+		$request_hash = strtolower( (string) $request_hash );
+
+		if ( ! preg_match( '/^[a-f0-9]{64}$/', $request_hash ) ) {
+			$request_hash = self::analysis_hash( $post_id );
+		}
+
+		if ( $request_hash ) {
+			update_post_meta( $post_id, self::META_INDEXED, $request_hash );
+		}
+
+		update_post_meta( $post_id, self::META_ANALYZED, time() );
+	}
+
+	/**
+	 * Whether the post still matches the inputs from its latest analysis.
+	 *
+	 * Timestamp fallback keeps analyses created before fingerprints were added
+	 * working until the post is analyzed again.
+	 *
+	 * @param int|WP_Post $post         Post ID or object.
+	 * @param array|null  $current_meta Optional preloaded title and description.
+	 * @return bool
+	 */
+	public static function is_current( $post, $current_meta = null ) {
+		$post = get_post( $post );
+
+		if ( ! $post ) {
+			return false;
+		}
+
+		$analyzed = (int) get_post_meta( $post->ID, self::META_ANALYZED, true );
+
+		if ( ! $analyzed ) {
+			return false;
+		}
+
+		$indexed_hash = (string) get_post_meta( $post->ID, self::META_INDEXED, true );
+
+		if ( preg_match( '/^[a-f0-9]{64}$/', $indexed_hash ) ) {
+			$current_hash = self::analysis_hash( $post, $current_meta );
+			return $current_hash && hash_equals( $indexed_hash, $current_hash );
+		}
+
+		$modified = strtotime( $post->post_modified_gmt . ' UTC' );
+		return ! $modified || $modified <= $analyzed;
+	}
+
+	/**
+	 * Whether a real analysis job is still in flight for this post.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return bool
+	 */
+	public static function is_queued( $post_id ) {
+		$queued = (int) get_post_meta( $post_id, self::META_QUEUED, true );
+		return $queued && time() - $queued < DAY_IN_SECONDS;
 	}
 
 	/**
@@ -256,6 +372,8 @@ class AISuite_SEO_Optimizer {
 				return new WP_Error( 'aisuite_seo_denied', __( 'You cannot edit this post.', 'founderpostai-ai-suite-seo' ) );
 			}
 
+			$was_current = self::is_current( $row->post_id );
+
 			if ( in_array( $row->field, array( 'title', 'description' ), true ) && $this->current_value( $row->post_id, $row->field ) !== (string) $row->current_value ) {
 				return new WP_Error(
 					'aisuite_seo_stale',
@@ -295,6 +413,12 @@ class AISuite_SEO_Optimizer {
 
 			if ( ! AISuite_SEO_Store::resolve( $suggestion_id, 'approved' ) ) {
 				return new WP_Error( 'aisuite_seo_resolved', __( 'That suggestion was handled by another request.', 'founderpostai-ai-suite-seo' ) );
+			}
+
+			// Advance the fingerprint across our own approved write only when the
+			// source was still current beforehand. Never hide an unrelated edit.
+			if ( $was_current ) {
+				self::mark_current( $row->post_id );
 			}
 
 			if ( class_exists( 'AISuite_SEO_Health_Screen' ) ) {

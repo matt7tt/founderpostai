@@ -5,7 +5,7 @@ Requires at least: 6.5
 Requires Plugins: founderpostai-ai-suite-core
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.1.5
+Stable tag: 0.1.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,7 +80,7 @@ Yes. It detects Yoast, stops outputting duplicate tags, and writes approved titl
 
 = How many posts can I analyze? =
 
-There is no plugin-level total. For reliability, each manual batch queues up to 10 recent posts; you can run another batch for additional posts. Actual AI processing is subject to the managed allowance or Anthropic API usage associated with your chosen external-service billing mode.
+There is no plugin-level total. For reliability, each manual batch queues the next 10 posts that need analysis; you can run another batch for additional posts. Already-current posts and posts with an analysis in flight are skipped. Actual AI processing is subject to the managed allowance or Anthropic API usage associated with your chosen external-service billing mode.
 
 = What if the suggested link text isn't in my post? =
 
@@ -91,6 +91,11 @@ Nothing is changed. Links are only inserted where the exact phrase appears as or
 No. Every feature and every line of functional code shipped in this plugin is available without a license check. A separately distributed add-on contains its own automation code for unattended whole-site runs, scheduling, and conservative auto-apply; it does not unlock dormant code in this plugin.
 
 == Changelog ==
+
+= 0.1.6 =
+* Repeat manual batches now advance to the next posts that need analysis instead of re-analyzing the same recent posts.
+* Analysis freshness now follows the submitted content and metadata, avoiding false stale warnings after an approved internal-link change.
+* Edits made while an analysis job is running remain correctly flagged for re-analysis.
 
 = 0.1.5 =
 * Added native metadata adapters for Yoast SEO, Rank Math, All in One SEO, and SEOPress.
