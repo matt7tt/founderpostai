@@ -216,7 +216,7 @@ class AISuite_SEO_Review_Screen {
 				submit_button(
 					sprintf(
 						/* translators: %d: number of posts */
-						__( 'Analyze my %d most recent posts', 'founderpostai-ai-suite-seo' ),
+						__( 'Analyze my next %d posts', 'founderpostai-ai-suite-seo' ),
 						self::FREE_BATCH_LIMIT
 					),
 					'primary',
@@ -349,16 +349,7 @@ class AISuite_SEO_Review_Screen {
 
 		if ( 'batch' === $mode ) {
 			check_admin_referer( 'aisuite_seo_analyze_batch' );
-			$post_ids = get_posts(
-				array(
-					'post_type'      => array( 'post', 'page' ),
-					'post_status'    => 'publish',
-					'posts_per_page' => self::FREE_BATCH_LIMIT,
-					'fields'         => 'ids',
-					'orderby'        => 'modified',
-					'order'          => 'DESC',
-				)
-			);
+			$post_ids = $this->batch_post_ids( self::FREE_BATCH_LIMIT );
 		} else {
 			$post_id = isset( $_GET['post_id'] ) ? (int) $_GET['post_id'] : 0;
 			check_admin_referer( 'aisuite_seo_analyze_' . $post_id );
@@ -386,6 +377,10 @@ class AISuite_SEO_Review_Screen {
 		}
 
 		if ( ! $queued ) {
+			if ( 'batch' === $mode && empty( $post_ids ) ) {
+				$this->redirect( 'current' );
+			}
+
 			$this->redirect(
 				'error',
 				$blocked ? $blocked->get_error_message() : __( 'Nothing could be queued.', 'founderpostai-ai-suite-seo' )
@@ -393,6 +388,58 @@ class AISuite_SEO_Review_Screen {
 		}
 
 		$this->redirect( 'queued', (string) $queued );
+	}
+
+	/**
+	 * Find the next recent posts whose analyzed inputs are no longer current.
+	 *
+	 * Pages are scanned beyond the newest ten so repeat batch runs progress
+	 * through the site instead of charging for the same posts again.
+	 *
+	 * @param int $limit Maximum post IDs to return.
+	 * @return int[]
+	 */
+	protected function batch_post_ids( $limit ) {
+		$limit     = max( 1, (int) $limit );
+		$page_size = max( 50, $limit * 5 );
+		$page      = 1;
+		$post_ids  = array();
+
+		do {
+			$posts = get_posts(
+				array(
+					'post_type'      => array( 'post', 'page' ),
+					'post_status'    => 'publish',
+					'posts_per_page' => $page_size,
+					'paged'          => $page,
+					'orderby'        => array(
+						'modified' => 'DESC',
+						'ID'       => 'DESC',
+					),
+					'no_found_rows'  => true,
+				)
+			);
+
+			foreach ( $posts as $post ) {
+				$can_edit = current_user_can( 'edit_post', $post->ID );
+				$queued   = AISuite_SEO_Optimizer::is_queued( $post->ID );
+
+				if ( ! $can_edit || $queued || AISuite_SEO_Optimizer::is_current( $post ) ) {
+					continue;
+				}
+
+				$post_ids[] = (int) $post->ID;
+
+				if ( count( $post_ids ) >= $limit ) {
+					break 2;
+				}
+			}
+
+			$post_count = count( $posts );
+			++$page;
+		} while ( $post_count === $page_size );
+
+		return $post_ids;
 	}
 
 	/**
@@ -438,6 +485,11 @@ class AISuite_SEO_Review_Screen {
 					_n( 'Queued %s post. Suggestions appear here as it finishes.', 'Queued %s posts. Suggestions appear here as they finish.', $count, 'founderpostai-ai-suite-seo' ),
 					number_format_i18n( $count )
 				);
+				break;
+
+			case 'current':
+				$type    = 'success';
+				$message = __( 'Every published post and page is already current or in the analysis queue.', 'founderpostai-ai-suite-seo' );
 				break;
 
 			case 'error':

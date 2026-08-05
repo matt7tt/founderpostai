@@ -375,16 +375,16 @@ class AISuite_SEO_Health_Screen {
 
 		$rows = array();
 		foreach ( $posts as $post ) {
-			$post_id     = (int) $post->ID;
-			$title       = isset( $metadata[ $post_id ]['title'] ) ? trim( $metadata[ $post_id ]['title'] ) : '';
-			$description = isset( $metadata[ $post_id ]['description'] ) ? trim( $metadata[ $post_id ]['description'] ) : '';
-			$analyzed    = (int) get_post_meta( $post_id, '_aisuite_seo_analyzed', true );
-			$modified    = strtotime( $post->post_modified_gmt . ' UTC' );
-			$error       = (string) get_post_meta( $post_id, '_aisuite_seo_error', true );
-			$stale       = ! $analyzed || $modified > $analyzed;
-			$missing_t   = '' === $title;
-			$missing_d   = '' === $description;
-			$orphaned    = empty( $incoming[ $post_id ] );
+			$post_id      = (int) $post->ID;
+			$title        = isset( $metadata[ $post_id ]['title'] ) ? trim( $metadata[ $post_id ]['title'] ) : '';
+			$description  = isset( $metadata[ $post_id ]['description'] ) ? trim( $metadata[ $post_id ]['description'] ) : '';
+			$analyzed     = (int) get_post_meta( $post_id, AISuite_SEO_Optimizer::META_ANALYZED, true );
+			$error        = (string) get_post_meta( $post_id, AISuite_SEO_Optimizer::META_ERROR, true );
+			$current_meta = isset( $metadata[ $post_id ] ) ? $metadata[ $post_id ] : null;
+			$stale        = ! AISuite_SEO_Optimizer::is_current( $post, $current_meta );
+			$missing_t    = '' === $title;
+			$missing_d    = '' === $description;
+			$orphaned     = empty( $incoming[ $post_id ] );
 
 			$rows[] = array(
 				'id'                  => $post_id,
@@ -394,7 +394,7 @@ class AISuite_SEO_Health_Screen {
 				'missing_description' => $missing_d,
 				'analyzed'            => $analyzed,
 				'stale'               => $stale,
-				'queued'              => (bool) get_post_meta( $post_id, AISuite_SEO_Optimizer::META_QUEUED, true ),
+				'queued'              => AISuite_SEO_Optimizer::is_queued( $post_id ),
 				'error'               => $error,
 				'incoming'            => isset( $incoming[ $post_id ] ) ? $incoming[ $post_id ] : 0,
 				'outgoing'            => isset( $outgoing[ $post_id ] ) ? $outgoing[ $post_id ] : 0,

@@ -53,6 +53,9 @@ function is_wp_error( $value ) {
 function wp_strip_all_tags( $value ) {
 	return strip_tags( $value );
 }
+function wp_json_encode( $value ) {
+	return json_encode( $value );
+}
 function get_permalink() {
 	return 'https://example.com/post/';
 }

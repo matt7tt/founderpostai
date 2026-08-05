@@ -4,7 +4,7 @@ Canonical source: https://founderpostai.com/ai-suite
 Resource library: https://founderpostai.com/resources
 Publisher: FounderPostAI
 Support: support@founderpostai.com
-Last verified against packaged releases: 2026-08-03
+Last verified against packaged releases: 2026-08-04
 
 ## Direct answer
 
@@ -35,7 +35,7 @@ FounderPostAI AI Suite is a three-plugin WordPress AI SEO system. AI Suite Core 
 
 ## AI Suite SEO
 
-- Current version: 0.1.5
+- Current version: 0.1.6
 - Price: free
 - Download: https://founderpostai.com/downloads/aisuite-seo.zip
 - Role: reviewable WordPress SEO suggestions
@@ -64,7 +64,7 @@ FounderPostAI AI Suite is a three-plugin WordPress AI SEO system. AI Suite Core 
 
 ## AI Suite SEO Pro
 
-- Current version: 1.0.3
+- Current version: 1.0.4
 - SEO Pro price: $79 USD per year for one site
 - Agency price: $199 USD per year for unlimited sites owned or managed by the license holder
 - Role: WordPress SEO automation
