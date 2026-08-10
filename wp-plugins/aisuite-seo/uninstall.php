@@ -11,6 +11,7 @@ defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 
 global $wpdb;
 
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-site-index.php';
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-store.php';
 
 if ( class_exists( 'AISuite_SEO_Store' ) ) {
@@ -23,6 +24,8 @@ foreach ( array( '_aisuite_seo_analyzed', '_aisuite_seo_error', '_aisuite_seo_in
 }
 
 delete_transient( 'aisuite_seo_health_snapshot' );
+delete_transient( 'aisuite_seo_gsc_status' );
+delete_transient( 'aisuite_seo_gsc_performance' );
 
 // Remove any stale per-suggestion mutex left by an interrupted apply request.
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery

@@ -130,6 +130,31 @@ class AISuite_Gateway_Client {
 		return $this->request( 'POST', '/v1/index/documents', array( 'documents' => $documents ) );
 	}
 
+	/** Start a read-only Google Search Console OAuth flow. */
+	public function search_console_connect( $return_url ) {
+		return $this->request( 'POST', '/v1/search-console/connect', array( 'return_url' => esc_url_raw( $return_url ) ) );
+	}
+
+	/** Read connection state and the properties available to the Google user. */
+	public function search_console_status() {
+		return $this->request( 'GET', '/v1/search-console/status' );
+	}
+
+	/** Select one property after the gateway verifies that it is accessible. */
+	public function search_console_select_property( $property ) {
+		return $this->request( 'POST', '/v1/search-console/property', array( 'property' => (string) $property ) );
+	}
+
+	/** Retrieve finalized search performance for a bounded date range. */
+	public function search_console_performance( $days = 28 ) {
+		return $this->request( 'POST', '/v1/search-console/performance', array( 'days' => max( 7, min( 90, (int) $days ) ) ), 30 );
+	}
+
+	/** Remove the gateway-held Google refresh token and selected property. */
+	public function search_console_disconnect() {
+		return $this->request( 'DELETE', '/v1/search-console/disconnect' );
+	}
+
 	/**
 	 * Switch between managed credits and bring-your-own-key.
 	 *

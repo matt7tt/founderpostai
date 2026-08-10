@@ -23,9 +23,13 @@ class WP_Error {
 class AISuite_Test_Jobs {
 	public $calls = 0;
 	public $fail_next = false;
+	public $payload = array();
+	public $context = array();
 
-	public function enqueue() {
+	public function enqueue( $type = '', $payload = array(), $context = array() ) {
 		++$this->calls;
+		$this->payload = $payload;
+		$this->context = $context;
 
 		if ( $this->fail_next ) {
 			$this->fail_next = false;
@@ -52,6 +56,12 @@ function is_wp_error( $value ) {
 }
 function wp_strip_all_tags( $value ) {
 	return strip_tags( $value );
+}
+function sanitize_text_field( $value ) {
+	return trim( strip_tags( (string) $value ) );
+}
+function sanitize_key( $value ) {
+	return preg_replace( '/[^a-z0-9_\-]/', '', strtolower( (string) $value ) );
 }
 function wp_json_encode( $value ) {
 	return json_encode( $value );
@@ -129,4 +139,18 @@ if ( ! is_wp_error( $failed ) || '' !== get_post_meta( 7, AISuite_SEO_Optimizer:
 	exit( 1 );
 }
 
-fwrite( STDOUT, "PASS: duplicate analyses are blocked and failed claims are released\n" );
+$refined = $optimizer->analyze(
+	7,
+	true,
+	array(
+		'focus'       => 'title',
+		'instruction' => '<b>Make this more specific.</b>',
+	)
+);
+
+if ( is_wp_error( $refined ) || 'title' !== $jobs->payload['review_request']['focus'] || 'Make this more specific.' !== $jobs->payload['review_request']['instruction'] || empty( $jobs->context['replace_review'] ) ) {
+	fwrite( STDERR, "FAIL: review refinements were not sanitized and preserved in the queued job\n" );
+	exit( 1 );
+}
+
+fwrite( STDOUT, "PASS: duplicate analyses are blocked, failed claims release, and refinements are queued safely\n" );

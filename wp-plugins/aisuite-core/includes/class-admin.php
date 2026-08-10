@@ -493,7 +493,13 @@ class AISuite_Admin {
 	public function handle_disconnect() {
 		$this->guard( 'aisuite_disconnect' );
 		$this->core->jobs->fail_all( __( 'This job was cancelled because the site was disconnected.', 'founderpostai-ai-suite-core' ) );
+		// Best effort while credentials still exist. Local disconnection must
+		// continue even if Google or the gateway is temporarily unavailable.
+		if ( is_callable( array( $this->core->gateway, 'search_console_disconnect' ) ) ) {
+			$this->core->gateway->search_console_disconnect();
+		}
 		AISuite_Site_Auth::disconnect();
+		do_action( 'aisuite_disconnected' );
 		$this->redirect( 'disconnected' );
 	}
 

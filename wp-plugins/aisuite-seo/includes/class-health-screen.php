@@ -14,8 +14,30 @@ class AISuite_SEO_Health_Screen {
 		add_action( 'admin_menu', array( $this, 'menu' ), 21 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'assets' ) );
 		add_action( 'admin_post_aisuite_seo_health_refresh', array( $this, 'handle_refresh' ) );
+		add_action( 'admin_post_aisuite_seo_index_rebuild', array( $this, 'handle_index_rebuild' ) );
 		add_action( 'save_post', array( __CLASS__, 'invalidate' ), 20 );
 		add_action( 'deleted_post', array( __CLASS__, 'invalidate' ) );
+	}
+
+	/** Reset only the generated local index; canonical post content is untouched. */
+	public function handle_index_rebuild() {
+		if ( ! current_user_can( self::CAP ) ) {
+			wp_die( esc_html__( 'You do not have permission to do that.', 'founderpostai-ai-suite-seo' ) );
+		}
+
+		check_admin_referer( 'aisuite_seo_index_rebuild' );
+		AISuite_SEO_Site_Index::rebuild();
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'        => self::SLUG,
+					'aisuite_msg' => 'indexing',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
 	}
 
 	public function menu() {
@@ -68,6 +90,9 @@ class AISuite_SEO_Health_Screen {
 		}
 
 		$snapshot = self::audit();
+		$index    = AISuite_SEO_Site_Index::progress();
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only confirmation; the acting request was nonce checked.
+		$message = isset( $_GET['aisuite_msg'] ) ? sanitize_key( wp_unslash( $_GET['aisuite_msg'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only filter.
 		$filter = isset( $_GET['health'] ) ? sanitize_key( wp_unslash( $_GET['health'] ) ) : 'all';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination.
@@ -77,12 +102,12 @@ class AISuite_SEO_Health_Screen {
 			$filter = 'all';
 		}
 
-		$rows       = array_values( array_filter( $snapshot['rows'], array( $this, 'filter_' . $filter ) ) );
-		$total      = count( $rows );
+		$rows        = array_values( array_filter( $snapshot['rows'], array( $this, 'filter_' . $filter ) ) );
+		$total       = count( $rows );
 		$total_pages = max( 1, (int) ceil( $total / self::PER_PAGE ) );
-		$page       = min( $page, $total_pages );
-		$rows       = array_slice( $rows, ( $page - 1 ) * self::PER_PAGE, self::PER_PAGE );
-		$summary    = $snapshot['summary'];
+		$page        = min( $page, $total_pages );
+		$rows        = array_slice( $rows, ( $page - 1 ) * self::PER_PAGE, self::PER_PAGE );
+		$summary     = $snapshot['summary'];
 		/* translators: 1: number of fully optimized posts, 2: total published posts */
 		$coverage_detail = sprintf( __( '%1$d of %2$d current', 'founderpostai-ai-suite-seo' ), $summary['optimized'], $summary['total'] );
 		?>
@@ -90,9 +115,10 @@ class AISuite_SEO_Health_Screen {
 			<h1><?php esc_html_e( 'SEO health', 'founderpostai-ai-suite-seo' ); ?></h1>
 			<a class="page-title-action" href="<?php echo esc_url( admin_url( 'admin.php?page=' . AISuite_SEO_Review_Screen::SLUG ) ); ?>"><?php esc_html_e( 'Review suggestions', 'founderpostai-ai-suite-seo' ); ?></a>
 
-			<?php // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only confirmation. ?>
-			<?php if ( isset( $_GET['aisuite_msg'] ) && 'refreshed' === sanitize_key( wp_unslash( $_GET['aisuite_msg'] ) ) ) : ?>
+			<?php if ( 'refreshed' === $message ) : ?>
 				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'The site-wide SEO audit is up to date.', 'founderpostai-ai-suite-seo' ); ?></p></div>
+			<?php elseif ( 'indexing' === $message ) : ?>
+				<div class="notice notice-info is-dismissible"><p><?php esc_html_e( 'The local content index is rebuilding in bounded background batches.', 'founderpostai-ai-suite-seo' ); ?></p></div>
 			<?php endif; ?>
 
 			<p class="description aisuite-health__intro">
@@ -120,12 +146,27 @@ class AISuite_SEO_Health_Screen {
 					<input type="hidden" name="action" value="aisuite_seo_health_refresh" />
 					<?php submit_button( __( 'Refresh site-wide audit', 'founderpostai-ai-suite-seo' ), 'secondary', 'submit', false ); ?>
 				</form>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<?php wp_nonce_field( 'aisuite_seo_index_rebuild' ); ?>
+					<input type="hidden" name="action" value="aisuite_seo_index_rebuild" />
+					<?php submit_button( __( 'Rebuild local content index', 'founderpostai-ai-suite-seo' ), 'secondary', 'submit', false ); ?>
+				</form>
 				<span class="description">
 					<?php
 					printf(
 						/* translators: %s: audit date and time */
 						esc_html__( 'Last scanned %s', 'founderpostai-ai-suite-seo' ),
 						esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $snapshot['generated_at'] ) )
+					);
+					?>
+				</span>
+				<span class="description">
+					<?php
+					printf(
+						/* translators: 1: indexed document count, 2: index status */
+						esc_html__( 'Local index: %1$s documents · %2$s', 'founderpostai-ai-suite-seo' ),
+						esc_html( number_format_i18n( $index['indexed'] ) ),
+						$index['complete'] ? esc_html__( 'current', 'founderpostai-ai-suite-seo' ) : esc_html__( 'building', 'founderpostai-ai-suite-seo' )
 					);
 					?>
 				</span>

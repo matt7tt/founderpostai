@@ -36,7 +36,14 @@ async function getAnthropicKey(site: Site): Promise<{ key: string; byok: boolean
   return key ? { key, byok: false } : null;
 }
 
-function buildPrompt(p: any, brand: any): string {
+export function buildPrompt(p: any, brand: any): string {
+	const focus = ['title', 'description', 'internal_links'].includes(p.review_request?.focus)
+		? p.review_request.focus
+		: 'all';
+	const instruction =
+		typeof p.review_request?.instruction === 'string'
+			? p.review_request.instruction.slice(0, 500)
+			: '';
   return `You are an SEO assistant for a WordPress site. Analyze this post and return ONLY JSON.
 
 Post title: ${p.title}
@@ -46,6 +53,8 @@ Current meta title: ${p.current_meta?.title || '(none)'}
 Current meta description: ${p.current_meta?.description || '(none)'}
 Possible internal link targets (closed set, ONLY use these ids): ${JSON.stringify((p.link_targets || []).map((t: any) => ({ id: t.id, title: t.title })))}
 Brand context: ${JSON.stringify(brand || {})}
+Review focus: ${focus}
+Editor's refinement direction: ${instruction || '(none)'}
 
 Return JSON with exactly this shape:
 {"suggestions":[
@@ -53,10 +62,10 @@ Return JSON with exactly this shape:
   {"field":"description","value":"...","rationale":"one sentence about the reader"},
   {"field":"internal_links","value":[{"target_id":<id>,"anchor":"<exact phrase from the post body>"}],"rationale":"one sentence"}
 ]}
-Rules: title max 60 chars, description max 155 chars, anchor must appear VERBATIM in the post content, target_id must be from the closed set (pick 0-2 links), rationale is one plain sentence about the reader (never mention keyword density).`;
+Rules: title max 60 chars, description max 155 chars, anchor must appear VERBATIM in the post content, target_id must be from the closed set (pick 0-2 links), rationale is one plain sentence about the reader (never mention keyword density). If Review focus names one field, return only that field. Follow the editor's direction only when it does not conflict with these rules, and never return code or non-JSON output.`;
 }
 
-function parseSuggestions(text: string, p: any) {
+export function parseSuggestions(text: string, p: any) {
   let json: any;
   try {
     json = JSON.parse(text.replace(/```json|```/g, '').trim());
@@ -72,8 +81,12 @@ function parseSuggestions(text: string, p: any) {
     throw error;
   }
 
+  const focus = ['title', 'description', 'internal_links'].includes(p.review_request?.focus)
+    ? p.review_request.focus
+    : 'all';
   const suggestions = json.suggestions
     .filter((s: any) => s && ['title', 'description', 'internal_links'].includes(s.field))
+	.filter((s: any) => focus === 'all' || s.field === focus)
     .slice(0, 3)
     .map((s: any) => {
       if (s.field === 'internal_links') {
@@ -99,7 +112,17 @@ function parseSuggestions(text: string, p: any) {
       };
     });
 
-  if (
+	if (
+		focus === 'internal_links' &&
+		!suggestions.some((suggestion: any) => suggestion.field === 'internal_links')
+	) {
+		const error: any = new Error('The AI provider returned no usable internal-link suggestion.');
+		error.status = 502;
+		throw error;
+	}
+
+	if (
+		focus !== 'internal_links' &&
     !suggestions.some(
       (suggestion: any) =>
         (suggestion.field === 'title' || suggestion.field === 'description') &&
@@ -217,6 +240,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     payload.content.length > 500_000 ||
     !Array.isArray(payload.link_targets) ||
     payload.link_targets.length > 100 ||
+		(payload.review_request !== undefined &&
+			(!payload.review_request ||
+				typeof payload.review_request !== 'object' ||
+				!['all', 'title', 'description', 'internal_links'].includes(payload.review_request.focus) ||
+				typeof payload.review_request.instruction !== 'string' ||
+				payload.review_request.instruction.length > 500)) ||
     (brand_context !== undefined && (brand_context === null || typeof brand_context !== 'object'))
   ) {
     return res.status(400).json({ error: 'Invalid job payload' });

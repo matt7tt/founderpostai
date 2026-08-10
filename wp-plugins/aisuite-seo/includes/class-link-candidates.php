@@ -32,6 +32,23 @@ class AISuite_SEO_Link_Candidates {
 
 		$profile = self::profile( $source );
 		$ranked  = array();
+
+		if ( class_exists( 'AISuite_SEO_Site_Index' ) && AISuite_SEO_Site_Index::is_ready() ) {
+			$indexed = AISuite_SEO_Site_Index::candidates( $source, min( 300, $limit * 3 ) );
+			$indexed = self::rank( $source, $indexed, $limit );
+
+			return array_map(
+				function ( $post ) {
+					return array(
+						'id'    => (int) $post->ID,
+						'title' => (string) $post->post_title,
+						'url'   => isset( $post->aisuite_url ) ? (string) $post->aisuite_url : get_permalink( $post ),
+					);
+				},
+				$indexed
+			);
+		}
+
 		$page    = 1;
 		$batch   = max( 25, (int) apply_filters( 'aisuite_seo_link_candidate_batch_size', self::BATCH_SIZE ) );
 

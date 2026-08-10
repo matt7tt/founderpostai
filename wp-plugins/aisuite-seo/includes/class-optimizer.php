@@ -33,15 +33,16 @@ class AISuite_SEO_Optimizer {
 	 * Queue a post for analysis. Sends the content the gateway needs and nothing
 	 * more — no user emails, no unrelated meta.
 	 *
-	 * @param int  $post_id      Post to analyze.
-	 * @param bool $enforce_caps Check the current user's rights. Pass false only
-	 *                           for work started by cron or a gateway callback,
-	 *                           where there is no current user at all — an
-	 *                           unconditional check there fails every time and
-	 *                           silently disables scheduled runs.
+	 * @param int   $post_id      Post to analyze.
+	 * @param bool  $enforce_caps Check the current user's rights. Pass false only
+	 *                            for work started by cron or a gateway callback,
+	 *                            where there is no current user at all — an
+	 *                            unconditional check there fails every time and
+	 *                            silently disables scheduled runs.
+	 * @param array $review_request Optional focus and human refinement direction.
 	 * @return string|WP_Error Local job reference.
 	 */
-	public function analyze( $post_id, $enforce_caps = true ) {
+	public function analyze( $post_id, $enforce_caps = true, array $review_request = array() ) {
 		$post = get_post( $post_id );
 
 		if ( ! $post || 'trash' === $post->post_status ) {
@@ -69,25 +70,31 @@ class AISuite_SEO_Optimizer {
 		}
 
 		$payload = array(
-			'post_id'      => (int) $post_id,
-			'permalink'    => get_permalink( $post ),
-			'post_type'    => $post->post_type,
-			'title'        => $post->post_title,
-			'content'      => wp_strip_all_tags( $post->post_content ),
-			'excerpt'      => $post->post_excerpt,
-			'current_meta' => array(
+			'post_id'        => (int) $post_id,
+			'permalink'      => get_permalink( $post ),
+			'post_type'      => $post->post_type,
+			'title'          => $post->post_title,
+			'content'        => wp_strip_all_tags( $post->post_content ),
+			'excerpt'        => $post->post_excerpt,
+			'current_meta'   => array(
 				'title'       => $this->current_value( $post_id, 'title' ),
 				'description' => $this->current_value( $post_id, 'description' ),
 			),
-			'link_targets' => $this->link_candidates( $post_id ),
+			'link_targets'   => $this->link_candidates( $post_id ),
+			'review_request' => array(
+				'focus'       => isset( $review_request['focus'] ) && in_array( $review_request['focus'], self::FIELDS, true ) ? $review_request['focus'] : 'all',
+				'instruction' => isset( $review_request['instruction'] ) ? $this->truncate( sanitize_text_field( $review_request['instruction'] ), 500 ) : '',
+			),
 		);
 
 		$ref = aisuite()->jobs->enqueue(
 			'seo.analyze_post',
 			$payload,
 			array(
-				'post_id'       => (int) $post_id,
-				'analysis_hash' => self::analysis_hash( $post ),
+				'post_id'        => (int) $post_id,
+				'analysis_hash'  => self::analysis_hash( $post ),
+				'review_focus'   => ! empty( $review_request ) && isset( $review_request['focus'] ) ? sanitize_key( $review_request['focus'] ) : '',
+				'replace_review' => ! empty( $review_request ),
 			)
 		);
 
@@ -124,8 +131,9 @@ class AISuite_SEO_Optimizer {
 			return;
 		}
 
-		$suggestions  = isset( $result['suggestions'] ) ? (array) $result['suggestions'] : array();
-		$store_failed = false;
+		$suggestions   = isset( $result['suggestions'] ) ? (array) $result['suggestions'] : array();
+		$store_failed  = false;
+		$stored_fields = array();
 
 		foreach ( $suggestions as $suggestion ) {
 			if ( ! is_array( $suggestion ) ) {
@@ -175,12 +183,25 @@ class AISuite_SEO_Optimizer {
 
 			if ( ! $stored ) {
 				$store_failed = true;
+			} else {
+				$stored_fields[ $field ] = true;
 			}
 		}
 
 		if ( $store_failed ) {
 			$this->receive_failure( __( 'A suggestion could not be saved. Check the site database and run the analysis again.', 'founderpostai-ai-suite-seo' ), $context );
 			return;
+		}
+
+		if ( ! empty( $context['replace_review'] ) ) {
+			$focus  = isset( $context['review_focus'] ) ? sanitize_key( $context['review_focus'] ) : 'all';
+			$fields = in_array( $focus, self::FIELDS, true ) ? array( $focus ) : self::FIELDS;
+
+			foreach ( $fields as $field ) {
+				if ( empty( $stored_fields[ $field ] ) ) {
+					AISuite_SEO_Store::dismiss_pending_field( $post_id, $field );
+				}
+			}
 		}
 
 		delete_post_meta( $post_id, self::META_ERROR );
@@ -350,9 +371,12 @@ class AISuite_SEO_Optimizer {
 	/**
 	 * Apply an approved suggestion.
 	 *
+	 * @param int         $suggestion_id Suggestion to apply.
+	 * @param bool        $enforce_caps  Check the current user's rights.
+	 * @param string|null $edited_value  Optional reviewed title or description.
 	 * @return true|WP_Error
 	 */
-	public function apply( $suggestion_id, $enforce_caps = true ) {
+	public function apply( $suggestion_id, $enforce_caps = true, $edited_value = null ) {
 		if ( ! $this->acquire_apply_lock( $suggestion_id ) ) {
 			return new WP_Error( 'aisuite_seo_busy', __( 'That suggestion is already being handled. Refresh and try again.', 'founderpostai-ai-suite-seo' ) );
 		}
@@ -373,6 +397,23 @@ class AISuite_SEO_Optimizer {
 			}
 
 			$was_current = self::is_current( $row->post_id );
+			$suggested   = (string) $row->suggested_value;
+
+			if ( in_array( $row->field, array( 'title', 'description' ), true ) ) {
+				if ( null !== $edited_value && ! is_scalar( $edited_value ) ) {
+					return new WP_Error( 'aisuite_seo_invalid_edit', __( 'The edited suggestion is invalid.', 'founderpostai-ai-suite-seo' ) );
+				}
+
+				if ( null !== $edited_value ) {
+					$suggested = sanitize_text_field( (string) $edited_value );
+				}
+
+				$suggested = trim( $this->truncate( $suggested, 'title' === $row->field ? 60 : 155 ) );
+
+				if ( '' === $suggested ) {
+					return new WP_Error( 'aisuite_seo_empty_edit', __( 'Enter a suggestion before applying it.', 'founderpostai-ai-suite-seo' ) );
+				}
+			}
 
 			if ( in_array( $row->field, array( 'title', 'description' ), true ) && $this->current_value( $row->post_id, $row->field ) !== (string) $row->current_value ) {
 				return new WP_Error(
@@ -383,11 +424,13 @@ class AISuite_SEO_Optimizer {
 
 			switch ( $row->field ) {
 				case 'title':
-					$updated = AISuite_SEO_Meta_Adapter::write( $row->post_id, 'title', $this->truncate( sanitize_text_field( $row->suggested_value ), 60 ) );
+					$rollback_value = $this->current_value( $row->post_id, 'title' );
+					$updated        = AISuite_SEO_Meta_Adapter::write( $row->post_id, 'title', $suggested );
 					break;
 
 				case 'description':
-					$updated = AISuite_SEO_Meta_Adapter::write( $row->post_id, 'description', $this->truncate( sanitize_text_field( $row->suggested_value ), 155 ) );
+					$rollback_value = $this->current_value( $row->post_id, 'description' );
+					$updated        = AISuite_SEO_Meta_Adapter::write( $row->post_id, 'description', $suggested );
 					break;
 
 				case 'internal_links':
@@ -396,7 +439,9 @@ class AISuite_SEO_Optimizer {
 					if ( is_wp_error( $applied ) ) {
 						return $applied;
 					}
-					$updated = true;
+					$rollback_value = $applied['before'];
+					$applied_value  = 'sha256:' . hash( 'sha256', $applied['after'] );
+					$updated        = true;
 					break;
 
 				default:
@@ -411,7 +456,11 @@ class AISuite_SEO_Optimizer {
 				return new WP_Error( 'aisuite_seo_write_failed', __( 'WordPress could not save that change. The suggestion remains pending so you can try again.', 'founderpostai-ai-suite-seo' ) );
 			}
 
-			if ( ! AISuite_SEO_Store::resolve( $suggestion_id, 'approved' ) ) {
+			if ( in_array( $row->field, array( 'title', 'description' ), true ) ) {
+				$applied_value = $this->current_value( $row->post_id, $row->field );
+			}
+
+			if ( ! AISuite_SEO_Store::resolve_applied( $suggestion_id, $suggested, $rollback_value, $applied_value ) ) {
 				return new WP_Error( 'aisuite_seo_resolved', __( 'That suggestion was handled by another request.', 'founderpostai-ai-suite-seo' ) );
 			}
 
@@ -419,6 +468,57 @@ class AISuite_SEO_Optimizer {
 			// source was still current beforehand. Never hide an unrelated edit.
 			if ( $was_current ) {
 				self::mark_current( $row->post_id );
+			}
+
+			if ( class_exists( 'AISuite_SEO_Health_Screen' ) ) {
+				AISuite_SEO_Health_Screen::invalidate();
+			}
+
+			return true;
+		} finally {
+			$this->release_apply_lock( $suggestion_id );
+		}
+	}
+
+	/**
+	 * Undo an application only while the live value is exactly what AI Suite wrote.
+	 *
+	 * @param int  $suggestion_id Suggestion to undo.
+	 * @param bool $enforce_caps  Check the current user's rights.
+	 * @return true|WP_Error
+	 */
+	public function undo( $suggestion_id, $enforce_caps = true ) {
+		if ( ! $this->acquire_apply_lock( $suggestion_id ) ) {
+			return new WP_Error( 'aisuite_seo_busy', __( 'That suggestion is already being handled. Refresh and try again.', 'founderpostai-ai-suite-seo' ) );
+		}
+
+		try {
+			$row = AISuite_SEO_Store::get( $suggestion_id );
+
+			if ( ! $row ) {
+				return new WP_Error( 'aisuite_seo_missing', __( 'That suggestion no longer exists.', 'founderpostai-ai-suite-seo' ) );
+			}
+
+			if ( 'approved' !== $row->status ) {
+				return new WP_Error( 'aisuite_seo_not_applied', __( 'Only an applied suggestion can be undone.', 'founderpostai-ai-suite-seo' ) );
+			}
+
+			if ( $enforce_caps && ! current_user_can( 'edit_post', $row->post_id ) ) {
+				return new WP_Error( 'aisuite_seo_denied', __( 'You cannot edit this post.', 'founderpostai-ai-suite-seo' ) );
+			}
+
+			if ( ! property_exists( $row, 'rollback_value' ) || ! property_exists( $row, 'applied_value' ) || null === $row->rollback_value || null === $row->applied_value ) {
+				return new WP_Error( 'aisuite_seo_no_rollback', __( 'Undo data was not recorded for this older suggestion.', 'founderpostai-ai-suite-seo' ) );
+			}
+
+			$restored = $this->restore_application( $row );
+
+			if ( is_wp_error( $restored ) ) {
+				return $restored;
+			}
+
+			if ( ! AISuite_SEO_Store::mark_undone( $suggestion_id ) ) {
+				return new WP_Error( 'aisuite_seo_undo_history', __( 'The value was restored, but the review history could not be updated. Refresh before trying anything else.', 'founderpostai-ai-suite-seo' ) );
 			}
 
 			if ( class_exists( 'AISuite_SEO_Health_Screen' ) ) {
@@ -471,7 +571,7 @@ class AISuite_SEO_Optimizer {
 	 * Delegates to the block/DOM-aware inserter. A revision is saved first, so
 	 * the change is always reversible from the editor.
 	 *
-	 * @return true|WP_Error
+	 * @return array|WP_Error Exact content before and after the write.
 	 */
 	protected function insert_links( $post_id, $links ) {
 		if ( empty( $links ) || ! is_array( $links ) ) {
@@ -493,14 +593,15 @@ class AISuite_SEO_Optimizer {
 			return new WP_Error( 'aisuite_seo_no_links', __( 'The linked pages are no longer published, so nothing was changed.', 'founderpostai-ai-suite-seo' ) );
 		}
 
-		$inserter = new AISuite_SEO_Link_Inserter();
-		$result   = $inserter->insert( $post->post_content, $links );
+		$before_content = (string) $post->post_content;
+		$inserter       = new AISuite_SEO_Link_Inserter();
+		$result         = $inserter->insert( $before_content, $links );
 
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
 
-		if ( $result['content'] === $post->post_content ) {
+		if ( $result['content'] === $before_content ) {
 			return new WP_Error( 'aisuite_seo_noop', __( 'Nothing changed, so the post was left alone.', 'founderpostai-ai-suite-seo' ) );
 		}
 
@@ -518,7 +619,63 @@ class AISuite_SEO_Optimizer {
 			return $updated;
 		}
 
-		return true;
+		return array(
+			'before' => $before_content,
+			'after'  => (string) $result['content'],
+		);
+	}
+
+	/**
+	 * Restore the exact journaled value without overwriting a later edit.
+	 *
+	 * @param object $row Applied suggestion row.
+	 * @return true|WP_Error
+	 */
+	protected function restore_application( $row ) {
+		if ( in_array( $row->field, array( 'title', 'description' ), true ) ) {
+			if ( $this->current_value( $row->post_id, $row->field ) !== (string) $row->applied_value ) {
+				return new WP_Error( 'aisuite_seo_undo_stale', __( 'The live value changed after this suggestion was applied, so AI Suite left it alone.', 'founderpostai-ai-suite-seo' ) );
+			}
+
+			$updated = AISuite_SEO_Meta_Adapter::write( $row->post_id, $row->field, (string) $row->rollback_value );
+
+			if ( is_wp_error( $updated ) ) {
+				return $updated;
+			}
+
+			return false === $updated
+				? new WP_Error( 'aisuite_seo_write_failed', __( 'WordPress could not restore the previous metadata.', 'founderpostai-ai-suite-seo' ) )
+				: true;
+		}
+
+		if ( 'internal_links' !== $row->field ) {
+			return new WP_Error( 'aisuite_seo_unknown_field', __( 'Unknown suggestion type.', 'founderpostai-ai-suite-seo' ) );
+		}
+
+		$post = get_post( $row->post_id );
+
+		if ( ! $post ) {
+			return new WP_Error( 'aisuite_seo_no_post', __( 'Post not found.', 'founderpostai-ai-suite-seo' ) );
+		}
+
+		$applied_hash = 0 === strpos( (string) $row->applied_value, 'sha256:' ) ? substr( (string) $row->applied_value, 7 ) : '';
+		$current_hash = hash( 'sha256', (string) $post->post_content );
+
+		if ( ! preg_match( '/^[a-f0-9]{64}$/', $applied_hash ) || ! hash_equals( $applied_hash, $current_hash ) ) {
+			return new WP_Error( 'aisuite_seo_undo_stale', __( 'The post changed after these links were applied, so AI Suite left it alone.', 'founderpostai-ai-suite-seo' ) );
+		}
+
+		wp_save_post_revision( $row->post_id );
+
+		$updated = wp_update_post(
+			array(
+				'ID'           => (int) $row->post_id,
+				'post_content' => (string) $row->rollback_value,
+			),
+			true
+		);
+
+		return is_wp_error( $updated ) ? $updated : true;
 	}
 
 	protected function truncate( $value, $length ) {

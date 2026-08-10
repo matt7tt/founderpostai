@@ -35,6 +35,10 @@ What makes it different:
 * Every content write creates a WordPress revision first.
 * All suggestions remain reviewable; there is no arbitrary PHP or JavaScript generation or execution.
 * A site-wide SEO health dashboard tracks coverage, missing metadata, stale or failed analyses, orphaned content, link counts, and pending suggestions.
+* Gutenberg includes an AI Suite SEO sidebar for live previews, reviewed edits, refinement directions, apply, dismiss, and guarded undo.
+* A compact local site index updates incrementally so relevant-link discovery remains bounded on sites with tens of thousands of posts.
+* The review queue can safely apply up to 20 selected suggestions while checking every item for newer manual edits.
+* An optional read-only Google Search Console dashboard ranks query-and-page opportunities from finalized impressions, clicks, CTR, and average position.
 
 All functionality included in this plugin is available without a plugin license, feature key, trial period, or time limit. Manual 10-post batches are repeatable reliability chunks, not a total usage cutoff. Hosted AI service usage is described below.
 
@@ -54,6 +58,8 @@ The SEO screen also links to Core's feedback form with AI Suite SEO preselected.
 
 When an administrator runs an analysis, the post title, plain-text content, excerpt, permalink, existing meta values, saved brand context, and a list of published post titles and URLs used as internal-link candidates are sent. The gateway sends this input to the Anthropic API and returns structured SEO suggestions. Nothing is sent until an administrator runs an analysis.
 
+The local content index is stored only in this WordPress database and is not uploaded. If an administrator explicitly connects Google Search Console, the FounderPostAI gateway requests Google's read-only Search Console scope, stores the returned refresh token encrypted, and retrieves the chosen property's finalized queries, pages, clicks, impressions, click-through rates, and average positions. WordPress caches that reporting data for six hours. Search Console data is not sent to Anthropic or another AI model, and disconnecting removes the gateway-held Google token.
+
 FounderPostAI AI Suite gateway:
 
 * Service: https://founderpostai.com/ai-suite
@@ -65,6 +71,12 @@ Anthropic API:
 * Service: https://www.anthropic.com/api
 * Commercial terms: https://www.anthropic.com/legal/commercial-terms
 * Privacy: https://www.anthropic.com/legal/privacy
+
+Google Search Console API (optional):
+
+* Service: https://search.google.com/search-console
+* API terms: https://developers.google.com/terms/api-services-user-data-policy
+* Privacy: https://policies.google.com/privacy
 
 The plugin does not download or execute code from either service. The gateway returns structured data, and the plugin validates field types, lengths, link targets, and anchor text before storing a suggestion.
 
