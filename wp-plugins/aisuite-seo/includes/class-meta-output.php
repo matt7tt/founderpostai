@@ -10,7 +10,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-class AISuite_SEO_Meta_Output {
+class FounderPostAI_AISuite_SEO_Meta_Output {
 
 	public function __construct() {
 		add_action( 'wp_head', array( $this, 'output' ), 1 );
@@ -32,9 +32,9 @@ class AISuite_SEO_Meta_Output {
 	 * @return string|false Name of the conflicting plugin, or false.
 	 */
 	public static function conflicting_plugin() {
-		$provider = AISuite_SEO_Meta_Adapter::provider();
+		$provider = FounderPostAI_AISuite_SEO_Meta_Adapter::provider();
 
-		return AISuite_SEO_Meta_Adapter::PROVIDER_AISUITE === $provider ? false : AISuite_SEO_Meta_Adapter::label( $provider );
+		return FounderPostAI_AISuite_SEO_Meta_Adapter::PROVIDER_FOUNDERPOSTAI === $provider ? false : FounderPostAI_AISuite_SEO_Meta_Adapter::label( $provider );
 	}
 
 	protected function should_output() {
@@ -46,7 +46,7 @@ class AISuite_SEO_Meta_Output {
 			return $parts;
 		}
 
-		$custom = get_post_meta( get_queried_object_id(), AISuite_SEO_Optimizer::META_TITLE, true );
+		$custom = get_post_meta( get_queried_object_id(), FounderPostAI_AISuite_SEO_Optimizer::META_TITLE, true );
 
 		if ( $custom ) {
 			$parts['title'] = $custom;
@@ -57,11 +57,11 @@ class AISuite_SEO_Meta_Output {
 	}
 
 	public function integration_title( $title ) {
-		return $this->integration_value( $title, AISuite_SEO_Optimizer::META_TITLE );
+		return $this->integration_value( $title, FounderPostAI_AISuite_SEO_Optimizer::META_TITLE );
 	}
 
 	public function integration_description( $description ) {
-		return $this->integration_value( $description, AISuite_SEO_Optimizer::META_DESCRIPTION );
+		return $this->integration_value( $description, FounderPostAI_AISuite_SEO_Optimizer::META_DESCRIPTION );
 	}
 
 	protected function integration_value( $current, $meta_key ) {
@@ -70,13 +70,13 @@ class AISuite_SEO_Meta_Output {
 		}
 
 		$post_id = get_queried_object_id();
-		$field   = AISuite_SEO_Optimizer::META_TITLE === $meta_key ? 'title' : 'description';
+		$field   = FounderPostAI_AISuite_SEO_Optimizer::META_TITLE === $meta_key ? 'title' : 'description';
 
 		$custom = get_post_meta( $post_id, $meta_key, true );
-		$marker = get_post_meta( $post_id, AISuite_SEO_Meta_Adapter::provider_key( $field ), true );
+		$marker = get_post_meta( $post_id, FounderPostAI_AISuite_SEO_Meta_Adapter::provider_key( $field ), true );
 
-		if ( AISuite_SEO_Meta_Adapter::provider() === $marker ) {
-			$native = AISuite_SEO_Meta_Adapter::read( $post_id, $field );
+		if ( FounderPostAI_AISuite_SEO_Meta_Adapter::provider() === $marker ) {
+			$native = FounderPostAI_AISuite_SEO_Meta_Adapter::read( $post_id, $field );
 
 			// A later manual edit (including clearing the field) wins. When the
 			// values still match, return the mirror to cover a stale provider
@@ -95,8 +95,8 @@ class AISuite_SEO_Meta_Output {
 		}
 
 		$post_id     = get_queried_object_id();
-		$title       = get_post_meta( $post_id, AISuite_SEO_Optimizer::META_TITLE, true );
-		$description = get_post_meta( $post_id, AISuite_SEO_Optimizer::META_DESCRIPTION, true );
+		$title       = get_post_meta( $post_id, FounderPostAI_AISuite_SEO_Optimizer::META_TITLE, true );
+		$description = get_post_meta( $post_id, FounderPostAI_AISuite_SEO_Optimizer::META_DESCRIPTION, true );
 
 		if ( ! $title && ! $description ) {
 			return;

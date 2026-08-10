@@ -9,10 +9,10 @@
 
 defined( 'ABSPATH' ) || exit;
 
-class AISuite_SEO_Site_Index {
+class FounderPostAI_AISuite_SEO_Site_Index {
 
-	const HOOK         = 'aisuite_seo_build_site_index';
-	const STATE_OPTION = 'aisuite_seo_index_state';
+	const HOOK         = 'founderpostai_aisuite_seo_build_site_index';
+	const STATE_OPTION = 'founderpostai_aisuite_seo_index_state';
 	const BATCH_SIZE   = 100;
 	const CONTENT_MAX  = 20000;
 
@@ -29,6 +29,12 @@ class AISuite_SEO_Site_Index {
 	/** Return the custom index table name. */
 	public static function table() {
 		global $wpdb;
+		return $wpdb->prefix . 'founderpostai_aisuite_seo_index';
+	}
+
+	/** Previous direct-download releases used this generated table name. */
+	protected static function legacy_table() {
+		global $wpdb;
 		return $wpdb->prefix . 'aisuite_seo_index';
 	}
 
@@ -40,6 +46,21 @@ class AISuite_SEO_Site_Index {
 
 		$table   = self::table();
 		$charset = $wpdb->get_charset_collate();
+		$legacy  = self::legacy_table();
+
+		// Preserve an already-built local index when moving to the distinct
+		// FounderPostAI prefix. The index contains generated data only.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one-time generated-table migration.
+		$new_exists = (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one-time generated-table migration.
+		$old_exists = (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $legacy ) );
+		if ( ! $new_exists && $old_exists ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- one-time atomic generated-table migration.
+			$renamed = $wpdb->query( $wpdb->prepare( 'RENAME TABLE %i TO %i', $legacy, $table ) );
+			if ( false !== $renamed ) {
+				$old_exists = false;
+			}
+		}
 		$sql     = "CREATE TABLE {$table} (
 			post_id BIGINT UNSIGNED NOT NULL,
 			post_type VARCHAR(32) NOT NULL,
@@ -57,6 +78,21 @@ class AISuite_SEO_Site_Index {
 		) {$charset};";
 
 		dbDelta( $sql );
+
+		if ( $old_exists ) {
+			// A new index already exists, so the obsolete generated copy is safe to remove.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- cleanup of a legacy generated table.
+			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $legacy ) );
+		}
+
+		if ( false === get_option( self::STATE_OPTION, false ) ) {
+			$legacy_state = get_option( 'aisuite_seo_index_state', false );
+			if ( is_array( $legacy_state ) ) {
+				update_option( self::STATE_OPTION, $legacy_state, false );
+			}
+		}
+		delete_option( 'aisuite_seo_index_state' );
+		wp_clear_scheduled_hook( 'aisuite_seo_build_site_index' );
 
 		if ( false === get_option( self::STATE_OPTION, false ) ) {
 			self::reset_state();
@@ -104,11 +140,14 @@ class AISuite_SEO_Site_Index {
 	public static function drop() {
 		global $wpdb;
 
-		$table = self::table();
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- uninstall removes the plugin-owned index table.
-		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) );
+		foreach ( array( self::table(), self::legacy_table() ) as $table ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- uninstall removes generated index storage, including a partially migrated legacy table.
+			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) );
+		}
 		delete_option( self::STATE_OPTION );
+		delete_option( 'aisuite_seo_index_state' );
 		wp_clear_scheduled_hook( self::HOOK );
+		wp_clear_scheduled_hook( 'aisuite_seo_build_site_index' );
 	}
 
 	/** Index one bounded batch, resuming by post ID rather than a costly offset. */
@@ -289,7 +328,7 @@ class AISuite_SEO_Site_Index {
 					'post_excerpt'      => (string) $row->excerpt,
 					'post_content'      => (string) $row->content,
 					'post_modified_gmt' => (string) $row->modified_gmt,
-					'aisuite_url'       => (string) $row->url,
+					'founderpostai_aisuite_seo_url' => (string) $row->url,
 				);
 			},
 			(array) $rows

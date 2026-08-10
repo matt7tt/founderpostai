@@ -10,9 +10,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
-class AISuite_SEO_Meta_Adapter {
+class FounderPostAI_AISuite_SEO_Meta_Adapter {
 
-	const PROVIDER_AISUITE = 'aisuite';
+	const PROVIDER_FOUNDERPOSTAI = 'founderpostai_aisuite_seo';
 	const PROVIDER_YOAST   = 'yoast';
 	const PROVIDER_RANKMATH = 'rankmath';
 	const PROVIDER_AIOSEO  = 'aioseo';
@@ -38,20 +38,20 @@ class AISuite_SEO_Meta_Adapter {
 			return self::PROVIDER_SEOPRESS;
 		}
 
-		return self::PROVIDER_AISUITE;
+		return self::PROVIDER_FOUNDERPOSTAI;
 	}
 
 	public static function label( $provider = '' ) {
 		$provider = $provider ? $provider : self::provider();
 		$labels   = array(
-			self::PROVIDER_AISUITE => __( 'AI Suite SEO', 'founderpostai-ai-suite-seo' ),
+			self::PROVIDER_FOUNDERPOSTAI => __( 'AI Suite SEO', 'founderpostai-ai-suite-seo' ),
 			self::PROVIDER_YOAST   => __( 'Yoast SEO', 'founderpostai-ai-suite-seo' ),
 			self::PROVIDER_RANKMATH => __( 'Rank Math', 'founderpostai-ai-suite-seo' ),
 			self::PROVIDER_AIOSEO  => __( 'All in One SEO', 'founderpostai-ai-suite-seo' ),
 			self::PROVIDER_SEOPRESS => __( 'SEOPress', 'founderpostai-ai-suite-seo' ),
 		);
 
-		return isset( $labels[ $provider ] ) ? $labels[ $provider ] : $labels[ self::PROVIDER_AISUITE ];
+		return isset( $labels[ $provider ] ) ? $labels[ $provider ] : $labels[ self::PROVIDER_FOUNDERPOSTAI ];
 	}
 
 	/**
@@ -154,7 +154,7 @@ class AISuite_SEO_Meta_Adapter {
 		$value   = (string) $value;
 
 		if ( ! $post_id || ! $field ) {
-			return new WP_Error( 'aisuite_seo_invalid_meta', __( 'The metadata field is invalid.', 'founderpostai-ai-suite-seo' ) );
+			return new WP_Error( 'founderpostai_aisuite_seo_invalid_meta', __( 'The metadata field is invalid.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		$provider = self::provider();
@@ -165,14 +165,14 @@ class AISuite_SEO_Meta_Adapter {
 		}
 
 		if ( false === $written && $value !== (string) self::read_native( $post_id, $field, $provider ) ) {
-			return new WP_Error( 'aisuite_seo_write_failed', __( 'The active SEO plugin could not save that metadata.', 'founderpostai-ai-suite-seo' ) );
+			return new WP_Error( 'founderpostai_aisuite_seo_write_failed', __( 'The active SEO plugin could not save that metadata.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		$mirror_key = self::mirror_key( $field );
 		$mirrored   = update_post_meta( $post_id, $mirror_key, $value );
 
 		if ( false === $mirrored && $value !== (string) get_post_meta( $post_id, $mirror_key, true ) ) {
-			return new WP_Error( 'aisuite_seo_write_failed', __( 'WordPress could not save the metadata portability copy.', 'founderpostai-ai-suite-seo' ) );
+			return new WP_Error( 'founderpostai_aisuite_seo_write_failed', __( 'WordPress could not save the metadata portability copy.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		update_post_meta( $post_id, self::provider_key( $field ), $provider );
@@ -227,7 +227,7 @@ class AISuite_SEO_Meta_Adapter {
 			case self::PROVIDER_AIOSEO:
 				$class = '\\AIOSEO\\Plugin\\Common\\Models\\Post';
 				if ( ! class_exists( $class ) ) {
-					return new WP_Error( 'aisuite_seo_aioseo_unavailable', __( 'All in One SEO is active but its post model is unavailable.', 'founderpostai-ai-suite-seo' ) );
+					return new WP_Error( 'founderpostai_aisuite_seo_aioseo_unavailable', __( 'All in One SEO is active but its post model is unavailable.', 'founderpostai-ai-suite-seo' ) );
 				}
 
 				// savePost is AIOSEO's own post-save path: it applies its filters,
@@ -236,20 +236,20 @@ class AISuite_SEO_Meta_Adapter {
 				if ( is_callable( array( $class, 'savePost' ) ) ) {
 					$result = $class::savePost( $post_id, array( $field => $value ) );
 					if ( is_string( $result ) && '' !== $result ) {
-						return new WP_Error( 'aisuite_seo_write_failed', __( 'All in One SEO reported a database error while saving.', 'founderpostai-ai-suite-seo' ) );
+						return new WP_Error( 'founderpostai_aisuite_seo_write_failed', __( 'All in One SEO reported a database error while saving.', 'founderpostai-ai-suite-seo' ) );
 					}
 					return false === $result
-						? new WP_Error( 'aisuite_seo_write_failed', __( 'All in One SEO could not save that metadata.', 'founderpostai-ai-suite-seo' ) )
+						? new WP_Error( 'founderpostai_aisuite_seo_write_failed', __( 'All in One SEO could not save that metadata.', 'founderpostai-ai-suite-seo' ) )
 						: true;
 				}
 
 				if ( ! is_callable( array( $class, 'getPost' ) ) ) {
-					return new WP_Error( 'aisuite_seo_aioseo_unavailable', __( 'All in One SEO could not open this post metadata.', 'founderpostai-ai-suite-seo' ) );
+					return new WP_Error( 'founderpostai_aisuite_seo_aioseo_unavailable', __( 'All in One SEO could not open this post metadata.', 'founderpostai-ai-suite-seo' ) );
 				}
 
 				$model = $class::getPost( $post_id );
 				if ( ! is_object( $model ) || ! is_callable( array( $model, 'save' ) ) ) {
-					return new WP_Error( 'aisuite_seo_aioseo_unavailable', __( 'All in One SEO could not open this post metadata.', 'founderpostai-ai-suite-seo' ) );
+					return new WP_Error( 'founderpostai_aisuite_seo_aioseo_unavailable', __( 'All in One SEO could not open this post metadata.', 'founderpostai-ai-suite-seo' ) );
 				}
 
 				$model->{$field} = $value;
@@ -259,7 +259,7 @@ class AISuite_SEO_Meta_Adapter {
 					do_action( 'aioseo_insert_post', $post_id );
 
 				if ( function_exists( 'aioseo' ) && aioseo()->core->db->lastError() ) {
-					return new WP_Error( 'aisuite_seo_write_failed', __( 'All in One SEO reported a database error while saving.', 'founderpostai-ai-suite-seo' ) );
+					return new WP_Error( 'founderpostai_aisuite_seo_write_failed', __( 'All in One SEO reported a database error while saving.', 'founderpostai-ai-suite-seo' ) );
 				}
 
 				return true;
@@ -277,10 +277,10 @@ class AISuite_SEO_Meta_Adapter {
 	}
 
 	protected static function mirror_key( $field ) {
-		return 'title' === $field ? '_aisuite_seo_title' : '_aisuite_seo_description';
+		return 'title' === $field ? '_founderpostai_aisuite_seo_title' : '_founderpostai_aisuite_seo_description';
 	}
 
 	public static function provider_key( $field ) {
-		return 'title' === $field ? '_aisuite_seo_title_provider' : '_aisuite_seo_description_provider';
+		return 'title' === $field ? '_founderpostai_aisuite_seo_title_provider' : '_founderpostai_aisuite_seo_description_provider';
 	}
 }

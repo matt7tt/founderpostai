@@ -4,7 +4,7 @@ Tags: seo, ai, automation, bulk optimization
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.4
+Stable tag: 1.0.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,12 @@ AI Suite Core and AI Suite SEO must both be installed and active.
 5. Open AI Suite > SEO Pro and enter the license key from your receipt.
 
 == Changelog ==
+
+= 1.0.5 =
+
+* Adopted collision-resistant FounderPostAI class, option, action, and cache names.
+* Migrates settings, license state, scheduled work, and sweep progress from earlier versions.
+* Requires AI Suite Core 0.1.5 and AI Suite SEO 0.1.7 or newer.
 
 = 1.0.4 =
 

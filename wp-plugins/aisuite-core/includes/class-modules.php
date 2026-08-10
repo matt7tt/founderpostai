@@ -21,6 +21,8 @@ class AISuite_Modules {
 	}
 
 	public function collect() {
+		do_action( 'founderpostai_aisuite_register_modules', $this );
+		// Backward compatibility for modules released before Core 0.1.5.
 		do_action( 'aisuite_register_modules', $this );
 	}
 

@@ -10,7 +10,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-class AISuite_SEO_Link_Candidates {
+class FounderPostAI_AISuite_SEO_Link_Candidates {
 
 	const DEFAULT_LIMIT = 60;
 	const BATCH_SIZE    = 250;
@@ -33,8 +33,8 @@ class AISuite_SEO_Link_Candidates {
 		$profile = self::profile( $source );
 		$ranked  = array();
 
-		if ( class_exists( 'AISuite_SEO_Site_Index' ) && AISuite_SEO_Site_Index::is_ready() ) {
-			$indexed = AISuite_SEO_Site_Index::candidates( $source, min( 300, $limit * 3 ) );
+		if ( class_exists( 'FounderPostAI_AISuite_SEO_Site_Index' ) && FounderPostAI_AISuite_SEO_Site_Index::is_ready() ) {
+			$indexed = FounderPostAI_AISuite_SEO_Site_Index::candidates( $source, min( 300, $limit * 3 ) );
 			$indexed = self::rank( $source, $indexed, $limit );
 
 			return array_map(
@@ -42,7 +42,7 @@ class AISuite_SEO_Link_Candidates {
 					return array(
 						'id'    => (int) $post->ID,
 						'title' => (string) $post->post_title,
-						'url'   => isset( $post->aisuite_url ) ? (string) $post->aisuite_url : get_permalink( $post ),
+						'url'   => isset( $post->founderpostai_aisuite_seo_url ) ? (string) $post->founderpostai_aisuite_seo_url : get_permalink( $post ),
 					);
 				},
 				$indexed
@@ -50,7 +50,7 @@ class AISuite_SEO_Link_Candidates {
 		}
 
 		$page    = 1;
-		$batch   = max( 25, (int) apply_filters( 'aisuite_seo_link_candidate_batch_size', self::BATCH_SIZE ) );
+		$batch   = max( 25, (int) apply_filters( 'founderpostai_aisuite_seo_link_candidate_batch_size', self::BATCH_SIZE ) );
 
 		do {
 			$posts = get_posts(

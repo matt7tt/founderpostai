@@ -9,23 +9,23 @@
 
 defined( 'ABSPATH' ) || exit;
 
-class AISuite_SEO_Optimizer {
+class FounderPostAI_AISuite_SEO_Optimizer {
 
-	const META_TITLE       = '_aisuite_seo_title';
-	const META_DESCRIPTION = '_aisuite_seo_description';
-	const META_INDEXED     = '_aisuite_seo_indexed_hash';
-	const META_ANALYZED    = '_aisuite_seo_analyzed';
-	const META_ERROR       = '_aisuite_seo_error';
-	const META_QUEUED      = '_aisuite_seo_queued';
-	const APPLY_LOCK       = 'aisuite_seo_apply_lock_';
+	const META_TITLE       = '_founderpostai_aisuite_seo_title';
+	const META_DESCRIPTION = '_founderpostai_aisuite_seo_description';
+	const META_INDEXED     = '_founderpostai_aisuite_seo_indexed_hash';
+	const META_ANALYZED    = '_founderpostai_aisuite_seo_analyzed';
+	const META_ERROR       = '_founderpostai_aisuite_seo_error';
+	const META_QUEUED      = '_founderpostai_aisuite_seo_queued';
+	const APPLY_LOCK       = 'founderpostai_aisuite_seo_apply_lock_';
 
 	/** Fields the gateway may return. Anything else is dropped. */
 	const FIELDS = array( 'title', 'description', 'internal_links' );
 
 	public function __construct( $register_hooks = true ) {
 		if ( $register_hooks ) {
-			add_action( 'aisuite_job_completed_seo.analyze_post', array( $this, 'receive_analysis' ), 10, 2 );
-			add_action( 'aisuite_job_failed_seo.analyze_post', array( $this, 'receive_failure' ), 10, 2 );
+			add_action( 'founderpostai_aisuite_job_completed_seo.analyze_post', array( $this, 'receive_analysis' ), 10, 2 );
+			add_action( 'founderpostai_aisuite_job_failed_seo.analyze_post', array( $this, 'receive_failure' ), 10, 2 );
 		}
 	}
 
@@ -46,17 +46,17 @@ class AISuite_SEO_Optimizer {
 		$post = get_post( $post_id );
 
 		if ( ! $post || 'trash' === $post->post_status ) {
-			return new WP_Error( 'aisuite_seo_no_post', __( 'Post not found.', 'founderpostai-ai-suite-seo' ) );
+			return new WP_Error( 'founderpostai_aisuite_seo_no_post', __( 'Post not found.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		if ( $enforce_caps && ! current_user_can( 'edit_post', $post_id ) ) {
-			return new WP_Error( 'aisuite_seo_denied', __( 'You cannot edit this post.', 'founderpostai-ai-suite-seo' ) );
+			return new WP_Error( 'founderpostai_aisuite_seo_denied', __( 'You cannot edit this post.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		$in_flight = (int) get_post_meta( $post_id, self::META_QUEUED, true );
 
 		if ( $in_flight && time() - $in_flight < DAY_IN_SECONDS ) {
-			return new WP_Error( 'aisuite_seo_already_queued', __( 'This post is already queued for analysis.', 'founderpostai-ai-suite-seo' ) );
+			return new WP_Error( 'founderpostai_aisuite_seo_already_queued', __( 'This post is already queued for analysis.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		if ( $in_flight ) {
@@ -66,7 +66,7 @@ class AISuite_SEO_Optimizer {
 		// Unique post meta is an atomic claim. Writing the marker after enqueue
 		// allowed two simultaneous bulk/admin requests to charge for the same post.
 		if ( ! add_post_meta( $post_id, self::META_QUEUED, time(), true ) ) {
-			return new WP_Error( 'aisuite_seo_already_queued', __( 'This post is already queued for analysis.', 'founderpostai-ai-suite-seo' ) );
+			return new WP_Error( 'founderpostai_aisuite_seo_already_queued', __( 'This post is already queued for analysis.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		$payload = array(
@@ -87,7 +87,7 @@ class AISuite_SEO_Optimizer {
 			),
 		);
 
-		$ref = aisuite()->jobs->enqueue(
+		$ref = founderpostai_aisuite()->jobs->enqueue(
 			'seo.analyze_post',
 			$payload,
 			array(
@@ -113,7 +113,7 @@ class AISuite_SEO_Optimizer {
 	 * this category.
 	 */
 	protected function link_candidates( $exclude_id, $limit = 60 ) {
-		return AISuite_SEO_Link_Candidates::select( $exclude_id, $limit );
+		return FounderPostAI_AISuite_SEO_Link_Candidates::select( $exclude_id, $limit );
 	}
 
 	/**
@@ -126,7 +126,7 @@ class AISuite_SEO_Optimizer {
 			return;
 		}
 
-		if ( ! AISuite_SEO_Store::table_exists() ) {
+		if ( ! FounderPostAI_AISuite_SEO_Store::table_exists() ) {
 			$this->receive_failure( __( 'The suggestions table is unavailable. Deactivate and reactivate AI Suite SEO, then try again.', 'founderpostai-ai-suite-seo' ), $context );
 			return;
 		}
@@ -171,7 +171,7 @@ class AISuite_SEO_Optimizer {
 				continue;
 			}
 
-			$stored = AISuite_SEO_Store::put(
+			$stored = FounderPostAI_AISuite_SEO_Store::put(
 				$post_id,
 				$field,
 				$this->current_value( $post_id, $field ),
@@ -199,7 +199,7 @@ class AISuite_SEO_Optimizer {
 
 			foreach ( $fields as $field ) {
 				if ( empty( $stored_fields[ $field ] ) ) {
-					AISuite_SEO_Store::dismiss_pending_field( $post_id, $field );
+					FounderPostAI_AISuite_SEO_Store::dismiss_pending_field( $post_id, $field );
 				}
 			}
 		}
@@ -208,8 +208,8 @@ class AISuite_SEO_Optimizer {
 		delete_post_meta( $post_id, self::META_QUEUED );
 		$analysis_hash = isset( $context['analysis_hash'] ) ? (string) $context['analysis_hash'] : '';
 		self::mark_current( $post_id, $analysis_hash );
-		if ( class_exists( 'AISuite_SEO_Health_Screen' ) ) {
-			AISuite_SEO_Health_Screen::invalidate();
+		if ( class_exists( 'FounderPostAI_AISuite_SEO_Health_Screen' ) ) {
+			FounderPostAI_AISuite_SEO_Health_Screen::invalidate();
 		}
 	}
 
@@ -242,8 +242,8 @@ class AISuite_SEO_Optimizer {
 
 		if ( ! is_array( $current_meta ) ) {
 			$current_meta = array(
-				'title'       => AISuite_SEO_Meta_Adapter::read( $post->ID, 'title' ),
-				'description' => AISuite_SEO_Meta_Adapter::read( $post->ID, 'description' ),
+				'title'       => FounderPostAI_AISuite_SEO_Meta_Adapter::read( $post->ID, 'title' ),
+				'description' => FounderPostAI_AISuite_SEO_Meta_Adapter::read( $post->ID, 'description' ),
 			);
 		}
 
@@ -365,7 +365,7 @@ class AISuite_SEO_Optimizer {
 	}
 
 	public function current_value( $post_id, $field ) {
-		return AISuite_SEO_Meta_Adapter::read( $post_id, $field );
+		return FounderPostAI_AISuite_SEO_Meta_Adapter::read( $post_id, $field );
 	}
 
 	/**
@@ -378,22 +378,22 @@ class AISuite_SEO_Optimizer {
 	 */
 	public function apply( $suggestion_id, $enforce_caps = true, $edited_value = null ) {
 		if ( ! $this->acquire_apply_lock( $suggestion_id ) ) {
-			return new WP_Error( 'aisuite_seo_busy', __( 'That suggestion is already being handled. Refresh and try again.', 'founderpostai-ai-suite-seo' ) );
+			return new WP_Error( 'founderpostai_aisuite_seo_busy', __( 'That suggestion is already being handled. Refresh and try again.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		try {
-			$row = AISuite_SEO_Store::get( $suggestion_id );
+			$row = FounderPostAI_AISuite_SEO_Store::get( $suggestion_id );
 
 			if ( ! $row ) {
-				return new WP_Error( 'aisuite_seo_missing', __( 'That suggestion no longer exists.', 'founderpostai-ai-suite-seo' ) );
+				return new WP_Error( 'founderpostai_aisuite_seo_missing', __( 'That suggestion no longer exists.', 'founderpostai-ai-suite-seo' ) );
 			}
 
 			if ( 'pending' !== $row->status ) {
-				return new WP_Error( 'aisuite_seo_resolved', __( 'That suggestion has already been handled.', 'founderpostai-ai-suite-seo' ) );
+				return new WP_Error( 'founderpostai_aisuite_seo_resolved', __( 'That suggestion has already been handled.', 'founderpostai-ai-suite-seo' ) );
 			}
 
 			if ( $enforce_caps && ! current_user_can( 'edit_post', $row->post_id ) ) {
-				return new WP_Error( 'aisuite_seo_denied', __( 'You cannot edit this post.', 'founderpostai-ai-suite-seo' ) );
+				return new WP_Error( 'founderpostai_aisuite_seo_denied', __( 'You cannot edit this post.', 'founderpostai-ai-suite-seo' ) );
 			}
 
 			$was_current = self::is_current( $row->post_id );
@@ -401,7 +401,7 @@ class AISuite_SEO_Optimizer {
 
 			if ( in_array( $row->field, array( 'title', 'description' ), true ) ) {
 				if ( null !== $edited_value && ! is_scalar( $edited_value ) ) {
-					return new WP_Error( 'aisuite_seo_invalid_edit', __( 'The edited suggestion is invalid.', 'founderpostai-ai-suite-seo' ) );
+					return new WP_Error( 'founderpostai_aisuite_seo_invalid_edit', __( 'The edited suggestion is invalid.', 'founderpostai-ai-suite-seo' ) );
 				}
 
 				if ( null !== $edited_value ) {
@@ -411,13 +411,13 @@ class AISuite_SEO_Optimizer {
 				$suggested = trim( $this->truncate( $suggested, 'title' === $row->field ? 60 : 155 ) );
 
 				if ( '' === $suggested ) {
-					return new WP_Error( 'aisuite_seo_empty_edit', __( 'Enter a suggestion before applying it.', 'founderpostai-ai-suite-seo' ) );
+					return new WP_Error( 'founderpostai_aisuite_seo_empty_edit', __( 'Enter a suggestion before applying it.', 'founderpostai-ai-suite-seo' ) );
 				}
 			}
 
 			if ( in_array( $row->field, array( 'title', 'description' ), true ) && $this->current_value( $row->post_id, $row->field ) !== (string) $row->current_value ) {
 				return new WP_Error(
-					'aisuite_seo_stale',
+					'founderpostai_aisuite_seo_stale',
 					__( 'This field changed after the suggestion was created. Run a new analysis so nothing newer is overwritten.', 'founderpostai-ai-suite-seo' )
 				);
 			}
@@ -425,12 +425,12 @@ class AISuite_SEO_Optimizer {
 			switch ( $row->field ) {
 				case 'title':
 					$rollback_value = $this->current_value( $row->post_id, 'title' );
-					$updated        = AISuite_SEO_Meta_Adapter::write( $row->post_id, 'title', $suggested );
+					$updated        = FounderPostAI_AISuite_SEO_Meta_Adapter::write( $row->post_id, 'title', $suggested );
 					break;
 
 				case 'description':
 					$rollback_value = $this->current_value( $row->post_id, 'description' );
-					$updated        = AISuite_SEO_Meta_Adapter::write( $row->post_id, 'description', $suggested );
+					$updated        = FounderPostAI_AISuite_SEO_Meta_Adapter::write( $row->post_id, 'description', $suggested );
 					break;
 
 				case 'internal_links':
@@ -445,7 +445,7 @@ class AISuite_SEO_Optimizer {
 					break;
 
 				default:
-					return new WP_Error( 'aisuite_seo_unknown_field', __( 'Unknown suggestion type.', 'founderpostai-ai-suite-seo' ) );
+					return new WP_Error( 'founderpostai_aisuite_seo_unknown_field', __( 'Unknown suggestion type.', 'founderpostai-ai-suite-seo' ) );
 			}
 
 			if ( is_wp_error( $updated ) ) {
@@ -453,15 +453,15 @@ class AISuite_SEO_Optimizer {
 			}
 
 			if ( false === $updated ) {
-				return new WP_Error( 'aisuite_seo_write_failed', __( 'WordPress could not save that change. The suggestion remains pending so you can try again.', 'founderpostai-ai-suite-seo' ) );
+				return new WP_Error( 'founderpostai_aisuite_seo_write_failed', __( 'WordPress could not save that change. The suggestion remains pending so you can try again.', 'founderpostai-ai-suite-seo' ) );
 			}
 
 			if ( in_array( $row->field, array( 'title', 'description' ), true ) ) {
 				$applied_value = $this->current_value( $row->post_id, $row->field );
 			}
 
-			if ( ! AISuite_SEO_Store::resolve_applied( $suggestion_id, $suggested, $rollback_value, $applied_value ) ) {
-				return new WP_Error( 'aisuite_seo_resolved', __( 'That suggestion was handled by another request.', 'founderpostai-ai-suite-seo' ) );
+			if ( ! FounderPostAI_AISuite_SEO_Store::resolve_applied( $suggestion_id, $suggested, $rollback_value, $applied_value ) ) {
+				return new WP_Error( 'founderpostai_aisuite_seo_resolved', __( 'That suggestion was handled by another request.', 'founderpostai-ai-suite-seo' ) );
 			}
 
 			// Advance the fingerprint across our own approved write only when the
@@ -470,8 +470,8 @@ class AISuite_SEO_Optimizer {
 				self::mark_current( $row->post_id );
 			}
 
-			if ( class_exists( 'AISuite_SEO_Health_Screen' ) ) {
-				AISuite_SEO_Health_Screen::invalidate();
+			if ( class_exists( 'FounderPostAI_AISuite_SEO_Health_Screen' ) ) {
+				FounderPostAI_AISuite_SEO_Health_Screen::invalidate();
 			}
 
 			return true;
@@ -489,26 +489,26 @@ class AISuite_SEO_Optimizer {
 	 */
 	public function undo( $suggestion_id, $enforce_caps = true ) {
 		if ( ! $this->acquire_apply_lock( $suggestion_id ) ) {
-			return new WP_Error( 'aisuite_seo_busy', __( 'That suggestion is already being handled. Refresh and try again.', 'founderpostai-ai-suite-seo' ) );
+			return new WP_Error( 'founderpostai_aisuite_seo_busy', __( 'That suggestion is already being handled. Refresh and try again.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		try {
-			$row = AISuite_SEO_Store::get( $suggestion_id );
+			$row = FounderPostAI_AISuite_SEO_Store::get( $suggestion_id );
 
 			if ( ! $row ) {
-				return new WP_Error( 'aisuite_seo_missing', __( 'That suggestion no longer exists.', 'founderpostai-ai-suite-seo' ) );
+				return new WP_Error( 'founderpostai_aisuite_seo_missing', __( 'That suggestion no longer exists.', 'founderpostai-ai-suite-seo' ) );
 			}
 
 			if ( 'approved' !== $row->status ) {
-				return new WP_Error( 'aisuite_seo_not_applied', __( 'Only an applied suggestion can be undone.', 'founderpostai-ai-suite-seo' ) );
+				return new WP_Error( 'founderpostai_aisuite_seo_not_applied', __( 'Only an applied suggestion can be undone.', 'founderpostai-ai-suite-seo' ) );
 			}
 
 			if ( $enforce_caps && ! current_user_can( 'edit_post', $row->post_id ) ) {
-				return new WP_Error( 'aisuite_seo_denied', __( 'You cannot edit this post.', 'founderpostai-ai-suite-seo' ) );
+				return new WP_Error( 'founderpostai_aisuite_seo_denied', __( 'You cannot edit this post.', 'founderpostai-ai-suite-seo' ) );
 			}
 
 			if ( ! property_exists( $row, 'rollback_value' ) || ! property_exists( $row, 'applied_value' ) || null === $row->rollback_value || null === $row->applied_value ) {
-				return new WP_Error( 'aisuite_seo_no_rollback', __( 'Undo data was not recorded for this older suggestion.', 'founderpostai-ai-suite-seo' ) );
+				return new WP_Error( 'founderpostai_aisuite_seo_no_rollback', __( 'Undo data was not recorded for this older suggestion.', 'founderpostai-ai-suite-seo' ) );
 			}
 
 			$restored = $this->restore_application( $row );
@@ -517,12 +517,12 @@ class AISuite_SEO_Optimizer {
 				return $restored;
 			}
 
-			if ( ! AISuite_SEO_Store::mark_undone( $suggestion_id ) ) {
-				return new WP_Error( 'aisuite_seo_undo_history', __( 'The value was restored, but the review history could not be updated. Refresh before trying anything else.', 'founderpostai-ai-suite-seo' ) );
+			if ( ! FounderPostAI_AISuite_SEO_Store::mark_undone( $suggestion_id ) ) {
+				return new WP_Error( 'founderpostai_aisuite_seo_undo_history', __( 'The value was restored, but the review history could not be updated. Refresh before trying anything else.', 'founderpostai-ai-suite-seo' ) );
 			}
 
-			if ( class_exists( 'AISuite_SEO_Health_Screen' ) ) {
-				AISuite_SEO_Health_Screen::invalidate();
+			if ( class_exists( 'FounderPostAI_AISuite_SEO_Health_Screen' ) ) {
+				FounderPostAI_AISuite_SEO_Health_Screen::invalidate();
 			}
 
 			return true;
@@ -533,30 +533,30 @@ class AISuite_SEO_Optimizer {
 
 	public function reject( $suggestion_id, $enforce_caps = true ) {
 		if ( ! $this->acquire_apply_lock( $suggestion_id ) ) {
-			return new WP_Error( 'aisuite_seo_busy', __( 'That suggestion is already being handled. Refresh and try again.', 'founderpostai-ai-suite-seo' ) );
+			return new WP_Error( 'founderpostai_aisuite_seo_busy', __( 'That suggestion is already being handled. Refresh and try again.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		try {
-			$row = AISuite_SEO_Store::get( $suggestion_id );
+			$row = FounderPostAI_AISuite_SEO_Store::get( $suggestion_id );
 
 			if ( ! $row ) {
-				return new WP_Error( 'aisuite_seo_missing', __( 'That suggestion no longer exists.', 'founderpostai-ai-suite-seo' ) );
+				return new WP_Error( 'founderpostai_aisuite_seo_missing', __( 'That suggestion no longer exists.', 'founderpostai-ai-suite-seo' ) );
 			}
 
 			if ( 'pending' !== $row->status ) {
-				return new WP_Error( 'aisuite_seo_resolved', __( 'That suggestion has already been handled.', 'founderpostai-ai-suite-seo' ) );
+				return new WP_Error( 'founderpostai_aisuite_seo_resolved', __( 'That suggestion has already been handled.', 'founderpostai-ai-suite-seo' ) );
 			}
 
 			if ( $enforce_caps && ! current_user_can( 'edit_post', $row->post_id ) ) {
-				return new WP_Error( 'aisuite_seo_denied', __( 'You cannot edit this post.', 'founderpostai-ai-suite-seo' ) );
+				return new WP_Error( 'founderpostai_aisuite_seo_denied', __( 'You cannot edit this post.', 'founderpostai-ai-suite-seo' ) );
 			}
 
-			if ( ! AISuite_SEO_Store::resolve( $suggestion_id, 'rejected' ) ) {
-				return new WP_Error( 'aisuite_seo_resolved', __( 'That suggestion was handled by another request.', 'founderpostai-ai-suite-seo' ) );
+			if ( ! FounderPostAI_AISuite_SEO_Store::resolve( $suggestion_id, 'rejected' ) ) {
+				return new WP_Error( 'founderpostai_aisuite_seo_resolved', __( 'That suggestion was handled by another request.', 'founderpostai-ai-suite-seo' ) );
 			}
 
-			if ( class_exists( 'AISuite_SEO_Health_Screen' ) ) {
-				AISuite_SEO_Health_Screen::invalidate();
+			if ( class_exists( 'FounderPostAI_AISuite_SEO_Health_Screen' ) ) {
+				FounderPostAI_AISuite_SEO_Health_Screen::invalidate();
 			}
 
 			return true;
@@ -575,13 +575,13 @@ class AISuite_SEO_Optimizer {
 	 */
 	protected function insert_links( $post_id, $links ) {
 		if ( empty( $links ) || ! is_array( $links ) ) {
-			return new WP_Error( 'aisuite_seo_no_links', __( 'No usable links in this suggestion.', 'founderpostai-ai-suite-seo' ) );
+			return new WP_Error( 'founderpostai_aisuite_seo_no_links', __( 'No usable links in this suggestion.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		$post = get_post( $post_id );
 
 		if ( ! $post ) {
-			return new WP_Error( 'aisuite_seo_no_post', __( 'Post not found.', 'founderpostai-ai-suite-seo' ) );
+			return new WP_Error( 'founderpostai_aisuite_seo_no_post', __( 'Post not found.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		// Suggestions can sit in the queue for days. Re-check each target and
@@ -590,11 +590,11 @@ class AISuite_SEO_Optimizer {
 		$links = $this->filter_links( $links, $post_id );
 
 		if ( empty( $links ) ) {
-			return new WP_Error( 'aisuite_seo_no_links', __( 'The linked pages are no longer published, so nothing was changed.', 'founderpostai-ai-suite-seo' ) );
+			return new WP_Error( 'founderpostai_aisuite_seo_no_links', __( 'The linked pages are no longer published, so nothing was changed.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		$before_content = (string) $post->post_content;
-		$inserter       = new AISuite_SEO_Link_Inserter();
+		$inserter       = new FounderPostAI_AISuite_SEO_Link_Inserter();
 		$result         = $inserter->insert( $before_content, $links );
 
 		if ( is_wp_error( $result ) ) {
@@ -602,7 +602,7 @@ class AISuite_SEO_Optimizer {
 		}
 
 		if ( $result['content'] === $before_content ) {
-			return new WP_Error( 'aisuite_seo_noop', __( 'Nothing changed, so the post was left alone.', 'founderpostai-ai-suite-seo' ) );
+			return new WP_Error( 'founderpostai_aisuite_seo_noop', __( 'Nothing changed, so the post was left alone.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		wp_save_post_revision( $post_id );
@@ -634,35 +634,35 @@ class AISuite_SEO_Optimizer {
 	protected function restore_application( $row ) {
 		if ( in_array( $row->field, array( 'title', 'description' ), true ) ) {
 			if ( $this->current_value( $row->post_id, $row->field ) !== (string) $row->applied_value ) {
-				return new WP_Error( 'aisuite_seo_undo_stale', __( 'The live value changed after this suggestion was applied, so AI Suite left it alone.', 'founderpostai-ai-suite-seo' ) );
+				return new WP_Error( 'founderpostai_aisuite_seo_undo_stale', __( 'The live value changed after this suggestion was applied, so AI Suite left it alone.', 'founderpostai-ai-suite-seo' ) );
 			}
 
-			$updated = AISuite_SEO_Meta_Adapter::write( $row->post_id, $row->field, (string) $row->rollback_value );
+			$updated = FounderPostAI_AISuite_SEO_Meta_Adapter::write( $row->post_id, $row->field, (string) $row->rollback_value );
 
 			if ( is_wp_error( $updated ) ) {
 				return $updated;
 			}
 
 			return false === $updated
-				? new WP_Error( 'aisuite_seo_write_failed', __( 'WordPress could not restore the previous metadata.', 'founderpostai-ai-suite-seo' ) )
+				? new WP_Error( 'founderpostai_aisuite_seo_write_failed', __( 'WordPress could not restore the previous metadata.', 'founderpostai-ai-suite-seo' ) )
 				: true;
 		}
 
 		if ( 'internal_links' !== $row->field ) {
-			return new WP_Error( 'aisuite_seo_unknown_field', __( 'Unknown suggestion type.', 'founderpostai-ai-suite-seo' ) );
+			return new WP_Error( 'founderpostai_aisuite_seo_unknown_field', __( 'Unknown suggestion type.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		$post = get_post( $row->post_id );
 
 		if ( ! $post ) {
-			return new WP_Error( 'aisuite_seo_no_post', __( 'Post not found.', 'founderpostai-ai-suite-seo' ) );
+			return new WP_Error( 'founderpostai_aisuite_seo_no_post', __( 'Post not found.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		$applied_hash = 0 === strpos( (string) $row->applied_value, 'sha256:' ) ? substr( (string) $row->applied_value, 7 ) : '';
 		$current_hash = hash( 'sha256', (string) $post->post_content );
 
 		if ( ! preg_match( '/^[a-f0-9]{64}$/', $applied_hash ) || ! hash_equals( $applied_hash, $current_hash ) ) {
-			return new WP_Error( 'aisuite_seo_undo_stale', __( 'The post changed after these links were applied, so AI Suite left it alone.', 'founderpostai-ai-suite-seo' ) );
+			return new WP_Error( 'founderpostai_aisuite_seo_undo_stale', __( 'The post changed after these links were applied, so AI Suite left it alone.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		wp_save_post_revision( $row->post_id );

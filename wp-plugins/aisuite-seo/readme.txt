@@ -5,7 +5,7 @@ Requires at least: 6.5
 Requires Plugins: founderpostai-ai-suite-core
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.1.6
+Stable tag: 0.1.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -103,6 +103,14 @@ Nothing is changed. Links are only inserted where the exact phrase appears as or
 No. Every feature and every line of functional code shipped in this plugin is available without a license check. A separately distributed add-on contains its own automation code for unattended whole-site runs, scheduling, and conservative auto-apply; it does not unlock dormant code in this plugin.
 
 == Changelog ==
+
+= 0.1.7 =
+* Added a Gutenberg sidebar with live search previews, editable suggestions, field-specific refinement, apply, dismiss, and guarded undo.
+* Added safe bulk application for up to 20 reviewed suggestions with capability, lock, and stale-value checks on every item.
+* Added an incremental local content index so internal-link discovery remains bounded on large sites.
+* Added an optional read-only Google Search Console dashboard with performance comparisons and explainable opportunity ranking.
+* Successful regeneration now cleanly replaces older pending suggestions without discarding them when a job fails.
+* Adopted collision-resistant FounderPostAI names with safe data migration from earlier direct-download versions.
 
 = 0.1.6 =
 * Repeat manual batches now advance to the next posts that need analysis instead of re-analyzing the same recent posts.

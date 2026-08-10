@@ -10,7 +10,7 @@ function __( $message ) {
 
 require dirname( __DIR__, 2 ) . '/wp-plugins/aisuite-seo/includes/class-search-console-screen.php';
 
-$screen = new AISuite_SEO_Search_Console_Screen();
+$screen = new FounderPostAI_AISuite_SEO_Search_Console_Screen();
 $rows   = array(
 	array(
 		'query'       => 'high upside',

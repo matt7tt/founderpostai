@@ -4,8 +4,8 @@ import { authedSite } from '@/lib/gateway/store';
 import { stripe } from '@/lib/stripe';
 
 const LATEST = {
-  version: '1.0.4',
-  url: 'https://founderpostai.com/downloads/aisuite-seo-pro-1.0.4.zip',
+  version: '1.0.5',
+  url: 'https://founderpostai.com/downloads/aisuite-seo-pro-1.0.5.zip',
   tested: '7.0',
 };
 

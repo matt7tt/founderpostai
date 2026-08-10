@@ -9,9 +9,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
-class AISuite_SEO_Pro_Updater {
+class FounderPostAI_AISuite_SEO_Pro_Updater {
 
-	const TRANSIENT = 'aisuite_seo_pro_update';
+	const TRANSIENT = 'founderpostai_aisuite_seo_pro_update';
 
 	protected $file;
 	protected $version;
@@ -65,7 +65,7 @@ class AISuite_SEO_Pro_Updater {
 					// The update server only hands out the package URL to an
 					// active license. Without this header it returns metadata
 					// only, and there is nothing to install.
-					'X-AISuite-License'           => class_exists( 'AISuite_SEO_Pro' ) ? AISuite_SEO_Pro::license_key() : '',
+					'X-AISuite-License'           => class_exists( 'FounderPostAI_AISuite_SEO_Pro' ) ? FounderPostAI_AISuite_SEO_Pro::license_key() : '',
 				),
 			)
 		);
@@ -160,7 +160,7 @@ class AISuite_SEO_Pro_Updater {
 			return;
 		}
 
-		if ( class_exists( 'AISuite_SEO_Pro' ) && '' === AISuite_SEO_Pro::license_key() ) {
+		if ( class_exists( 'FounderPostAI_AISuite_SEO_Pro' ) && '' === FounderPostAI_AISuite_SEO_Pro::license_key() ) {
 			printf(
 				'<div class="notice notice-warning"><p>%s <a href="%s">%s</a></p></div>',
 				esc_html__( 'Enter your AI Suite SEO Pro license key to receive plugin updates.', 'aisuite-seo-pro' ),
@@ -170,7 +170,7 @@ class AISuite_SEO_Pro_Updater {
 			return;
 		}
 
-		if ( class_exists( 'AISuite_SEO_Pro' ) && ! AISuite_SEO_Pro::license_is_valid( AISuite_SEO_Pro::license_key() ) ) {
+		if ( class_exists( 'FounderPostAI_AISuite_SEO_Pro' ) && ! FounderPostAI_AISuite_SEO_Pro::license_is_valid( FounderPostAI_AISuite_SEO_Pro::license_key() ) ) {
 			printf(
 				'<div class="notice notice-error"><p>%s <a href="%s">%s</a></p></div>',
 				esc_html__( 'The AI Suite SEO Pro license key is not in a valid format.', 'aisuite-seo-pro' ),

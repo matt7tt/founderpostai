@@ -3,7 +3,7 @@
  * Plugin Name:       FounderPostAI – AI Suite SEO Pro
  * Plugin URI:        https://founderpostai.com/seo
  * Description:       Adds site-wide bulk optimization, scheduled re-analysis, and auto-apply rules to AI Suite SEO.
- * Version:           1.0.4
+ * Version:           1.0.5
  * Requires at least: 6.5
  * Requires PHP:      7.4
  * Requires Plugins:  founderpostai-ai-suite-core, founderpostai-ai-suite-seo
@@ -20,22 +20,29 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'AISUITE_SEO_PRO_VERSION', '1.0.4' );
-define( 'AISUITE_SEO_PRO_FILE', __FILE__ );
+define( 'FOUNDERPOSTAI_AISUITE_SEO_PRO_VERSION', '1.0.5' );
+define( 'FOUNDERPOSTAI_AISUITE_SEO_PRO_FILE', __FILE__ );
 
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-updater.php';
 
 add_action(
 	'plugins_loaded',
 	function () {
-		if ( ! function_exists( 'aisuite' ) || ! class_exists( 'AISuite_SEO_Optimizer' ) ) {
+		if (
+			! function_exists( 'founderpostai_aisuite' ) ||
+			! defined( 'AISUITE_CORE_VERSION' ) ||
+			version_compare( AISUITE_CORE_VERSION, '0.1.5', '<' ) ||
+			! defined( 'FOUNDERPOSTAI_AISUITE_SEO_VERSION' ) ||
+			version_compare( FOUNDERPOSTAI_AISUITE_SEO_VERSION, '0.1.7', '<' ) ||
+			! class_exists( 'FounderPostAI_AISuite_SEO_Optimizer' )
+		) {
 			add_action(
 				'admin_notices',
 				function () {
 					if ( current_user_can( 'activate_plugins' ) ) {
 						printf(
 							'<div class="notice notice-error"><p>%s</p></div>',
-							esc_html__( 'AI Suite SEO Pro needs both AI Suite Core and AI Suite SEO. Install and activate them to continue.', 'aisuite-seo-pro' )
+							esc_html__( 'AI Suite SEO Pro needs AI Suite Core 0.1.5 and AI Suite SEO 0.1.7 or newer. Install or update both plugins to continue.', 'aisuite-seo-pro' )
 						);
 					}
 				}
@@ -43,8 +50,9 @@ add_action(
 			return;
 		}
 
-		new AISuite_SEO_Pro_Updater( AISUITE_SEO_PRO_FILE, AISUITE_SEO_PRO_VERSION );
-		new AISuite_SEO_Pro();
+		FounderPostAI_AISuite_SEO_Pro::migrate_legacy_data();
+		new FounderPostAI_AISuite_SEO_Pro_Updater( FOUNDERPOSTAI_AISUITE_SEO_PRO_FILE, FOUNDERPOSTAI_AISUITE_SEO_PRO_VERSION );
+		new FounderPostAI_AISuite_SEO_Pro();
 	},
 	20
 );
@@ -52,29 +60,57 @@ add_action(
 register_deactivation_hook(
 	__FILE__,
 	function () {
-		wp_clear_scheduled_hook( AISuite_SEO_Pro::CRON_HOOK );
-		wp_clear_scheduled_hook( AISuite_SEO_Pro::CONTINUE_HOOK );
+		wp_clear_scheduled_hook( FounderPostAI_AISuite_SEO_Pro::CRON_HOOK );
+		wp_clear_scheduled_hook( FounderPostAI_AISuite_SEO_Pro::CONTINUE_HOOK );
 	}
 );
 
-class AISuite_SEO_Pro {
+class FounderPostAI_AISuite_SEO_Pro {
 
-	const OPTION         = 'aisuite_seo_pro_settings';
-	const LICENSE_OPTION = 'aisuite_seo_pro_license';
-	const CRON_HOOK      = 'aisuite_seo_pro_sweep';
-	const CONTINUE_HOOK  = 'aisuite_seo_pro_bulk_continue';
-	const SWEEP_CURSOR   = 'aisuite_seo_pro_sweep_cursor';
+	const OPTION         = 'founderpostai_aisuite_seo_pro_settings';
+	const LICENSE_OPTION = 'founderpostai_aisuite_seo_pro_license';
+	const CRON_HOOK      = 'founderpostai_aisuite_seo_pro_sweep';
+	const CONTINUE_HOOK  = 'founderpostai_aisuite_seo_pro_bulk_continue';
+	const SWEEP_CURSOR   = 'founderpostai_aisuite_seo_pro_sweep_cursor';
+	const MIGRATION_OPTION = 'founderpostai_aisuite_seo_pro_migration';
 	const BATCH_SIZE     = 25;
 	const MAX_SCAN       = 1000;
 
+	/** Move settings from direct-download releases that predate the unique prefix. */
+	public static function migrate_legacy_data() {
+		if ( '1' === get_option( self::MIGRATION_OPTION, '' ) ) {
+			return;
+		}
+
+		$missing = '__founderpostai_aisuite_seo_pro_missing__';
+		$mapping = array(
+			'aisuite_seo_pro_settings'     => self::OPTION,
+			'aisuite_seo_pro_license'      => self::LICENSE_OPTION,
+			'aisuite_seo_pro_sweep_cursor' => self::SWEEP_CURSOR,
+		);
+
+		foreach ( $mapping as $legacy_option => $new_option ) {
+			$legacy_value = get_option( $legacy_option, $missing );
+			if ( $missing !== $legacy_value && $missing === get_option( $new_option, $missing ) ) {
+				add_option( $new_option, $legacy_value, '', false );
+			}
+			delete_option( $legacy_option );
+		}
+
+		delete_transient( 'aisuite_seo_pro_update' );
+		wp_clear_scheduled_hook( 'aisuite_seo_pro_sweep' );
+		wp_clear_scheduled_hook( 'aisuite_seo_pro_bulk_continue' );
+		update_option( self::MIGRATION_OPTION, '1', false );
+	}
+
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'menu' ), 30 );
-		add_action( 'admin_post_aisuite_seo_pro_save', array( $this, 'save' ) );
-		add_action( 'admin_post_aisuite_seo_pro_bulk', array( $this, 'run_bulk' ) );
+		add_action( 'admin_post_founderpostai_aisuite_seo_pro_save', array( $this, 'save' ) );
+		add_action( 'admin_post_founderpostai_aisuite_seo_pro_bulk', array( $this, 'run_bulk' ) );
 		add_action( self::CRON_HOOK, array( $this, 'sweep' ) );
 		add_action( self::CONTINUE_HOOK, array( $this, 'continue_bulk' ) );
-		add_action( 'aisuite_job_completed_seo.analyze_post', array( $this, 'maybe_auto_apply' ), 20, 2 );
-		add_filter( 'plugin_action_links_' . plugin_basename( AISUITE_SEO_PRO_FILE ), array( $this, 'plugin_action_links' ) );
+		add_action( 'founderpostai_aisuite_job_completed_seo.analyze_post', array( $this, 'maybe_auto_apply' ), 20, 2 );
+		add_filter( 'plugin_action_links_' . plugin_basename( FOUNDERPOSTAI_AISUITE_SEO_PRO_FILE ), array( $this, 'plugin_action_links' ) );
 
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) && $this->settings()['schedule_enabled'] ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::CRON_HOOK );
@@ -148,8 +184,8 @@ class AISuite_SEO_Pro {
 				<h2><?php esc_html_e( 'Automation', 'aisuite-seo-pro' ); ?></h2>
 
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-					<?php wp_nonce_field( 'aisuite_seo_pro_save' ); ?>
-					<input type="hidden" name="action" value="aisuite_seo_pro_save" />
+					<?php wp_nonce_field( 'founderpostai_aisuite_seo_pro_save' ); ?>
+					<input type="hidden" name="action" value="founderpostai_aisuite_seo_pro_save" />
 
 					<table class="form-table" role="presentation">
 						<tr>
@@ -198,8 +234,8 @@ class AISuite_SEO_Pro {
 				<p><?php esc_html_e( 'Queues every published post and page that has never been analyzed.', 'aisuite-seo-pro' ); ?></p>
 
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-					<?php wp_nonce_field( 'aisuite_seo_pro_bulk' ); ?>
-					<input type="hidden" name="action" value="aisuite_seo_pro_bulk" />
+					<?php wp_nonce_field( 'founderpostai_aisuite_seo_pro_bulk' ); ?>
+					<input type="hidden" name="action" value="founderpostai_aisuite_seo_pro_bulk" />
 					<?php submit_button( __( 'Start bulk run', 'aisuite-seo-pro' ), 'primary', 'submit', false ); ?>
 				</form>
 			</div>
@@ -212,7 +248,7 @@ class AISuite_SEO_Pro {
 			wp_die( esc_html__( 'You do not have permission to do that.', 'aisuite-seo-pro' ) );
 		}
 
-		check_admin_referer( 'aisuite_seo_pro_save' );
+		check_admin_referer( 'founderpostai_aisuite_seo_pro_save' );
 
 		$settings = array(
 			'schedule_enabled' => ! empty( $_POST['schedule_enabled'] ),
@@ -232,7 +268,7 @@ class AISuite_SEO_Pro {
 			if ( $license !== self::license_key() ) {
 				update_option( self::LICENSE_OPTION, $license, false );
 				// The cached update response was fetched with the old key.
-				delete_transient( AISuite_SEO_Pro_Updater::TRANSIENT );
+				delete_transient( FounderPostAI_AISuite_SEO_Pro_Updater::TRANSIENT );
 			}
 		}
 
@@ -251,11 +287,11 @@ class AISuite_SEO_Pro {
 			wp_die( esc_html__( 'You do not have permission to do that.', 'aisuite-seo-pro' ) );
 		}
 
-		check_admin_referer( 'aisuite_seo_pro_bulk' );
+		check_admin_referer( 'founderpostai_aisuite_seo_pro_bulk' );
 
 		$this->run_bulk_batch();
 
-		wp_safe_redirect( admin_url( 'admin.php?page=aisuite-seo' ) );
+		wp_safe_redirect( admin_url( 'admin.php?page=founderpostai-aisuite-seo' ) );
 		exit;
 	}
 
@@ -303,7 +339,7 @@ class AISuite_SEO_Pro {
 		global $wpdb;
 
 		$limit     = (int) $this->settings()['daily_post_limit'];
-		$optimizer = new AISuite_SEO_Optimizer( false );
+		$optimizer = new FounderPostAI_AISuite_SEO_Optimizer( false );
 		$queued    = 0;
 		$scanned   = 0;
 		$cursor    = max( 0, (int) get_option( self::SWEEP_CURSOR, 0 ) );
@@ -345,12 +381,12 @@ class AISuite_SEO_Pro {
 					continue;
 				}
 
-				if ( AISuite_SEO_Optimizer::is_current( $post ) ) {
+				if ( FounderPostAI_AISuite_SEO_Optimizer::is_current( $post ) ) {
 					$cursor = $post_id;
 					continue; // Unchanged since its last analysis.
 				}
 
-				if ( AISuite_SEO_Optimizer::is_queued( $post_id ) ) {
+				if ( FounderPostAI_AISuite_SEO_Optimizer::is_queued( $post_id ) ) {
 					$cursor = $post_id;
 					continue; // An analysis is already queued or running.
 				}
@@ -389,22 +425,22 @@ class AISuite_SEO_Pro {
 			? array(
 				'relation' => 'AND',
 				array(
-					'key'     => '_aisuite_seo_analyzed',
+					'key'     => '_founderpostai_aisuite_seo_analyzed',
 					'compare' => 'NOT EXISTS',
 				),
 				// Not already in flight from an earlier batch — completion is
-				// what writes _aisuite_seo_analyzed, so without this a
+				// what writes _founderpostai_aisuite_seo_analyzed, so without this a
 				// continuation would re-queue (and re-charge) the same posts.
 				// Markers older than a day are stale (the job queue times out
 				// at a day) and must not exclude a post forever.
 				array(
 					'relation' => 'OR',
 					array(
-						'key'     => '_aisuite_seo_queued',
+						'key'     => '_founderpostai_aisuite_seo_queued',
 						'compare' => 'NOT EXISTS',
 					),
 					array(
-						'key'     => '_aisuite_seo_queued',
+						'key'     => '_founderpostai_aisuite_seo_queued',
 						'value'   => time() - DAY_IN_SECONDS,
 						'compare' => '<',
 						'type'    => 'NUMERIC',
@@ -425,7 +461,7 @@ class AISuite_SEO_Pro {
 			)
 		);
 
-		$optimizer = new AISuite_SEO_Optimizer( false );
+		$optimizer = new FounderPostAI_AISuite_SEO_Optimizer( false );
 		$enforce   = (bool) get_current_user_id(); // Cron continuations run with no user.
 		$queued    = 0;
 		$blocked   = '';
@@ -471,8 +507,8 @@ class AISuite_SEO_Pro {
 			return;
 		}
 
-		$optimizer   = new AISuite_SEO_Optimizer( false );
-		$suggestions = AISuite_SEO_Store::query(
+		$optimizer   = new FounderPostAI_AISuite_SEO_Optimizer( false );
+		$suggestions = FounderPostAI_AISuite_SEO_Store::query(
 			array(
 				'status'   => 'pending',
 				'post_id'  => $post_id,

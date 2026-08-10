@@ -37,7 +37,7 @@ function get_posts() {
 	exit( 1 );
 }
 
-class AISuite_SEO_Site_Index {
+class FounderPostAI_AISuite_SEO_Site_Index {
 	public static function is_ready() {
 		return true;
 	}
@@ -50,7 +50,7 @@ class AISuite_SEO_Site_Index {
 				'post_excerpt'      => 'Relevant guide.',
 				'post_content'      => 'Build a useful internal linking structure.',
 				'post_modified_gmt' => '2026-01-01 00:00:00',
-				'aisuite_url'       => 'https://example.com/internal-links/',
+				'founderpostai_aisuite_seo_url' => 'https://example.com/internal-links/',
 			),
 			(object) array(
 				'ID'                => 2,
@@ -58,7 +58,7 @@ class AISuite_SEO_Site_Index {
 				'post_excerpt'      => 'Recipes.',
 				'post_content'      => 'Sandwiches and salads.',
 				'post_modified_gmt' => '2026-07-01 00:00:00',
-				'aisuite_url'       => 'https://example.com/lunch/',
+				'founderpostai_aisuite_seo_url' => 'https://example.com/lunch/',
 			),
 		);
 	}
@@ -66,7 +66,7 @@ class AISuite_SEO_Site_Index {
 
 require dirname( __DIR__, 2 ) . '/wp-plugins/aisuite-seo/includes/class-link-candidates.php';
 
-$candidates = AISuite_SEO_Link_Candidates::select( 1, 2 );
+$candidates = FounderPostAI_AISuite_SEO_Link_Candidates::select( 1, 2 );
 
 if ( 2 !== count( $candidates ) || 3 !== $candidates[0]['id'] || 'https://example.com/internal-links/' !== $candidates[0]['url'] ) {
 	fwrite( STDERR, "FAIL: local index candidates were not relevance ranked and preserved\n" );

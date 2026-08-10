@@ -409,6 +409,9 @@ class AISuite_Job_Queue {
 
 			$this->finish( $ref );
 
+			do_action( 'founderpostai_aisuite_job_completed_' . $type, $result, $context, $ref );
+			do_action( 'founderpostai_aisuite_job_completed', $type, $result, $context, $ref );
+			// Backward compatibility for modules released before Core 0.1.5.
 			do_action( 'aisuite_job_completed_' . $type, $result, $context, $ref );
 			do_action( 'aisuite_job_completed', $type, $result, $context, $ref );
 		} finally {
@@ -433,6 +436,9 @@ class AISuite_Job_Queue {
 
 			$this->finish( $ref );
 
+			do_action( 'founderpostai_aisuite_job_failed_' . $type, $message, $context, $ref );
+			do_action( 'founderpostai_aisuite_job_failed', $type, $message, $context, $ref );
+			// Backward compatibility for modules released before Core 0.1.5.
 			do_action( 'aisuite_job_failed_' . $type, $message, $context, $ref );
 			do_action( 'aisuite_job_failed', $type, $message, $context, $ref );
 		} finally {
