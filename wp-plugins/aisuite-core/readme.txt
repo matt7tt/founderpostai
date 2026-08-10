@@ -4,7 +4,7 @@ Tags: ai, automation, seo, content
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.1.4
+Stable tag: 0.1.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -88,6 +88,12 @@ Yes. Switch billing to "Use my own API key" on the Connection screen, then add t
 Background work runs immediately in most cases. If your host blocks loopback requests, it falls back to WP-Cron, which only fires when someone visits your site. The Connection screen shows which method your site is using.
 
 == Changelog ==
+
+= 0.1.5 =
+* Added the secure gateway methods used by compatible modules for optional read-only Google Search Console reporting.
+* Disconnecting AI Suite now also removes any gateway-held Google Search Console token.
+* Added complete Search Console external-service and suggested privacy-policy disclosures.
+* Added collision-resistant FounderPostAI module hooks and an accessor while preserving compatibility with existing modules.
 
 = 0.1.4 =
 * Added a one-screen feedback form for bugs, improvement ideas, and general feedback.

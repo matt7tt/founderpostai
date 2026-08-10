@@ -22,7 +22,7 @@ for ( $post_id = 1; $post_id <= 63; ++$post_id ) {
 	);
 }
 
-class AISuite_SEO_Meta_Adapter {
+class FounderPostAI_AISuite_SEO_Meta_Adapter {
 	public static function read() {
 		return '';
 	}
@@ -70,10 +70,10 @@ require dirname( __DIR__, 2 ) . '/wp-plugins/aisuite-seo/includes/class-optimize
 require dirname( __DIR__, 2 ) . '/wp-plugins/aisuite-seo/includes/class-review-screen.php';
 
 for ( $post_id = 1; $post_id <= 60; ++$post_id ) {
-	AISuite_SEO_Optimizer::mark_current( $post_id );
+	FounderPostAI_AISuite_SEO_Optimizer::mark_current( $post_id );
 }
 
-class AISuite_Test_Review_Screen extends AISuite_SEO_Review_Screen {
+class AISuite_Test_Review_Screen extends FounderPostAI_AISuite_SEO_Review_Screen {
 	public function next_batch( $limit ) {
 		return $this->batch_post_ids( $limit );
 	}

@@ -9,7 +9,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-class AISuite_SEO_Review_Screen {
+class FounderPostAI_AISuite_SEO_Review_Screen {
 
 	const CAP  = 'edit_posts';
 	const SLUG = 'founderpostai-ai-suite-seo';
@@ -20,16 +20,16 @@ class AISuite_SEO_Review_Screen {
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'menu' ), 20 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'assets' ) );
-		add_action( 'admin_post_aisuite_seo_resolve', array( $this, 'handle_resolve' ) );
-		add_action( 'admin_post_aisuite_seo_bulk_apply', array( $this, 'handle_bulk_apply' ) );
-		add_action( 'admin_post_aisuite_seo_regenerate', array( $this, 'handle_regenerate' ) );
-		add_action( 'admin_post_aisuite_seo_analyze', array( $this, 'handle_analyze' ) );
+		add_action( 'admin_post_founderpostai_aisuite_seo_resolve', array( $this, 'handle_resolve' ) );
+		add_action( 'admin_post_founderpostai_aisuite_seo_bulk_apply', array( $this, 'handle_bulk_apply' ) );
+		add_action( 'admin_post_founderpostai_aisuite_seo_regenerate', array( $this, 'handle_regenerate' ) );
+		add_action( 'admin_post_founderpostai_aisuite_seo_analyze', array( $this, 'handle_analyze' ) );
 		add_filter( 'post_row_actions', array( $this, 'row_action' ), 10, 2 );
 		add_filter( 'page_row_actions', array( $this, 'row_action' ), 10, 2 );
 	}
 
 	public function menu() {
-		$pending = AISuite_SEO_Store::count( 'pending' );
+		$pending = FounderPostAI_AISuite_SEO_Store::count( 'pending' );
 		$label   = __( 'SEO', 'founderpostai-ai-suite-seo' );
 
 		if ( $pending ) {
@@ -52,11 +52,11 @@ class AISuite_SEO_Review_Screen {
 		}
 
 		wp_enqueue_style( 'aisuite-admin', AISUITE_CORE_URL . 'assets/admin.css', array(), AISUITE_CORE_VERSION );
-		wp_enqueue_style( 'aisuite-seo-review', AISUITE_SEO_URL . 'assets/review.css', array( 'aisuite-admin' ), AISUITE_SEO_VERSION );
-		wp_enqueue_script( 'aisuite-seo-review', AISUITE_SEO_URL . 'assets/review.js', array(), AISUITE_SEO_VERSION, true );
+		wp_enqueue_style( 'founderpostai-aisuite-seo-review', FOUNDERPOSTAI_AISUITE_SEO_URL . 'assets/review.css', array( 'aisuite-admin' ), FOUNDERPOSTAI_AISUITE_SEO_VERSION );
+		wp_enqueue_script( 'founderpostai-aisuite-seo-review', FOUNDERPOSTAI_AISUITE_SEO_URL . 'assets/review.js', array(), FOUNDERPOSTAI_AISUITE_SEO_VERSION, true );
 		wp_localize_script(
-			'aisuite-seo-review',
-			'AISuiteSEOReview',
+			'founderpostai-aisuite-seo-review',
+			'FounderPostAIAISuiteSEOReview',
 			array(
 				'characters'  => __( 'characters', 'founderpostai-ai-suite-seo' ),
 				'pixels'      => __( 'px wide', 'founderpostai-ai-suite-seo' ),
@@ -72,22 +72,22 @@ class AISuite_SEO_Review_Screen {
 	}
 
 	public function row_action( $actions, $post ) {
-		if ( ! current_user_can( 'edit_post', $post->ID ) || ! function_exists( 'aisuite' ) ) {
+		if ( ! current_user_can( 'edit_post', $post->ID ) || ! function_exists( 'founderpostai_aisuite' ) ) {
 			return $actions;
 		}
 
 		$url = wp_nonce_url(
 			add_query_arg(
 				array(
-					'action'  => 'aisuite_seo_analyze',
+					'action'  => 'founderpostai_aisuite_seo_analyze',
 					'post_id' => $post->ID,
 				),
 				admin_url( 'admin-post.php' )
 			),
-			'aisuite_seo_analyze_' . $post->ID
+			'founderpostai_aisuite_seo_analyze_' . $post->ID
 		);
 
-		$actions['aisuite_seo'] = sprintf(
+		$actions['founderpostai_aisuite_seo'] = sprintf(
 			'<a href="%s">%s</a>',
 			esc_url( $url ),
 			esc_html__( 'Optimize with AI Suite', 'founderpostai-ai-suite-seo' )
@@ -111,19 +111,19 @@ class AISuite_SEO_Review_Screen {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination.
 		$page_number = isset( $_GET['paged'] ) ? max( 1, (int) $_GET['paged'] ) : 1;
 		$per_page    = 20;
-		$total       = AISuite_SEO_Store::count( $status );
-		$suggestions = AISuite_SEO_Store::query(
+		$total       = FounderPostAI_AISuite_SEO_Store::count( $status );
+		$suggestions = FounderPostAI_AISuite_SEO_Store::query(
 			array(
 				'status'   => $status,
 				'page'     => $page_number,
 				'per_page' => $per_page,
 			)
 		);
-		$conflict    = AISuite_SEO_Meta_Output::conflicting_plugin();
+		$conflict    = FounderPostAI_AISuite_SEO_Meta_Output::conflicting_plugin();
 		?>
 		<div class="wrap aisuite-wrap">
 			<h1><?php esc_html_e( 'SEO review', 'founderpostai-ai-suite-seo' ); ?></h1>
-			<a class="page-title-action" href="<?php echo esc_url( admin_url( 'admin.php?page=' . AISuite_SEO_Health_Screen::SLUG ) ); ?>"><?php esc_html_e( 'SEO health', 'founderpostai-ai-suite-seo' ); ?></a>
+			<a class="page-title-action" href="<?php echo esc_url( admin_url( 'admin.php?page=' . FounderPostAI_AISuite_SEO_Health_Screen::SLUG ) ); ?>"><?php esc_html_e( 'SEO health', 'founderpostai-ai-suite-seo' ); ?></a>
 			<?php if ( class_exists( 'AISuite_Feedback' ) && current_user_can( AISuite_Feedback::CAP ) ) : ?>
 				<a class="page-title-action" href="<?php echo esc_url( AISuite_Feedback::url( 'seo' ) ); ?>"><?php esc_html_e( 'Send feedback', 'founderpostai-ai-suite-seo' ); ?></a>
 			<?php endif; ?>
@@ -144,7 +144,7 @@ class AISuite_SEO_Review_Screen {
 				</div>
 			<?php endif; ?>
 
-			<?php if ( ! aisuite()->brand->is_complete() ) : ?>
+			<?php if ( ! founderpostai_aisuite()->brand->is_complete() ) : ?>
 				<div class="notice notice-info">
 					<p>
 						<?php esc_html_e( 'Suggestions get noticeably better once brand context is filled in.', 'founderpostai-ai-suite-seo' ); ?>
@@ -173,7 +173,7 @@ class AISuite_SEO_Review_Screen {
 							<a href="<?php echo esc_url( $status_url ); ?>"
 								class="<?php echo $status === $key ? 'current' : ''; ?>">
 							<?php echo esc_html( $label ); ?>
-							<span class="count">(<?php echo esc_html( number_format_i18n( AISuite_SEO_Store::count( $key ) ) ); ?>)</span>
+							<span class="count">(<?php echo esc_html( number_format_i18n( FounderPostAI_AISuite_SEO_Store::count( $key ) ) ); ?>)</span>
 						</a>
 					</li>
 				<?php endforeach; ?>
@@ -232,8 +232,8 @@ class AISuite_SEO_Review_Screen {
 		<div class="aisuite-empty">
 			<p><?php esc_html_e( 'No suggestions waiting. Pick a post and run an analysis to fill this queue.', 'founderpostai-ai-suite-seo' ); ?></p>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-				<?php wp_nonce_field( 'aisuite_seo_analyze_batch' ); ?>
-				<input type="hidden" name="action" value="aisuite_seo_analyze" />
+				<?php wp_nonce_field( 'founderpostai_aisuite_seo_analyze_batch' ); ?>
+				<input type="hidden" name="action" value="founderpostai_aisuite_seo_analyze" />
 				<input type="hidden" name="mode" value="batch" />
 				<?php
 				submit_button(
@@ -364,8 +364,8 @@ class AISuite_SEO_Review_Screen {
 
 	/** Render a Google-style preview that follows the editable field. */
 	protected function render_serp_preview( $row, $post ) {
-		$current_title       = AISuite_SEO_Meta_Adapter::read( $post->ID, 'title' );
-		$current_description = AISuite_SEO_Meta_Adapter::read( $post->ID, 'description' );
+		$current_title       = FounderPostAI_AISuite_SEO_Meta_Adapter::read( $post->ID, 'title' );
+		$current_description = FounderPostAI_AISuite_SEO_Meta_Adapter::read( $post->ID, 'description' );
 		$preview_title       = 'title' === $row->field ? $row->suggested_value : $current_title;
 		$preview_description = 'description' === $row->field ? $row->suggested_value : $current_description;
 		$preview_title       = $preview_title ? $preview_title : get_the_title( $post );
@@ -386,8 +386,8 @@ class AISuite_SEO_Review_Screen {
 		$form_id = 'aisuite-apply-' . (int) $row->id;
 		?>
 		<form id="<?php echo esc_attr( $form_id ); ?>" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-			<?php wp_nonce_field( 'aisuite_seo_resolve_' . $row->id ); ?>
-			<input type="hidden" name="action" value="aisuite_seo_resolve" />
+			<?php wp_nonce_field( 'founderpostai_aisuite_seo_resolve_' . $row->id ); ?>
+			<input type="hidden" name="action" value="founderpostai_aisuite_seo_resolve" />
 			<input type="hidden" name="suggestion_id" value="<?php echo esc_attr( $row->id ); ?>" />
 			<input type="hidden" name="decision" value="apply" />
 			<?php if ( in_array( $row->field, array( 'title', 'description' ), true ) ) : ?>
@@ -404,8 +404,8 @@ class AISuite_SEO_Review_Screen {
 		<div class="aisuite-bulk-toolbar">
 			<label><input type="checkbox" data-aisuite-select-all /> <?php esc_html_e( 'Select this page', 'founderpostai-ai-suite-seo' ); ?></label>
 			<form id="aisuite-bulk-apply" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" data-aisuite-bulk-form>
-				<?php wp_nonce_field( 'aisuite_seo_bulk_apply' ); ?>
-				<input type="hidden" name="action" value="aisuite_seo_bulk_apply" />
+				<?php wp_nonce_field( 'founderpostai_aisuite_seo_bulk_apply' ); ?>
+				<input type="hidden" name="action" value="founderpostai_aisuite_seo_bulk_apply" />
 				<button type="submit" class="button button-primary" disabled data-aisuite-bulk-submit><?php esc_html_e( 'Apply selected', 'founderpostai-ai-suite-seo' ); ?> <span data-aisuite-selected-count>(0)</span></button>
 			</form>
 			<span class="description"><?php esc_html_e( 'Up to 20 at once. Newer manual edits are never overwritten.', 'founderpostai-ai-suite-seo' ); ?></span>
@@ -419,8 +419,8 @@ class AISuite_SEO_Review_Screen {
 		<details class="aisuite-refine">
 			<summary><?php esc_html_e( 'Regenerate or refine', 'founderpostai-ai-suite-seo' ); ?></summary>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-				<?php wp_nonce_field( 'aisuite_seo_regenerate_' . $row->id ); ?>
-				<input type="hidden" name="action" value="aisuite_seo_regenerate" />
+				<?php wp_nonce_field( 'founderpostai_aisuite_seo_regenerate_' . $row->id ); ?>
+				<input type="hidden" name="action" value="founderpostai_aisuite_seo_regenerate" />
 				<input type="hidden" name="suggestion_id" value="<?php echo esc_attr( $row->id ); ?>" />
 				<label for="aisuite-refine-<?php echo esc_attr( $row->id ); ?>"><?php esc_html_e( 'Optional direction', 'founderpostai-ai-suite-seo' ); ?></label>
 				<input type="text" class="regular-text" id="aisuite-refine-<?php echo esc_attr( $row->id ); ?>" name="instruction" maxlength="500" placeholder="<?php esc_attr_e( 'Example: make it more specific and less promotional', 'founderpostai-ai-suite-seo' ); ?>" />
@@ -438,8 +438,8 @@ class AISuite_SEO_Review_Screen {
 	protected function render_resolve_button( $id, $decision, $label, $class, $confirm = false ) {
 		?>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-			<?php wp_nonce_field( 'aisuite_seo_resolve_' . $id ); ?>
-			<input type="hidden" name="action" value="aisuite_seo_resolve" />
+			<?php wp_nonce_field( 'founderpostai_aisuite_seo_resolve_' . $id ); ?>
+			<input type="hidden" name="action" value="founderpostai_aisuite_seo_resolve" />
 			<input type="hidden" name="suggestion_id" value="<?php echo esc_attr( $id ); ?>" />
 			<input type="hidden" name="decision" value="<?php echo esc_attr( $decision ); ?>" />
 			<button type="submit" class="button <?php echo esc_attr( $class ); ?>"
@@ -458,7 +458,7 @@ class AISuite_SEO_Review_Screen {
 			wp_die( esc_html__( 'You do not have permission to do that.', 'founderpostai-ai-suite-seo' ) );
 		}
 
-		check_admin_referer( 'aisuite_seo_resolve_' . $id );
+		check_admin_referer( 'founderpostai_aisuite_seo_resolve_' . $id );
 
 		$decision = isset( $_POST['decision'] ) ? sanitize_key( wp_unslash( $_POST['decision'] ) ) : '';
 
@@ -466,7 +466,7 @@ class AISuite_SEO_Review_Screen {
 			$this->redirect( 'error', __( 'Unknown review decision.', 'founderpostai-ai-suite-seo' ) );
 		}
 
-		$optimizer = new AISuite_SEO_Optimizer( false );
+		$optimizer = new FounderPostAI_AISuite_SEO_Optimizer( false );
 
 		switch ( $decision ) {
 			case 'apply':
@@ -504,7 +504,7 @@ class AISuite_SEO_Review_Screen {
 			wp_die( esc_html__( 'You do not have permission to do that.', 'founderpostai-ai-suite-seo' ) );
 		}
 
-		check_admin_referer( 'aisuite_seo_bulk_apply' );
+		check_admin_referer( 'founderpostai_aisuite_seo_bulk_apply' );
 
 		$ids    = isset( $_POST['suggestion_ids'] ) && is_array( $_POST['suggestion_ids'] ) ? array_map( 'absint', wp_unslash( $_POST['suggestion_ids'] ) ) : array();
 		$ids    = array_slice( array_values( array_unique( array_filter( $ids ) ) ), 0, 20 );
@@ -514,12 +514,12 @@ class AISuite_SEO_Review_Screen {
 			$this->redirect( 'error', __( 'Select at least one suggestion.', 'founderpostai-ai-suite-seo' ) );
 		}
 
-		$optimizer = new AISuite_SEO_Optimizer( false );
+		$optimizer = new FounderPostAI_AISuite_SEO_Optimizer( false );
 		$applied   = 0;
 		$failed    = 0;
 
 		foreach ( $ids as $id ) {
-			$row    = AISuite_SEO_Store::get( $id );
+			$row    = FounderPostAI_AISuite_SEO_Store::get( $id );
 			$edited = null;
 
 			if ( $row && in_array( $row->field, array( 'title', 'description' ), true ) && isset( $values[ $id ] ) && is_scalar( $values[ $id ] ) ) {
@@ -545,8 +545,8 @@ class AISuite_SEO_Review_Screen {
 			wp_die( esc_html__( 'You do not have permission to do that.', 'founderpostai-ai-suite-seo' ) );
 		}
 
-		check_admin_referer( 'aisuite_seo_regenerate_' . $id );
-		$row = AISuite_SEO_Store::get( $id );
+		check_admin_referer( 'founderpostai_aisuite_seo_regenerate_' . $id );
+		$row = FounderPostAI_AISuite_SEO_Store::get( $id );
 
 		if ( ! $row || 'pending' !== $row->status || ! current_user_can( 'edit_post', $row->post_id ) ) {
 			$this->redirect( 'error', __( 'That suggestion can no longer be regenerated.', 'founderpostai-ai-suite-seo' ) );
@@ -558,7 +558,7 @@ class AISuite_SEO_Review_Screen {
 
 		$instruction = isset( $_POST['instruction'] ) ? sanitize_text_field( wp_unslash( $_POST['instruction'] ) ) : '';
 		$instruction = function_exists( 'mb_substr' ) ? mb_substr( $instruction, 0, 500, 'UTF-8' ) : substr( $instruction, 0, 500 );
-		$optimizer   = new AISuite_SEO_Optimizer( false );
+		$optimizer   = new FounderPostAI_AISuite_SEO_Optimizer( false );
 		$result      = $optimizer->analyze(
 			$row->post_id,
 			true,
@@ -583,15 +583,15 @@ class AISuite_SEO_Review_Screen {
 		$mode = isset( $_POST['mode'] ) ? sanitize_key( wp_unslash( $_POST['mode'] ) ) : 'single';
 
 		if ( 'batch' === $mode ) {
-			check_admin_referer( 'aisuite_seo_analyze_batch' );
+			check_admin_referer( 'founderpostai_aisuite_seo_analyze_batch' );
 			$post_ids = $this->batch_post_ids( self::FREE_BATCH_LIMIT );
 		} else {
 			$post_id = isset( $_GET['post_id'] ) ? (int) $_GET['post_id'] : 0;
-			check_admin_referer( 'aisuite_seo_analyze_' . $post_id );
+			check_admin_referer( 'founderpostai_aisuite_seo_analyze_' . $post_id );
 			$post_ids = array( $post_id );
 		}
 
-		$optimizer = new AISuite_SEO_Optimizer( false );
+		$optimizer = new FounderPostAI_AISuite_SEO_Optimizer( false );
 		$queued    = 0;
 		$blocked   = null;
 
@@ -657,9 +657,9 @@ class AISuite_SEO_Review_Screen {
 
 			foreach ( $posts as $post ) {
 				$can_edit = current_user_can( 'edit_post', $post->ID );
-				$queued   = AISuite_SEO_Optimizer::is_queued( $post->ID );
+				$queued   = FounderPostAI_AISuite_SEO_Optimizer::is_queued( $post->ID );
 
-				if ( ! $can_edit || $queued || AISuite_SEO_Optimizer::is_current( $post ) ) {
+				if ( ! $can_edit || $queued || FounderPostAI_AISuite_SEO_Optimizer::is_current( $post ) ) {
 					continue;
 				}
 
@@ -684,12 +684,12 @@ class AISuite_SEO_Review_Screen {
 	 * a place for reflected content to hide.
 	 */
 	protected function detail_key() {
-		return 'aisuite_seo_flash_' . get_current_user_id();
+		return 'founderpostai_aisuite_seo_flash_' . get_current_user_id();
 	}
 
 	protected function render_flash() {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display only; the acting request was nonce-checked.
-		$code = isset( $_GET['aisuite_msg'] ) ? sanitize_key( wp_unslash( $_GET['aisuite_msg'] ) ) : '';
+		$code = isset( $_GET['founderpostai_aisuite_seo_msg'] ) ? sanitize_key( wp_unslash( $_GET['founderpostai_aisuite_seo_msg'] ) ) : '';
 
 		if ( ! $code ) {
 			return;
@@ -768,7 +768,7 @@ class AISuite_SEO_Review_Screen {
 
 		$query = array(
 			'page'        => self::SLUG,
-			'aisuite_msg' => $code,
+			'founderpostai_aisuite_seo_msg' => $code,
 		);
 
 		if ( $status ) {

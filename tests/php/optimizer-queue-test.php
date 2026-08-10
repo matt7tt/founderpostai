@@ -112,7 +112,7 @@ function delete_post_meta( $post_id, $key ) {
 	unset( $post_meta[ $post_id ][ $key ] );
 	return true;
 }
-function aisuite() {
+function founderpostai_aisuite() {
 	global $jobs;
 	return (object) array( 'jobs' => $jobs );
 }
@@ -121,20 +121,20 @@ require dirname( __DIR__, 2 ) . '/wp-plugins/aisuite-seo/includes/class-meta-ada
 require dirname( __DIR__, 2 ) . '/wp-plugins/aisuite-seo/includes/class-link-candidates.php';
 require dirname( __DIR__, 2 ) . '/wp-plugins/aisuite-seo/includes/class-optimizer.php';
 
-$optimizer = new AISuite_SEO_Optimizer( false );
+$optimizer = new FounderPostAI_AISuite_SEO_Optimizer( false );
 $first     = $optimizer->analyze( 7 );
 $second    = $optimizer->analyze( 7 );
 
-if ( is_wp_error( $first ) || ! is_wp_error( $second ) || 'aisuite_seo_already_queued' !== $second->get_error_code() || 1 !== $jobs->calls ) {
+if ( is_wp_error( $first ) || ! is_wp_error( $second ) || 'founderpostai_aisuite_seo_already_queued' !== $second->get_error_code() || 1 !== $jobs->calls ) {
 	fwrite( STDERR, "FAIL: simultaneous analyses were not deduplicated\n" );
 	exit( 1 );
 }
 
-delete_post_meta( 7, AISuite_SEO_Optimizer::META_QUEUED );
+delete_post_meta( 7, FounderPostAI_AISuite_SEO_Optimizer::META_QUEUED );
 $jobs->fail_next = true;
 $failed          = $optimizer->analyze( 7 );
 
-if ( ! is_wp_error( $failed ) || '' !== get_post_meta( 7, AISuite_SEO_Optimizer::META_QUEUED, true ) ) {
+if ( ! is_wp_error( $failed ) || '' !== get_post_meta( 7, FounderPostAI_AISuite_SEO_Optimizer::META_QUEUED, true ) ) {
 	fwrite( STDERR, "FAIL: a failed enqueue left the post permanently locked\n" );
 	exit( 1 );
 }

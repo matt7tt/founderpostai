@@ -3,18 +3,18 @@
 
 defined( 'ABSPATH' ) || exit;
 
-class AISuite_SEO_Health_Screen {
+class FounderPostAI_AISuite_SEO_Health_Screen {
 
 	const CAP       = 'edit_posts';
 	const SLUG      = 'founderpostai-ai-suite-seo-health';
-	const CACHE_KEY = 'aisuite_seo_health_snapshot';
+	const CACHE_KEY = 'founderpostai_aisuite_seo_health_snapshot';
 	const PER_PAGE  = 50;
 
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'menu' ), 21 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'assets' ) );
-		add_action( 'admin_post_aisuite_seo_health_refresh', array( $this, 'handle_refresh' ) );
-		add_action( 'admin_post_aisuite_seo_index_rebuild', array( $this, 'handle_index_rebuild' ) );
+		add_action( 'admin_post_founderpostai_aisuite_seo_health_refresh', array( $this, 'handle_refresh' ) );
+		add_action( 'admin_post_founderpostai_aisuite_seo_index_rebuild', array( $this, 'handle_index_rebuild' ) );
 		add_action( 'save_post', array( __CLASS__, 'invalidate' ), 20 );
 		add_action( 'deleted_post', array( __CLASS__, 'invalidate' ) );
 	}
@@ -25,14 +25,14 @@ class AISuite_SEO_Health_Screen {
 			wp_die( esc_html__( 'You do not have permission to do that.', 'founderpostai-ai-suite-seo' ) );
 		}
 
-		check_admin_referer( 'aisuite_seo_index_rebuild' );
-		AISuite_SEO_Site_Index::rebuild();
+		check_admin_referer( 'founderpostai_aisuite_seo_index_rebuild' );
+		FounderPostAI_AISuite_SEO_Site_Index::rebuild();
 
 		wp_safe_redirect(
 			add_query_arg(
 				array(
 					'page'        => self::SLUG,
-					'aisuite_msg' => 'indexing',
+					'founderpostai_aisuite_seo_msg' => 'indexing',
 				),
 				admin_url( 'admin.php' )
 			)
@@ -57,7 +57,7 @@ class AISuite_SEO_Health_Screen {
 		}
 
 		wp_enqueue_style( 'aisuite-admin', AISUITE_CORE_URL . 'assets/admin.css', array(), AISUITE_CORE_VERSION );
-		wp_enqueue_style( 'aisuite-seo-review', AISUITE_SEO_URL . 'assets/review.css', array( 'aisuite-admin' ), AISUITE_SEO_VERSION );
+		wp_enqueue_style( 'founderpostai-aisuite-seo-review', FOUNDERPOSTAI_AISUITE_SEO_URL . 'assets/review.css', array( 'aisuite-admin' ), FOUNDERPOSTAI_AISUITE_SEO_VERSION );
 	}
 
 	public static function invalidate() {
@@ -69,14 +69,14 @@ class AISuite_SEO_Health_Screen {
 			wp_die( esc_html__( 'You do not have permission to do that.', 'founderpostai-ai-suite-seo' ) );
 		}
 
-		check_admin_referer( 'aisuite_seo_health_refresh' );
+		check_admin_referer( 'founderpostai_aisuite_seo_health_refresh' );
 		self::audit( true );
 
 		wp_safe_redirect(
 			add_query_arg(
 				array(
 					'page'        => self::SLUG,
-					'aisuite_msg' => 'refreshed',
+					'founderpostai_aisuite_seo_msg' => 'refreshed',
 				),
 				admin_url( 'admin.php' )
 			)
@@ -90,9 +90,9 @@ class AISuite_SEO_Health_Screen {
 		}
 
 		$snapshot = self::audit();
-		$index    = AISuite_SEO_Site_Index::progress();
+		$index    = FounderPostAI_AISuite_SEO_Site_Index::progress();
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only confirmation; the acting request was nonce checked.
-		$message = isset( $_GET['aisuite_msg'] ) ? sanitize_key( wp_unslash( $_GET['aisuite_msg'] ) ) : '';
+		$message = isset( $_GET['founderpostai_aisuite_seo_msg'] ) ? sanitize_key( wp_unslash( $_GET['founderpostai_aisuite_seo_msg'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only filter.
 		$filter = isset( $_GET['health'] ) ? sanitize_key( wp_unslash( $_GET['health'] ) ) : 'all';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only pagination.
@@ -113,7 +113,7 @@ class AISuite_SEO_Health_Screen {
 		?>
 		<div class="wrap aisuite-wrap">
 			<h1><?php esc_html_e( 'SEO health', 'founderpostai-ai-suite-seo' ); ?></h1>
-			<a class="page-title-action" href="<?php echo esc_url( admin_url( 'admin.php?page=' . AISuite_SEO_Review_Screen::SLUG ) ); ?>"><?php esc_html_e( 'Review suggestions', 'founderpostai-ai-suite-seo' ); ?></a>
+			<a class="page-title-action" href="<?php echo esc_url( admin_url( 'admin.php?page=' . FounderPostAI_AISuite_SEO_Review_Screen::SLUG ) ); ?>"><?php esc_html_e( 'Review suggestions', 'founderpostai-ai-suite-seo' ); ?></a>
 
 			<?php if ( 'refreshed' === $message ) : ?>
 				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'The site-wide SEO audit is up to date.', 'founderpostai-ai-suite-seo' ); ?></p></div>
@@ -126,7 +126,7 @@ class AISuite_SEO_Health_Screen {
 				printf(
 					/* translators: %s: metadata provider name */
 					esc_html__( 'Metadata source: %s. The audit covers every published public post type and counts links between those pages.', 'founderpostai-ai-suite-seo' ),
-					esc_html( AISuite_SEO_Meta_Adapter::label( $snapshot['provider'] ) )
+					esc_html( FounderPostAI_AISuite_SEO_Meta_Adapter::label( $snapshot['provider'] ) )
 				);
 				?>
 			</p>
@@ -142,13 +142,13 @@ class AISuite_SEO_Health_Screen {
 
 			<div class="aisuite-health__toolbar">
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-					<?php wp_nonce_field( 'aisuite_seo_health_refresh' ); ?>
-					<input type="hidden" name="action" value="aisuite_seo_health_refresh" />
+					<?php wp_nonce_field( 'founderpostai_aisuite_seo_health_refresh' ); ?>
+					<input type="hidden" name="action" value="founderpostai_aisuite_seo_health_refresh" />
 					<?php submit_button( __( 'Refresh site-wide audit', 'founderpostai-ai-suite-seo' ), 'secondary', 'submit', false ); ?>
 				</form>
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-					<?php wp_nonce_field( 'aisuite_seo_index_rebuild' ); ?>
-					<input type="hidden" name="action" value="aisuite_seo_index_rebuild" />
+					<?php wp_nonce_field( 'founderpostai_aisuite_seo_index_rebuild' ); ?>
+					<input type="hidden" name="action" value="founderpostai_aisuite_seo_index_rebuild" />
 					<?php submit_button( __( 'Rebuild local content index', 'founderpostai-ai-suite-seo' ), 'secondary', 'submit', false ); ?>
 				</form>
 				<span class="description">
@@ -265,8 +265,8 @@ class AISuite_SEO_Health_Screen {
 	protected function row( array $row ) {
 		$post         = get_post( $row['id'] );
 		$analyze_url  = wp_nonce_url(
-			add_query_arg( array( 'action' => 'aisuite_seo_analyze', 'post_id' => $row['id'] ), admin_url( 'admin-post.php' ) ),
-			'aisuite_seo_analyze_' . $row['id']
+			add_query_arg( array( 'action' => 'founderpostai_aisuite_seo_analyze', 'post_id' => $row['id'] ), admin_url( 'admin-post.php' ) ),
+			'founderpostai_aisuite_seo_analyze_' . $row['id']
 		);
 		/* translators: %d: title character count */
 		$title_detail = sprintf( __( 'Title: %d chars', 'founderpostai-ai-suite-seo' ), $row['title_length'] );
@@ -300,7 +300,7 @@ class AISuite_SEO_Health_Screen {
 				<?php else : ?>
 					<?php esc_html_e( 'Current', 'founderpostai-ai-suite-seo' ); ?>
 				<?php endif; ?>
-					<?php if ( $row['pending'] ) : ?><br /><a href="<?php echo esc_url( admin_url( 'admin.php?page=' . AISuite_SEO_Review_Screen::SLUG ) ); ?>"><?php echo esc_html( $pending_detail ); ?></a><?php endif; ?>
+					<?php if ( $row['pending'] ) : ?><br /><a href="<?php echo esc_url( admin_url( 'admin.php?page=' . FounderPostAI_AISuite_SEO_Review_Screen::SLUG ) ); ?>"><?php echo esc_html( $pending_detail ); ?></a><?php endif; ?>
 			</td>
 		</tr>
 		<?php
@@ -387,8 +387,8 @@ class AISuite_SEO_Health_Screen {
 			)
 		);
 		$ids        = wp_list_pluck( $posts, 'ID' );
-		$metadata   = AISuite_SEO_Meta_Adapter::read_many( $ids );
-		$pending    = AISuite_SEO_Store::pending_counts_by_post();
+		$metadata   = FounderPostAI_AISuite_SEO_Meta_Adapter::read_many( $ids );
+		$pending    = FounderPostAI_AISuite_SEO_Store::pending_counts_by_post();
 		$url_map    = array();
 		$incoming   = array_fill_keys( $ids, 0 );
 		$outgoing   = array_fill_keys( $ids, 0 );
@@ -419,10 +419,10 @@ class AISuite_SEO_Health_Screen {
 			$post_id      = (int) $post->ID;
 			$title        = isset( $metadata[ $post_id ]['title'] ) ? trim( $metadata[ $post_id ]['title'] ) : '';
 			$description  = isset( $metadata[ $post_id ]['description'] ) ? trim( $metadata[ $post_id ]['description'] ) : '';
-			$analyzed     = (int) get_post_meta( $post_id, AISuite_SEO_Optimizer::META_ANALYZED, true );
-			$error        = (string) get_post_meta( $post_id, AISuite_SEO_Optimizer::META_ERROR, true );
+			$analyzed     = (int) get_post_meta( $post_id, FounderPostAI_AISuite_SEO_Optimizer::META_ANALYZED, true );
+			$error        = (string) get_post_meta( $post_id, FounderPostAI_AISuite_SEO_Optimizer::META_ERROR, true );
 			$current_meta = isset( $metadata[ $post_id ] ) ? $metadata[ $post_id ] : null;
-			$stale        = ! AISuite_SEO_Optimizer::is_current( $post, $current_meta );
+			$stale        = ! FounderPostAI_AISuite_SEO_Optimizer::is_current( $post, $current_meta );
 			$missing_t    = '' === $title;
 			$missing_d    = '' === $description;
 			$orphaned     = empty( $incoming[ $post_id ] );
@@ -435,7 +435,7 @@ class AISuite_SEO_Health_Screen {
 				'missing_description' => $missing_d,
 				'analyzed'            => $analyzed,
 				'stale'               => $stale,
-				'queued'              => AISuite_SEO_Optimizer::is_queued( $post_id ),
+				'queued'              => FounderPostAI_AISuite_SEO_Optimizer::is_queued( $post_id ),
 				'error'               => $error,
 				'incoming'            => isset( $incoming[ $post_id ] ) ? $incoming[ $post_id ] : 0,
 				'outgoing'            => isset( $outgoing[ $post_id ] ) ? $outgoing[ $post_id ] : 0,
@@ -449,7 +449,7 @@ class AISuite_SEO_Health_Screen {
 		$optimized = count( array_filter( $rows, array( __CLASS__, 'row_optimized' ) ) );
 		$snapshot  = array(
 			'generated_at' => time(),
-			'provider'     => AISuite_SEO_Meta_Adapter::provider(),
+			'provider'     => FounderPostAI_AISuite_SEO_Meta_Adapter::provider(),
 			'rows'         => $rows,
 			'summary'      => array(
 				'total'     => $total,

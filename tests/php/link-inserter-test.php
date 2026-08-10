@@ -46,7 +46,7 @@ function aisuite_assert( $condition, $label ) {
 }
 
 function aisuite_insert( $html, $anchor = 'target phrase' ) {
-	$inserter = new AISuite_SEO_Link_Inserter();
+	$inserter = new FounderPostAI_AISuite_SEO_Link_Inserter();
 	return $inserter->insert(
 		$html,
 		array(

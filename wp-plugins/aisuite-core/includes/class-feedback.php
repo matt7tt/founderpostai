@@ -110,17 +110,23 @@ class AISuite_Feedback {
 			),
 		);
 
-		if ( defined( 'AISUITE_SEO_VERSION' ) ) {
+		$seo_version = defined( 'FOUNDERPOSTAI_AISUITE_SEO_VERSION' )
+			? FOUNDERPOSTAI_AISUITE_SEO_VERSION
+			: ( defined( 'AISUITE_SEO_VERSION' ) ? AISUITE_SEO_VERSION : '' );
+		if ( $seo_version ) {
 			$products['seo'] = array(
 				'label'   => __( 'AI Suite SEO', 'founderpostai-ai-suite-core' ),
-				'version' => AISUITE_SEO_VERSION,
+				'version' => $seo_version,
 			);
 		}
 
-		if ( defined( 'AISUITE_SEO_PRO_VERSION' ) ) {
+		$seo_pro_version = defined( 'FOUNDERPOSTAI_AISUITE_SEO_PRO_VERSION' )
+			? FOUNDERPOSTAI_AISUITE_SEO_PRO_VERSION
+			: ( defined( 'AISUITE_SEO_PRO_VERSION' ) ? AISUITE_SEO_PRO_VERSION : '' );
+		if ( $seo_pro_version ) {
 			$products['seo-pro'] = array(
 				'label'   => __( 'AI Suite SEO Pro', 'founderpostai-ai-suite-core' ),
-				'version' => AISUITE_SEO_PRO_VERSION,
+				'version' => $seo_pro_version,
 			);
 		}
 

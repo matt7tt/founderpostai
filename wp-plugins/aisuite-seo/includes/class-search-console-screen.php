@@ -3,22 +3,22 @@
 
 defined( 'ABSPATH' ) || exit;
 
-class AISuite_SEO_Search_Console_Screen {
+class FounderPostAI_AISuite_SEO_Search_Console_Screen {
 
 	const CAP              = 'manage_options';
 	const SLUG             = 'founderpostai-ai-suite-search-console';
-	const STATUS_TRANSIENT = 'aisuite_seo_gsc_status';
-	const DATA_TRANSIENT   = 'aisuite_seo_gsc_performance';
-	const DETAIL_TRANSIENT = 'aisuite_seo_gsc_detail_';
+	const STATUS_TRANSIENT = 'founderpostai_aisuite_seo_gsc_status';
+	const DATA_TRANSIENT   = 'founderpostai_aisuite_seo_gsc_performance';
+	const DETAIL_TRANSIENT = 'founderpostai_aisuite_seo_gsc_detail_';
 
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'menu' ), 22 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'assets' ) );
-		add_action( 'admin_post_aisuite_seo_gsc_connect', array( $this, 'connect' ) );
-		add_action( 'admin_post_aisuite_seo_gsc_property', array( $this, 'select_property' ) );
-		add_action( 'admin_post_aisuite_seo_gsc_refresh', array( $this, 'refresh' ) );
-		add_action( 'admin_post_aisuite_seo_gsc_disconnect', array( $this, 'disconnect' ) );
-		add_action( 'aisuite_disconnected', array( $this, 'clear_cache' ) );
+		add_action( 'admin_post_founderpostai_aisuite_seo_gsc_connect', array( $this, 'connect' ) );
+		add_action( 'admin_post_founderpostai_aisuite_seo_gsc_property', array( $this, 'select_property' ) );
+		add_action( 'admin_post_founderpostai_aisuite_seo_gsc_refresh', array( $this, 'refresh' ) );
+		add_action( 'admin_post_founderpostai_aisuite_seo_gsc_disconnect', array( $this, 'disconnect' ) );
+		add_action( 'founderpostai_aisuite_disconnected', array( $this, 'clear_cache' ) );
 	}
 
 	public function menu() {
@@ -38,7 +38,7 @@ class AISuite_SEO_Search_Console_Screen {
 		}
 
 		wp_enqueue_style( 'aisuite-admin', AISUITE_CORE_URL . 'assets/admin.css', array(), AISUITE_CORE_VERSION );
-		wp_enqueue_style( 'aisuite-seo-review', AISUITE_SEO_URL . 'assets/review.css', array( 'aisuite-admin' ), AISUITE_SEO_VERSION );
+		wp_enqueue_style( 'founderpostai-aisuite-seo-review', FOUNDERPOSTAI_AISUITE_SEO_URL . 'assets/review.css', array( 'aisuite-admin' ), FOUNDERPOSTAI_AISUITE_SEO_VERSION );
 	}
 
 	/** Render connection, property selection, or the live opportunity dashboard. */
@@ -49,7 +49,7 @@ class AISuite_SEO_Search_Console_Screen {
 
 		$this->flash();
 
-		if ( ! is_callable( array( aisuite()->gateway, 'search_console_status' ) ) ) {
+		if ( ! is_callable( array( founderpostai_aisuite()->gateway, 'search_console_status' ) ) ) {
 			$this->render_shell_start();
 			echo '<div class="notice notice-warning"><p>' . esc_html__( 'Update AI Suite Core with the SEO plugin to enable the Search Console connection.', 'founderpostai-ai-suite-seo' ) . '</p></div>';
 			$this->render_shell_end();
@@ -94,7 +94,7 @@ class AISuite_SEO_Search_Console_Screen {
 		?>
 		<div class="wrap aisuite-wrap">
 			<h1><?php esc_html_e( 'Search performance', 'founderpostai-ai-suite-seo' ); ?></h1>
-			<a class="page-title-action" href="<?php echo esc_url( admin_url( 'admin.php?page=' . AISuite_SEO_Review_Screen::SLUG ) ); ?>"><?php esc_html_e( 'Review suggestions', 'founderpostai-ai-suite-seo' ); ?></a>
+			<a class="page-title-action" href="<?php echo esc_url( admin_url( 'admin.php?page=' . FounderPostAI_AISuite_SEO_Review_Screen::SLUG ) ); ?>"><?php esc_html_e( 'Review suggestions', 'founderpostai-ai-suite-seo' ); ?></a>
 		<?php
 	}
 
@@ -110,8 +110,8 @@ class AISuite_SEO_Search_Console_Screen {
 			<p><?php esc_html_e( 'See the queries and pages already earning Google impressions, then prioritize high-impression results with weak click-through rates or positions just outside the top results.', 'founderpostai-ai-suite-seo' ); ?></p>
 			<p class="description"><?php esc_html_e( 'The connection requests read-only Search Console access. Google refresh tokens are encrypted and held by the FounderPostAI gateway; they are never stored in this WordPress database. Search performance is cached here for six hours and is not sent to an AI model.', 'founderpostai-ai-suite-seo' ); ?></p>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-				<?php wp_nonce_field( 'aisuite_seo_gsc_connect' ); ?>
-				<input type="hidden" name="action" value="aisuite_seo_gsc_connect" />
+				<?php wp_nonce_field( 'founderpostai_aisuite_seo_gsc_connect' ); ?>
+				<input type="hidden" name="action" value="founderpostai_aisuite_seo_gsc_connect" />
 				<?php submit_button( __( 'Continue to Google', 'founderpostai-ai-suite-seo' ), 'primary', 'submit', false ); ?>
 			</form>
 		</div>
@@ -129,8 +129,8 @@ class AISuite_SEO_Search_Console_Screen {
 				<?php $this->connection_panel( true ); ?>
 			<?php else : ?>
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-					<?php wp_nonce_field( 'aisuite_seo_gsc_property' ); ?>
-					<input type="hidden" name="action" value="aisuite_seo_gsc_property" />
+					<?php wp_nonce_field( 'founderpostai_aisuite_seo_gsc_property' ); ?>
+					<input type="hidden" name="action" value="founderpostai_aisuite_seo_gsc_property" />
 					<select name="property" required>
 						<option value=""><?php esc_html_e( 'Select a property', 'founderpostai-ai-suite-seo' ); ?></option>
 						<?php foreach ( $properties as $property ) : ?>
@@ -176,13 +176,13 @@ class AISuite_SEO_Search_Console_Screen {
 
 		<div class="aisuite-health__toolbar">
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-				<?php wp_nonce_field( 'aisuite_seo_gsc_refresh' ); ?>
-				<input type="hidden" name="action" value="aisuite_seo_gsc_refresh" />
+				<?php wp_nonce_field( 'founderpostai_aisuite_seo_gsc_refresh' ); ?>
+				<input type="hidden" name="action" value="founderpostai_aisuite_seo_gsc_refresh" />
 				<?php submit_button( __( 'Refresh Search Console data', 'founderpostai-ai-suite-seo' ), 'secondary', 'submit', false ); ?>
 			</form>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" onsubmit="return confirm('<?php echo esc_js( __( 'Disconnect Search Console and remove the encrypted Google token?', 'founderpostai-ai-suite-seo' ) ); ?>');">
-				<?php wp_nonce_field( 'aisuite_seo_gsc_disconnect' ); ?>
-				<input type="hidden" name="action" value="aisuite_seo_gsc_disconnect" />
+				<?php wp_nonce_field( 'founderpostai_aisuite_seo_gsc_disconnect' ); ?>
+				<input type="hidden" name="action" value="founderpostai_aisuite_seo_gsc_disconnect" />
 				<?php submit_button( __( 'Disconnect', 'founderpostai-ai-suite-seo' ), 'link-delete', 'submit', false ); ?>
 			</form>
 		</div>
@@ -298,8 +298,8 @@ class AISuite_SEO_Search_Console_Screen {
 
 	/** Request a one-time gateway authorization URL and leave WordPress safely. */
 	public function connect() {
-		$this->guard( 'aisuite_seo_gsc_connect' );
-		$result = aisuite()->gateway->search_console_connect( admin_url( 'admin.php?page=' . self::SLUG ) );
+		$this->guard( 'founderpostai_aisuite_seo_gsc_connect' );
+		$result = founderpostai_aisuite()->gateway->search_console_connect( admin_url( 'admin.php?page=' . self::SLUG ) );
 
 		if ( is_wp_error( $result ) || empty( $result['authorization_url'] ) ) {
 			$this->redirect_error( is_wp_error( $result ) ? $result->get_error_message() : __( 'The gateway did not return a Google authorization URL.', 'founderpostai-ai-suite-seo' ) );
@@ -323,9 +323,9 @@ class AISuite_SEO_Search_Console_Screen {
 	}
 
 	public function select_property() {
-		$this->guard( 'aisuite_seo_gsc_property' );
+		$this->guard( 'founderpostai_aisuite_seo_gsc_property' );
 		// Keep the nonce assertion local so Plugin Check can verify the POST reads below.
-		check_admin_referer( 'aisuite_seo_gsc_property' );
+		check_admin_referer( 'founderpostai_aisuite_seo_gsc_property' );
 
 		if ( ! isset( $_POST['property'] ) || ! is_string( $_POST['property'] ) ) {
 			$this->redirect_error( __( 'Choose a valid Search Console property.', 'founderpostai-ai-suite-seo' ) );
@@ -333,7 +333,7 @@ class AISuite_SEO_Search_Console_Screen {
 
 		$property = sanitize_text_field( wp_unslash( $_POST['property'] ) );
 		$property = function_exists( 'mb_substr' ) ? mb_substr( $property, 0, 2048, 'UTF-8' ) : substr( $property, 0, 2048 );
-		$result   = aisuite()->gateway->search_console_select_property( $property );
+		$result   = founderpostai_aisuite()->gateway->search_console_select_property( $property );
 
 		if ( is_wp_error( $result ) ) {
 			$this->redirect_error( $result->get_error_message() );
@@ -344,7 +344,7 @@ class AISuite_SEO_Search_Console_Screen {
 	}
 
 	public function refresh() {
-		$this->guard( 'aisuite_seo_gsc_refresh' );
+		$this->guard( 'founderpostai_aisuite_seo_gsc_refresh' );
 		delete_transient( self::DATA_TRANSIENT );
 		$data = $this->performance( true );
 
@@ -356,8 +356,8 @@ class AISuite_SEO_Search_Console_Screen {
 	}
 
 	public function disconnect() {
-		$this->guard( 'aisuite_seo_gsc_disconnect' );
-		$result = aisuite()->gateway->search_console_disconnect();
+		$this->guard( 'founderpostai_aisuite_seo_gsc_disconnect' );
+		$result = founderpostai_aisuite()->gateway->search_console_disconnect();
 
 		if ( is_wp_error( $result ) ) {
 			$this->redirect_error( $result->get_error_message() );
@@ -389,7 +389,7 @@ class AISuite_SEO_Search_Console_Screen {
 			return $status;
 		}
 
-		$status = aisuite()->gateway->search_console_status();
+		$status = founderpostai_aisuite()->gateway->search_console_status();
 		if ( ! is_wp_error( $status ) ) {
 			set_transient( self::STATUS_TRANSIENT, $status, 10 * MINUTE_IN_SECONDS );
 		}
@@ -402,7 +402,7 @@ class AISuite_SEO_Search_Console_Screen {
 			return $data;
 		}
 
-		$data = aisuite()->gateway->search_console_performance( 28 );
+		$data = founderpostai_aisuite()->gateway->search_console_performance( 28 );
 		if ( ! is_wp_error( $data ) ) {
 			set_transient( self::DATA_TRANSIENT, $data, 6 * HOUR_IN_SECONDS );
 		}
@@ -416,7 +416,7 @@ class AISuite_SEO_Search_Console_Screen {
 
 	protected function flash() {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only result; state-changing requests are nonce checked and OAuth uses one-time state.
-		$code = isset( $_GET['aisuite_gsc'] ) ? sanitize_key( wp_unslash( $_GET['aisuite_gsc'] ) ) : '';
+		$code = isset( $_GET['founderpostai_aisuite_gsc'] ) ? sanitize_key( wp_unslash( $_GET['founderpostai_aisuite_gsc'] ) ) : '';
 
 		if ( ! $code ) {
 			return;
@@ -452,7 +452,7 @@ class AISuite_SEO_Search_Console_Screen {
 			add_query_arg(
 				array(
 					'page'        => self::SLUG,
-					'aisuite_gsc' => sanitize_key( $code ),
+					'founderpostai_aisuite_gsc' => sanitize_key( $code ),
 				),
 				admin_url( 'admin.php' )
 			)

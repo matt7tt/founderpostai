@@ -499,6 +499,8 @@ class AISuite_Admin {
 			$this->core->gateway->search_console_disconnect();
 		}
 		AISuite_Site_Auth::disconnect();
+		do_action( 'founderpostai_aisuite_disconnected' );
+		// Backward compatibility for modules released before Core 0.1.5.
 		do_action( 'aisuite_disconnected' );
 		$this->redirect( 'disconnected' );
 	}

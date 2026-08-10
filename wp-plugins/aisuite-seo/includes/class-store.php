@@ -9,12 +9,19 @@
 
 defined( 'ABSPATH' ) || exit;
 
-class AISuite_SEO_Store {
+class FounderPostAI_AISuite_SEO_Store {
 
-	const DB_VERSION = '3';
-	const DB_OPTION  = 'aisuite_seo_db_version';
+	const DB_VERSION  = '4';
+	const DB_OPTION   = 'founderpostai_aisuite_seo_db_version';
+	const CACHE_GROUP = 'founderpostai_aisuite_seo';
 
 	public static function table() {
+		global $wpdb;
+		return $wpdb->prefix . 'founderpostai_aisuite_seo_suggestions';
+	}
+
+	/** Previous direct-download releases used this table before the prefix review. */
+	protected static function legacy_table() {
 		global $wpdb;
 		return $wpdb->prefix . 'aisuite_seo_suggestions';
 	}
@@ -26,6 +33,21 @@ class AISuite_SEO_Store {
 
 		$table   = self::table();
 		$charset = $wpdb->get_charset_collate();
+		$legacy  = self::legacy_table();
+
+		// Preserve review history from direct-download versions. A rename is
+		// atomic and happens only when the distinct new table does not exist.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one-time schema migration.
+		$new_exists = (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one-time schema migration.
+		$old_exists = (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $legacy ) );
+		if ( ! $new_exists && $old_exists ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- one-time atomic table migration.
+			$renamed = $wpdb->query( $wpdb->prepare( 'RENAME TABLE %i TO %i', $legacy, $table ) );
+			if ( false !== $renamed ) {
+				$old_exists = false;
+			}
+		}
 
 		$sql = "CREATE TABLE {$table} (
 			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -49,11 +71,31 @@ class AISuite_SEO_Store {
 
 		dbDelta( $sql );
 
-		if ( class_exists( 'AISuite_SEO_Site_Index' ) ) {
-			AISuite_SEO_Site_Index::install();
+		// If an interrupted upgrade left both tables, append the legacy rows
+		// without reusing IDs, then remove the obsolete generic table.
+		if ( $old_exists ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- one-time compatibility migration between plugin-owned tables.
+			$copied = $wpdb->query(
+				$wpdb->prepare(
+					'INSERT INTO %i (post_id, field, current_value, suggested_value, rollback_value, applied_value, rationale, status, created_at, resolved_at, resolved_by, undo_at, undo_by) SELECT post_id, field, current_value, suggested_value, rollback_value, applied_value, rationale, status, created_at, resolved_at, resolved_by, undo_at, undo_by FROM %i',
+					$table,
+					$legacy
+				)
+			);
+			if ( false !== $copied ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- copied legacy table is no longer used.
+				$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $legacy ) );
+			}
 		}
 
-		wp_cache_delete( 'aisuite_seo_table', 'aisuite' );
+		self::migrate_legacy_post_meta();
+		delete_option( 'aisuite_seo_db_version' );
+
+		if ( class_exists( 'FounderPostAI_AISuite_SEO_Site_Index' ) ) {
+			FounderPostAI_AISuite_SEO_Site_Index::install();
+		}
+
+		wp_cache_delete( 'founderpostai_aisuite_seo_table', self::CACHE_GROUP );
 		update_option( self::DB_OPTION, self::DB_VERSION, false );
 	}
 
@@ -71,7 +113,7 @@ class AISuite_SEO_Store {
 	public static function table_exists() {
 		global $wpdb;
 
-		$cached = wp_cache_get( 'aisuite_seo_table', 'aisuite' );
+		$cached = wp_cache_get( 'founderpostai_aisuite_seo_table', self::CACHE_GROUP );
 
 		if ( false !== $cached ) {
 			return (bool) $cached;
@@ -80,7 +122,7 @@ class AISuite_SEO_Store {
 		$table  = self::table();
 		$exists = (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
-		wp_cache_set( 'aisuite_seo_table', $exists ? 1 : 0, 'aisuite', HOUR_IN_SECONDS );
+		wp_cache_set( 'founderpostai_aisuite_seo_table', $exists ? 1 : 0, self::CACHE_GROUP, HOUR_IN_SECONDS );
 
 		return $exists;
 	}
@@ -89,15 +131,16 @@ class AISuite_SEO_Store {
 	public static function drop() {
 		global $wpdb;
 
-		$table = self::table();
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) );
+		foreach ( array( self::table(), self::legacy_table() ) as $table ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- uninstall removes plugin-owned storage, including a partially migrated legacy table.
+			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) );
+		}
 
 		delete_option( self::DB_OPTION );
+		delete_option( 'aisuite_seo_db_version' );
 
-		if ( class_exists( 'AISuite_SEO_Site_Index' ) ) {
-			AISuite_SEO_Site_Index::drop();
+		if ( class_exists( 'FounderPostAI_AISuite_SEO_Site_Index' ) ) {
+			FounderPostAI_AISuite_SEO_Site_Index::drop();
 		}
 	}
 
@@ -232,8 +275,8 @@ class AISuite_SEO_Store {
 			return 0;
 		}
 
-		$key    = 'aisuite_seo_count_' . $status;
-		$cached = wp_cache_get( $key, 'aisuite' );
+		$key    = 'founderpostai_aisuite_seo_count_' . $status;
+		$cached = wp_cache_get( $key, self::CACHE_GROUP );
 
 		if ( false !== $cached ) {
 			return (int) $cached;
@@ -244,7 +287,7 @@ class AISuite_SEO_Store {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$count = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE status = %s', $table, $status ) );
 
-		wp_cache_set( $key, $count, 'aisuite', 5 * MINUTE_IN_SECONDS );
+		wp_cache_set( $key, $count, self::CACHE_GROUP, 5 * MINUTE_IN_SECONDS );
 
 		return $count;
 	}
@@ -272,8 +315,60 @@ class AISuite_SEO_Store {
 	/** Counts are cached; any write must clear them. */
 	public static function flush_counts() {
 		foreach ( array( 'pending', 'approved', 'rejected', 'undone' ) as $status ) {
-			wp_cache_delete( 'aisuite_seo_count_' . $status, 'aisuite' );
+			wp_cache_delete( 'founderpostai_aisuite_seo_count_' . $status, self::CACHE_GROUP );
 		}
+	}
+
+	/**
+	 * Move legacy metadata once, preferring any value already written under the
+	 * new unique key. The old keys are removed so future reads cannot conflict.
+	 */
+	protected static function migrate_legacy_post_meta() {
+		global $wpdb;
+		// One-time, version-gated migration of plugin-owned post metadata.
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.SlowDBQuery
+
+		$mapping = array(
+			'_aisuite_seo_title'                => '_founderpostai_aisuite_seo_title',
+			'_aisuite_seo_description'          => '_founderpostai_aisuite_seo_description',
+			'_aisuite_seo_indexed_hash'         => '_founderpostai_aisuite_seo_indexed_hash',
+			'_aisuite_seo_analyzed'             => '_founderpostai_aisuite_seo_analyzed',
+			'_aisuite_seo_error'                => '_founderpostai_aisuite_seo_error',
+			'_aisuite_seo_queued'               => '_founderpostai_aisuite_seo_queued',
+			'_aisuite_seo_title_provider'       => '_founderpostai_aisuite_seo_title_provider',
+			'_aisuite_seo_description_provider' => '_founderpostai_aisuite_seo_description_provider',
+		);
+
+		foreach ( $mapping as $legacy_key => $new_key ) {
+			$copied = $wpdb->query(
+				$wpdb->prepare(
+					'INSERT INTO %i (post_id, meta_key, meta_value) SELECT legacy.post_id, %s, legacy.meta_value FROM %i AS legacy LEFT JOIN %i AS current ON current.post_id = legacy.post_id AND current.meta_key = %s WHERE legacy.meta_key = %s AND current.meta_id IS NULL',
+					$wpdb->postmeta,
+					$new_key,
+					$wpdb->postmeta,
+					$wpdb->postmeta,
+					$new_key,
+					$legacy_key
+				)
+			);
+			if ( false !== $copied ) {
+				$wpdb->delete( $wpdb->postmeta, array( 'meta_key' => $legacy_key ), array( '%s' ) );
+			}
+		}
+
+		foreach ( array( '_founderpostai_aisuite_seo_title_provider', '_founderpostai_aisuite_seo_description_provider' ) as $provider_key ) {
+			$wpdb->update(
+				$wpdb->postmeta,
+				array( 'meta_value' => FounderPostAI_AISuite_SEO_Meta_Adapter::PROVIDER_FOUNDERPOSTAI ),
+				array(
+					'meta_key'   => $provider_key,
+					'meta_value' => 'aisuite',
+				),
+				array( '%s' ),
+				array( '%s', '%s' )
+			);
+		}
+		// phpcs:enable
 	}
 
 	/**
@@ -396,7 +491,7 @@ class AISuite_SEO_Store {
 		global $wpdb;
 
 		$field = sanitize_key( $field );
-		if ( ! self::table_exists() || ! in_array( $field, AISuite_SEO_Optimizer::FIELDS, true ) ) {
+		if ( ! self::table_exists() || ! in_array( $field, FounderPostAI_AISuite_SEO_Optimizer::FIELDS, true ) ) {
 			return 0;
 		}
 

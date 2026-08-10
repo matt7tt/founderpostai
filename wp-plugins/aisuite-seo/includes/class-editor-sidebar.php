@@ -3,9 +3,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
-class AISuite_SEO_Editor_Sidebar {
+class FounderPostAI_AISuite_SEO_Editor_Sidebar {
 
-	const REST_NAMESPACE = 'aisuite-seo/v1';
+	const REST_NAMESPACE = 'founderpostai-aisuite-seo/v1';
 
 	public function __construct() {
 		add_action( 'enqueue_block_editor_assets', array( $this, 'assets' ) );
@@ -26,23 +26,23 @@ class AISuite_SEO_Editor_Sidebar {
 			return;
 		}
 
-		wp_enqueue_style( 'aisuite-seo-editor', AISUITE_SEO_URL . 'assets/editor.css', array( 'wp-components' ), AISUITE_SEO_VERSION );
+		wp_enqueue_style( 'founderpostai-aisuite-seo-editor', FOUNDERPOSTAI_AISUITE_SEO_URL . 'assets/editor.css', array( 'wp-components' ), FOUNDERPOSTAI_AISUITE_SEO_VERSION );
 		wp_enqueue_script(
-			'aisuite-seo-editor',
-			AISUITE_SEO_URL . 'assets/editor.js',
+			'founderpostai-aisuite-seo-editor',
+			FOUNDERPOSTAI_AISUITE_SEO_URL . 'assets/editor.js',
 			array( 'wp-api-fetch', 'wp-components', 'wp-data', 'wp-edit-post', 'wp-element', 'wp-i18n', 'wp-plugins' ),
-			AISUITE_SEO_VERSION,
+			FOUNDERPOSTAI_AISUITE_SEO_VERSION,
 			true
 		);
 		wp_localize_script(
-			'aisuite-seo-editor',
-			'AISuiteSEOEditor',
+			'founderpostai-aisuite-seo-editor',
+			'FounderPostAIAISuiteSEOEditor',
 			array(
 				'namespace' => '/' . self::REST_NAMESPACE,
 				'pollMs'    => 5000,
 			)
 		);
-		wp_set_script_translations( 'aisuite-seo-editor', 'founderpostai-ai-suite-seo' );
+		wp_set_script_translations( 'founderpostai-aisuite-seo-editor', 'founderpostai-ai-suite-seo' );
 	}
 
 	/** Register routes that reuse the optimizer's capability and stale checks. */
@@ -99,7 +99,7 @@ class AISuite_SEO_Editor_Sidebar {
 
 	/** Resolve the owning post before authorizing a suggestion action. */
 	public function can_edit_suggestion( WP_REST_Request $request ) {
-		$row = AISuite_SEO_Store::get( (int) $request['id'] );
+		$row = FounderPostAI_AISuite_SEO_Store::get( (int) $request['id'] );
 		return $row && current_user_can( 'edit_post', (int) $row->post_id );
 	}
 
@@ -113,12 +113,12 @@ class AISuite_SEO_Editor_Sidebar {
 		$focus = sanitize_key( (string) $request->get_param( 'focus' ) );
 
 		if ( ! in_array( $focus, array( '', 'all', 'title', 'description', 'internal_links' ), true ) ) {
-			return new WP_Error( 'aisuite_seo_bad_focus', __( 'Choose a valid area to refine.', 'founderpostai-ai-suite-seo' ), array( 'status' => 400 ) );
+			return new WP_Error( 'founderpostai_aisuite_seo_bad_focus', __( 'Choose a valid area to refine.', 'founderpostai-ai-suite-seo' ), array( 'status' => 400 ) );
 		}
 
 		$instruction = sanitize_text_field( (string) $request->get_param( 'instruction' ) );
 		$instruction = $this->truncate( $instruction, 500 );
-		$optimizer   = new AISuite_SEO_Optimizer( false );
+		$optimizer   = new FounderPostAI_AISuite_SEO_Optimizer( false );
 		$result      = $optimizer->analyze(
 			(int) $request['id'],
 			true,
@@ -143,13 +143,13 @@ class AISuite_SEO_Editor_Sidebar {
 	/** Apply, dismiss, or safely undo one suggestion from Gutenberg. */
 	public function resolve( WP_REST_Request $request ) {
 		$decision  = sanitize_key( (string) $request['decision'] );
-		$optimizer = new AISuite_SEO_Optimizer( false );
+		$optimizer = new FounderPostAI_AISuite_SEO_Optimizer( false );
 
 		if ( 'apply' === $decision ) {
 			$value = $request->get_param( 'suggested_value' );
 
 			if ( null !== $value && ! is_string( $value ) ) {
-				return new WP_Error( 'aisuite_seo_invalid_edit', __( 'The edited suggestion is invalid.', 'founderpostai-ai-suite-seo' ), array( 'status' => 400 ) );
+				return new WP_Error( 'founderpostai_aisuite_seo_invalid_edit', __( 'The edited suggestion is invalid.', 'founderpostai-ai-suite-seo' ), array( 'status' => 400 ) );
 			}
 
 			$result = $optimizer->apply( (int) $request['id'], true, null === $value ? null : sanitize_text_field( $value ) );
@@ -163,7 +163,7 @@ class AISuite_SEO_Editor_Sidebar {
 			return $result;
 		}
 
-		$row = AISuite_SEO_Store::get( (int) $request['id'] );
+		$row = FounderPostAI_AISuite_SEO_Store::get( (int) $request['id'] );
 		return rest_ensure_response( $this->state( $row ? (int) $row->post_id : 0 ) );
 	}
 
@@ -172,19 +172,19 @@ class AISuite_SEO_Editor_Sidebar {
 		$post = get_post( $post_id );
 
 		if ( ! $post ) {
-			return new WP_Error( 'aisuite_seo_no_post', __( 'Post not found.', 'founderpostai-ai-suite-seo' ), array( 'status' => 404 ) );
+			return new WP_Error( 'founderpostai_aisuite_seo_no_post', __( 'Post not found.', 'founderpostai-ai-suite-seo' ), array( 'status' => 404 ) );
 		}
 
-		$title       = AISuite_SEO_Meta_Adapter::read( $post_id, 'title' );
-		$description = AISuite_SEO_Meta_Adapter::read( $post_id, 'description' );
-		$pending     = AISuite_SEO_Store::query(
+		$title       = FounderPostAI_AISuite_SEO_Meta_Adapter::read( $post_id, 'title' );
+		$description = FounderPostAI_AISuite_SEO_Meta_Adapter::read( $post_id, 'description' );
+		$pending     = FounderPostAI_AISuite_SEO_Store::query(
 			array(
 				'status'   => 'pending',
 				'post_id'  => $post_id,
 				'per_page' => 20,
 			)
 		);
-		$applied     = AISuite_SEO_Store::query(
+		$applied     = FounderPostAI_AISuite_SEO_Store::query(
 			array(
 				'status'   => 'approved',
 				'post_id'  => $post_id,
@@ -207,9 +207,9 @@ class AISuite_SEO_Editor_Sidebar {
 				'description' => $description ? (string) $description : wp_trim_words( wp_strip_all_tags( $post->post_excerpt ? $post->post_excerpt : $post->post_content ), 24, '…' ),
 			),
 			'analysis'    => array(
-				'queued'  => (bool) AISuite_SEO_Optimizer::is_queued( $post_id ),
-				'current' => (bool) AISuite_SEO_Optimizer::is_current( $post ),
-				'error'   => (string) get_post_meta( $post_id, AISuite_SEO_Optimizer::META_ERROR, true ),
+				'queued'  => (bool) FounderPostAI_AISuite_SEO_Optimizer::is_queued( $post_id ),
+				'current' => (bool) FounderPostAI_AISuite_SEO_Optimizer::is_current( $post ),
+				'error'   => (string) get_post_meta( $post_id, FounderPostAI_AISuite_SEO_Optimizer::META_ERROR, true ),
 			),
 			'suggestions' => array_map( array( $this, 'suggestion_data' ), array_merge( $pending, $applied ) ),
 		);

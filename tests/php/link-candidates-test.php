@@ -34,7 +34,7 @@ $posts = array(
 	),
 );
 
-$ranked = AISuite_SEO_Link_Candidates::rank( $source, $posts, 2 );
+$ranked = FounderPostAI_AISuite_SEO_Link_Candidates::rank( $source, $posts, 2 );
 
 if ( 2 !== count( $ranked ) || 3 !== (int) $ranked[0]->ID ) {
 	fwrite( STDERR, "FAIL: topical relevance did not outrank recency\n" );

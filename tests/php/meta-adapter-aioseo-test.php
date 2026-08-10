@@ -53,14 +53,14 @@ namespace {
 
 	require dirname( __DIR__, 2 ) . '/wp-plugins/aisuite-seo/includes/class-meta-adapter.php';
 
-	$result = \AISuite_SEO_Meta_Adapter::write( 11, 'title', 'AIOSEO title' );
+	$result = \FounderPostAI_AISuite_SEO_Meta_Adapter::write( 11, 'title', 'AIOSEO title' );
 	$model  = \AIOSEO\Plugin\Common\Models\Post::getPost( 11 );
 
 	if (
 		true !== $result ||
 		'AIOSEO title' !== $model->title ||
-		'AIOSEO title' !== get_post_meta( 11, '_aisuite_seo_title', true ) ||
-		'AIOSEO title' !== \AISuite_SEO_Meta_Adapter::read( 11, 'title' )
+		'AIOSEO title' !== get_post_meta( 11, '_founderpostai_aisuite_seo_title', true ) ||
+		'AIOSEO title' !== \FounderPostAI_AISuite_SEO_Meta_Adapter::read( 11, 'title' )
 	) {
 		fwrite( STDERR, "FAIL: approved metadata did not use AIOSEO's post model\n" );
 		exit( 1 );

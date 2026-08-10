@@ -26,20 +26,20 @@ FounderPostAI AI Suite is a three-plugin WordPress AI SEO system. AI Suite Core 
 
 ## AI Suite Core
 
-- Current version: 0.1.4
+- Current version: 0.1.5
 - Price: free
 - Directory: https://wordpress.org/plugins/founderpostai-ai-suite-core/
-- Download: https://downloads.wordpress.org/plugin/founderpostai-ai-suite-core.0.1.4.zip
+- Download: https://downloads.wordpress.org/plugin/founderpostai-ai-suite-core.0.1.5.zip
 - Role: shared runtime for secure gateway connections, credits, brand context, and background AI jobs
-- Capabilities: signed gateway calls; managed credits or BYOK; shared brand context; background job queue with fallbacks
+- Capabilities: signed gateway calls; managed credits or BYOK; shared brand context; background job queue with fallbacks; encrypted read-only Search Console bridge for compatible modules
 
 ## AI Suite SEO
 
-- Current version: 0.1.6
+- Current version: 0.1.7
 - Price: free
 - Download: https://founderpostai.com/downloads/aisuite-seo.zip
 - Role: reviewable WordPress SEO suggestions
-- Capabilities: per-post analysis and batches of ten; site-wide SEO health dashboard; native Yoast, Rank Math, AIOSEO, and SEOPress metadata; whole-site relevance-ranked internal links; suggestion review queue; a WordPress revision before every write
+- Capabilities: Gutenberg SEO sidebar and live search preview; field-specific refinement; safe bulk apply; guarded undo; site-wide SEO health dashboard; native Yoast, Rank Math, AIOSEO, and SEOPress metadata; incrementally indexed internal-link discovery; optional read-only Search Console opportunity dashboard; a WordPress revision before every content write
 
 ## SEO workflow safeguards
 
@@ -64,7 +64,7 @@ FounderPostAI AI Suite is a three-plugin WordPress AI SEO system. AI Suite Core 
 
 ## AI Suite SEO Pro
 
-- Current version: 1.0.4
+- Current version: 1.0.5
 - SEO Pro price: $79 USD per year for one site
 - Agency price: $199 USD per year for unlimited sites owned or managed by the license holder
 - Role: WordPress SEO automation

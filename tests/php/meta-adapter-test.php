@@ -42,26 +42,26 @@ function update_meta_cache() {}
 
 require dirname( __DIR__, 2 ) . '/wp-plugins/aisuite-seo/includes/class-meta-adapter.php';
 
-$result = AISuite_SEO_Meta_Adapter::write( 9, 'description', 'Native description' );
+$result = FounderPostAI_AISuite_SEO_Meta_Adapter::write( 9, 'description', 'Native description' );
 
 if (
 	true !== $result ||
 	'Native description' !== get_post_meta( 9, '_yoast_wpseo_metadesc', true ) ||
-	'Native description' !== get_post_meta( 9, '_aisuite_seo_description', true ) ||
-	'Native description' !== AISuite_SEO_Meta_Adapter::read( 9, 'description' )
+	'Native description' !== get_post_meta( 9, '_founderpostai_aisuite_seo_description', true ) ||
+	'Native description' !== FounderPostAI_AISuite_SEO_Meta_Adapter::read( 9, 'description' )
 ) {
 	fwrite( STDERR, "FAIL: approved metadata was not saved natively and mirrored\n" );
 	exit( 1 );
 }
 
 update_post_meta( 9, '_yoast_wpseo_metadesc', 'Manual edit' );
-if ( 'Manual edit' !== AISuite_SEO_Meta_Adapter::read( 9, 'description' ) ) {
+if ( 'Manual edit' !== FounderPostAI_AISuite_SEO_Meta_Adapter::read( 9, 'description' ) ) {
 	fwrite( STDERR, "FAIL: a later native edit did not remain authoritative\n" );
 	exit( 1 );
 }
 
 update_post_meta( 9, '_yoast_wpseo_metadesc', '' );
-if ( '' !== AISuite_SEO_Meta_Adapter::read( 9, 'description' ) ) {
+if ( '' !== FounderPostAI_AISuite_SEO_Meta_Adapter::read( 9, 'description' ) ) {
 	fwrite( STDERR, "FAIL: clearing a native field resurrected the portability mirror\n" );
 	exit( 1 );
 }

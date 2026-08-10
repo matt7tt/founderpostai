@@ -3,7 +3,7 @@
  * Plugin Name:       FounderPostAI – AI Suite Core
  * Plugin URI:        https://founderpostai.com/ai-suite
  * Description:       Shared runtime for the AI Suite modules: account connection, credit balance, brand context, and the background job queue every module runs on.
- * Version:           0.1.4
+ * Version:           0.1.5
  * Requires at least: 6.5
  * Requires PHP:      7.4
  * Author:            FounderPostAI
@@ -17,7 +17,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'AISUITE_CORE_VERSION', '0.1.4' );
+define( 'AISUITE_CORE_VERSION', '0.1.5' );
 define( 'AISUITE_CORE_FILE', __FILE__ );
 define( 'AISUITE_CORE_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AISUITE_CORE_URL', plugin_dir_url( __FILE__ ) );
@@ -97,12 +97,21 @@ final class AISuite_Core {
 	}
 }
 
-/** Accessor used by every module: aisuite()->jobs->enqueue( ... ) */
-function aisuite() {
+/** Distinct accessor used by every FounderPostAI module. */
+function founderpostai_aisuite() {
 	return AISuite_Core::instance();
 }
 
-add_action( 'plugins_loaded', 'aisuite', 5 );
+/**
+ * Backward-compatible accessor for direct-download modules before Core 0.1.5.
+ *
+ * @deprecated 0.1.5 Use founderpostai_aisuite().
+ */
+function aisuite() {
+	return founderpostai_aisuite();
+}
+
+add_action( 'plugins_loaded', 'founderpostai_aisuite', 5 );
 
 /**
  * Suggest accurate disclosure text for the site's privacy policy.

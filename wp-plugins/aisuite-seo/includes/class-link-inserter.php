@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-class AISuite_SEO_Link_Inserter {
+class FounderPostAI_AISuite_SEO_Link_Inserter {
 
 	/** Blocks whose text we're willing to modify. */
 	const ELIGIBLE_BLOCKS = array( 'core/paragraph', 'core/list-item' );
@@ -37,7 +37,7 @@ class AISuite_SEO_Link_Inserter {
 	public function insert( $content, array $links ) {
 		if ( ! class_exists( 'DOMDocument' ) ) {
 			return new WP_Error(
-				'aisuite_seo_no_dom',
+				'founderpostai_aisuite_seo_no_dom',
 				__( 'This server is missing the PHP DOM extension, so links cannot be inserted safely.', 'founderpostai-ai-suite-seo' )
 			);
 		}
@@ -58,7 +58,7 @@ class AISuite_SEO_Link_Inserter {
 		}
 
 		if ( empty( $this->pending ) ) {
-			return new WP_Error( 'aisuite_seo_no_links', __( 'No usable links in this suggestion.', 'founderpostai-ai-suite-seo' ) );
+			return new WP_Error( 'founderpostai_aisuite_seo_no_links', __( 'No usable links in this suggestion.', 'founderpostai-ai-suite-seo' ) );
 		}
 
 		$content = has_blocks( $content )
@@ -67,7 +67,7 @@ class AISuite_SEO_Link_Inserter {
 
 		if ( empty( $this->placed ) ) {
 			return new WP_Error(
-				'aisuite_seo_anchors_missing',
+				'founderpostai_aisuite_seo_anchors_missing',
 				__( 'None of the suggested anchor phrases appear as plain text in this post, so nothing was changed.', 'founderpostai-ai-suite-seo' )
 			);
 		}

@@ -1,7 +1,7 @@
 ( function () {
 	'use strict';
 
-	var labels = window.AISuiteSEOReview || {};
+	var labels = window.FounderPostAIAISuiteSEOReview || {};
 	var canvas = document.createElement( 'canvas' );
 	var context = canvas.getContext( '2d' );
 

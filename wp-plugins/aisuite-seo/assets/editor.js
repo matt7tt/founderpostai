@@ -18,7 +18,7 @@
 	var TextControl = wp.components.TextControl;
 	var TextareaControl = wp.components.TextareaControl;
 	var __ = wp.i18n.__;
-	var namespace = config && config.namespace ? config.namespace : '/aisuite-seo/v1';
+	var namespace = config && config.namespace ? config.namespace : '/founderpostai-aisuite-seo/v1';
 	var pollMs = config && config.pollMs ? parseInt( config.pollMs, 10 ) : 5000;
 
 	function apiError( error ) {
@@ -249,10 +249,10 @@
 		}
 
 		return el( Fragment, null,
-			el( PluginSidebarMoreMenuItem, { target: 'aisuite-seo-sidebar', icon: 'search' }, __( 'AI Suite SEO', 'founderpostai-ai-suite-seo' ) ),
-			el( PluginSidebar, { name: 'aisuite-seo-sidebar', title: __( 'AI Suite SEO', 'founderpostai-ai-suite-seo' ), icon: 'search' }, el( 'div', { className: 'aisuite-editor' }, content ) )
+			el( PluginSidebarMoreMenuItem, { target: 'founderpostai-aisuite-seo-sidebar', icon: 'search' }, __( 'AI Suite SEO', 'founderpostai-ai-suite-seo' ) ),
+			el( PluginSidebar, { name: 'founderpostai-aisuite-seo-sidebar', title: __( 'AI Suite SEO', 'founderpostai-ai-suite-seo' ), icon: 'search' }, el( 'div', { className: 'aisuite-editor' }, content ) )
 		);
 	}
 
-	wp.plugins.registerPlugin( 'aisuite-seo-editor', { render: Sidebar, icon: 'search' } );
-}( window.wp, window.AISuiteSEOEditor || {} ) );
+	wp.plugins.registerPlugin( 'founderpostai-aisuite-seo-editor', { render: Sidebar, icon: 'search' } );
+}( window.wp, window.FounderPostAIAISuiteSEOEditor || {} ) );
