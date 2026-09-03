@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { stripe } from '@/lib/stripe';
 import { generateLicenseKey, PRICE_TO_PLAN, PLAN_LABELS } from '@/lib/license';
+import { recordUniqueFunnelEventSafely } from '@/lib/funnel';
 
 // Called by /thanks after a Payment Link redirect (?session_id=cs_...).
 // Verifies the session is paid, then returns the subscription's license key,
@@ -62,6 +63,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         status: subscription.status === 'active' ? 'active' : subscription.status,
         subscription_id: subscriptionId,
       });
+      await recordUniqueFunnelEventSafely('purchase_completed', subscriptionId);
     } catch (e) {
       console.error(`License index failed for subscription ${subscriptionId}:`, e);
       return res.status(503).json({ error: 'License is being prepared. Refresh in a moment.' });

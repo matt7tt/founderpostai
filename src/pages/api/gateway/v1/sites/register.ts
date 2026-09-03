@@ -3,6 +3,7 @@ import { getJSON, setJSON, redis } from '@/lib/gateway/redis';
 import { randomId, outboundHeaders } from '@/lib/gateway/crypto';
 import { saveSite, accountFor, Site } from '@/lib/gateway/store';
 import { validateSiteUrls } from '@/lib/gateway/url';
+import { recordFunnelEventSafely } from '@/lib/funnel';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end();
@@ -72,6 +73,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   };
   await saveSite(site);
   await redis('SET', `credits:${site.site_id}`, site.credits_included);
+  await recordFunnelEventSafely('site_connected');
 
   const account = await accountFor(site);
   return res.status(200).json({

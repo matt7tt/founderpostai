@@ -18,7 +18,7 @@ export default function Privacy() {
         title="Privacy Policy | FounderPostAI"
         description={description}
         breadcrumbLabel="Privacy policy"
-        dateModified="2026-08-02T18:00:00-07:00"
+        dateModified="2026-09-03T12:00:00+01:00"
       />
       <div style={{ fontFamily: "'Inter', sans-serif", maxWidth: '680px', margin: '0 auto', padding: '64px 24px', color: '#0a0a0a', lineHeight: 1.7 }}>
         <nav aria-label="Breadcrumb" style={{ marginBottom: '32px', fontSize: '14px' }}>
@@ -27,7 +27,7 @@ export default function Privacy() {
           <span>Privacy policy</span>
         </nav>
         <h1 style={{ letterSpacing: '-0.04em' }}>Privacy Policy</h1>
-        <p style={{ color: '#6b6b6b' }}>Last updated: August 2026</p>
+        <p style={{ color: '#6b6b6b' }}>Last updated: September 2026</p>
 
         <h2>What we collect</h2>
         <p>
@@ -59,11 +59,17 @@ export default function Privacy() {
           Console data is not sent to an AI model. Disconnecting removes the stored Google token.
         </p>
         <p>
-          <strong>On this website:</strong> anonymized usage analytics via Vercel Web Analytics,
-          including page paths, referring domains, plugin-download clicks, pricing and checkout
-          clicks, support and outbound-link clicks, and the purchased plan after a successful
-          license lookup. We do not send payment details, license keys, content, URL query
-          parameters, or advertising identifiers to analytics. No advertising trackers.
+          <strong>On this website:</strong> anonymous traffic measurement via Vercel Web
+          Analytics. We also keep first-party daily counters for page views, plugin install and
+          download clicks, connection progress, first completed plugin jobs, checkout clicks, and
+          confirmed purchases. Those counters contain only the event type, day, and page path;
+          query strings are removed. Anonymous duplicate-prevention markers are used for first-job
+          and purchase counts. Counters and markers expire after 180 days.
+        </p>
+        <p>
+          We do not add raw IP addresses, cookies, emails, payment details, license keys, submitted
+          content, URL query parameters, or advertising identifiers to these first-party counters.
+          We do not use advertising trackers.
         </p>
 
         <h2>What we never do</h2>
@@ -77,7 +83,7 @@ export default function Privacy() {
         <p>
           Stripe (payments), Anthropic (inference, with training opted out), Google (optional
           read-only Search Console data), Vercel (hosting and analytics), and Upstash (durable
-          gateway, OAuth token, and feedback storage).
+          gateway, OAuth token, feedback, and anonymous aggregate analytics storage).
         </p>
 
         <h2>Your rights</h2>

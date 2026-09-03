@@ -2,22 +2,22 @@
 
 A store for the **AI Suite** WordPress plugin family:
 
-- **AI Suite Core** (Free, direct download) — connection, credits, brand context, job queue
+- **AI Suite Core** (Free on WordPress.org) — connection, credits, brand context, job queue
 - **AI Suite SEO** (Free, direct download) — suggestions + review queue, batches of ten, block-aware internal links
 - **AI Suite SEO Pro** ($79/yr, this store) — bulk runs, scheduling, auto-apply
 - **Agency** ($199/yr) — Pro on unlimited client sites, BYOK flat fee
 
 Billing modes: managed credits ("actions") or BYOK (customer's own provider key, never stored in WordPress). 30-day refunds, GPL-licensed.
 
-## A/B testing
+## Traffic and conversion measurement
 
-The homepage is split 50/50 between two designs in `src/pages/index.tsx` (cookie `ab_design`,
-30 days). Assignment happens during server rendering so a visitor sees their assigned design on
-the first request. Variants live in `src/designs/Editorial.tsx` and `src/designs/Studio.tsx`.
-Force one with `/?v=studio` or `/?v=editorial`. Conversion events (`landing_view`,
-`checkout_click`) go to Vercel Analytics via `@vercel/analytics`.
+The homepage uses the Editorial design while the traffic baseline grows. Vercel Web Analytics
+provides anonymous site traffic, and the app also stores privacy-safe daily funnel counters in
+Upstash for page views, plugin clicks, connection codes, connected sites, first completed jobs,
+checkout clicks, and purchases. Open the private `/feedback-review` route to see those metrics.
+Daily counters and anonymous duplicate-prevention markers expire after 180 days.
 
-Both variants share one canonical URL, search metadata, social preview, and SoftwareApplication
+The site shares one canonical URL, search metadata, social preview, and SoftwareApplication
 structured-data graph. Public indexable URLs are listed in `/sitemap.xml`; account and transaction
 routes send `noindex` directives.
 
@@ -47,7 +47,7 @@ Editorial / indie-plugin-shop aesthetic (deliberately anti-"AI SaaS" slop): warm
 gradients and glow.
 
 The landing page (`src/pages/index.tsx`) is self-contained Tailwind; the legacy SaaS dashboard,
-auth, and Stripe checkout are still present but unlinked from the homepage except the login link.
+auth, and Stripe checkout are still present but are not linked from the plugin storefront.
 
 ## Setup
 

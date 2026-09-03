@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { setJSON, redis } from '@/lib/gateway/redis';
 import { randomId } from '@/lib/gateway/crypto';
+import { recordFunnelEventSafely } from '@/lib/funnel';
 
 // Public: mint a single-use connect token (shown on the /connect page).
 // Rate-limited per IP — this is the free-tier front door.
@@ -18,5 +19,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const connect_token = randomId('ct');
   await setJSON(`ctoken:${connect_token}`, { created: Date.now(), used: false }, 900);
+  await recordFunnelEventSafely('connection_code_created');
   return res.status(200).json({ connect_token, expires_in: 900 });
 }

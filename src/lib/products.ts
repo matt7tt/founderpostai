@@ -25,7 +25,7 @@ export const AI_SUITE_PRODUCTS = [
     id: 'ai-suite-core',
     name: 'FounderPostAI – AI Suite Core',
     shortName: 'AI Suite Core',
-    version: '0.1.5',
+    version: '0.1.6',
     price: 'Free',
     priceValue: '0',
     audience: 'Every AI Suite installation',

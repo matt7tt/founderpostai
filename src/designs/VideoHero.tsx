@@ -413,7 +413,6 @@ export default function VideoHero() {
             <a href="#plugins" className="transition-colors hover:text-white">Plugins</a>
             <a href="#pricing" className="transition-colors hover:text-white">Pricing</a>
             <a href="#faq" className="transition-colors hover:text-white">FAQ</a>
-            <Link href="/login" className="transition-colors hover:text-white">Account</Link>
           </div>
           <p>© {new Date().getFullYear()} FounderPostAI · GPL-licensed code</p>
         </div>

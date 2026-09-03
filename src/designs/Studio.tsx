@@ -61,7 +61,6 @@ const DRAWER_LINKS = [
   { label: 'FAQs', href: '#faq' },
   { label: 'Resources', href: '/resources' },
   { label: 'Product Facts', href: '/ai-suite' },
-  { label: 'Account', href: '/login' },
   { label: 'Get in Touch', href: 'mailto:support@founderpostai.com' },
 ];
 
@@ -439,7 +438,6 @@ export default function Studio() {
           <Link href="/ai-suite">Product facts</Link>
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>
-          <Link href="/login">Account</Link>
         </div>
         <p>© {new Date().getFullYear()} FounderPostAI · GPL-licensed code</p>
       </footer>

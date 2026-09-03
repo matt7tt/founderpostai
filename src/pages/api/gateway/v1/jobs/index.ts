@@ -11,6 +11,7 @@ import {
   Site,
 } from '@/lib/gateway/store';
 import { validateSiteUrls } from '@/lib/gateway/url';
+import { recordUniqueFunnelEventSafely } from '@/lib/funnel';
 
 export const config = { api: { bodyParser: false } };
 export const maxDuration = 60;
@@ -380,6 +381,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // not delete idempotency and cause the customer's model call to repeat.
     }
   }
+  await recordUniqueFunnelEventSafely('first_job_completed', site.site_id);
   const account = await accountFor(site);
   await deliverCallback(site, {
     idempotency_key,

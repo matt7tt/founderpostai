@@ -19,6 +19,11 @@ const nextConfig = {
         destination: '/ai-suite',
         permanent: true,
       },
+      {
+        source: '/about',
+        destination: '/ai-suite',
+        permanent: true,
+      },
     ];
   },
   async headers() {

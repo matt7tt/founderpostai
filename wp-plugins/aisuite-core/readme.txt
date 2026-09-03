@@ -2,9 +2,9 @@
 Contributors: founderpostai
 Tags: ai, automation, seo, content
 Requires at least: 6.5
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.1.5
+Stable tag: 0.1.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -88,6 +88,10 @@ Yes. Switch billing to "Use my own API key" on the Connection screen, then add t
 Background work runs immediately in most cases. If your host blocks loopback requests, it falls back to WP-Cron, which only fires when someone visits your site. The Connection screen shows which method your site is using.
 
 == Changelog ==
+
+= 0.1.6 =
+* Added a prominent link to generate a connection code directly from the Connection screen.
+* Clarified the three-step site connection flow.
 
 = 0.1.5 =
 * Added the secure gateway methods used by compatible modules for optional read-only Google Search Console reporting.

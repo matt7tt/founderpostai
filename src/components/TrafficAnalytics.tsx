@@ -40,6 +40,14 @@ export default function TrafficAnalytics() {
       const url = new URL(href, window.location.href);
       const sourcePath = window.location.pathname;
 
+      if (
+        url.hostname === 'wordpress.org' &&
+        url.pathname.replace(/\/+$/, '') === '/plugins/founderpostai-ai-suite-core'
+      ) {
+        track('core_install_click', { source_path: sourcePath });
+        return;
+      }
+
       if (url.pathname.startsWith('/downloads/')) {
         track('plugin_download', {
           file: url.pathname.split('/').pop() || 'unknown',

@@ -43,8 +43,8 @@ export default function Connect() {
           Connect your site
         </h1>
         <p style={{ fontSize: '16px', color: '#6b6b6b', maxWidth: '440px', margin: '0 0 32px', lineHeight: 1.6 }}>
-          Generate a free connection token, then paste it into{' '}
-          <strong>wp-admin → AI Suite → Connection</strong>. Tokens are single-use and expire in
+          Generate a free connection code, then paste it into{' '}
+          <strong>wp-admin → AI Suite → Connection</strong>. Codes are single-use and expire in
           15 minutes.
         </p>
 
@@ -70,7 +70,7 @@ export default function Connect() {
               }}
               style={{ background: '#0a0a0a', color: '#fff', border: 'none', borderRadius: '999px', padding: '12px 22px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
             >
-              {copied ? 'Copied ✓' : 'Copy token'}
+              {copied ? 'Copied ✓' : 'Copy connection code'}
             </button>
           </div>
         ) : (
@@ -79,7 +79,7 @@ export default function Connect() {
             disabled={loading}
             style={{ background: '#0a0a0a', color: '#fff', border: 'none', borderRadius: '999px', padding: '16px 30px', fontSize: '15px', fontWeight: 600, cursor: 'pointer' }}
           >
-            {loading ? 'Generating…' : 'Generate my token'}
+            {loading ? 'Generating…' : 'Generate connection code'}
           </button>
         )}
         {error && <p style={{ color: '#c00', marginTop: '16px' }}>{error}</p>}

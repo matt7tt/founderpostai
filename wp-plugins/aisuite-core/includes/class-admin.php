@@ -125,8 +125,17 @@ class AISuite_Admin {
 						</form>
 					</div>
 				<?php else : ?>
+					<p><?php esc_html_e( 'Connect this site in three steps:', 'founderpostai-ai-suite-core' ); ?></p>
+					<ol>
+						<li><?php esc_html_e( 'Open FounderPostAI and generate a single-use connection code.', 'founderpostai-ai-suite-core' ); ?></li>
+						<li><?php esc_html_e( 'Copy the code. It expires after 15 minutes.', 'founderpostai-ai-suite-core' ); ?></li>
+						<li><?php esc_html_e( 'Paste it below and select Connect site.', 'founderpostai-ai-suite-core' ); ?></li>
+					</ol>
+
 					<p>
-						<?php esc_html_e( 'Paste the connection code from your AI Suite dashboard. It is single-use and expires in 15 minutes.', 'founderpostai-ai-suite-core' ); ?>
+						<a class="button button-secondary" href="<?php echo esc_url( aisuite_dashboard_url() ); ?>" target="_blank" rel="noopener noreferrer">
+							<?php esc_html_e( 'Get connection code', 'founderpostai-ai-suite-core' ); ?>
+						</a>
 					</p>
 
 					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">

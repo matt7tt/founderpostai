@@ -26,10 +26,10 @@ FounderPostAI AI Suite is a three-plugin WordPress AI SEO system. AI Suite Core 
 
 ## AI Suite Core
 
-- Current version: 0.1.5
+- Current version: 0.1.6
 - Price: free
 - Directory: https://wordpress.org/plugins/founderpostai-ai-suite-core/
-- Download: https://downloads.wordpress.org/plugin/founderpostai-ai-suite-core.0.1.5.zip
+- Download: https://downloads.wordpress.org/plugin/founderpostai-ai-suite-core.0.1.6.zip
 - Role: shared runtime for secure gateway connections, credits, brand context, and background AI jobs
 - Capabilities: signed gateway calls; managed credits or BYOK; shared brand context; background job queue with fallbacks; encrypted read-only Search Console bridge for compatible modules
 

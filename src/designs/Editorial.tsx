@@ -79,11 +79,10 @@ export default function Editorial() {
               <Link href="/resources" className="hidden lg:inline hover:text-[#00749C] transition-colors">Resources</Link>
               <Link href="/ai-suite" className="hidden lg:inline hover:text-[#00749C] transition-colors">Product facts</Link>
               <a
-                href={PAYMENT_LINKS.pro}
-                onClick={() => track('checkout_click', { design: 'editorial', plan: 'pro' })}
+                href={WORDPRESS_ORG_CORE_URL}
                 className="bg-[#1B1712] text-[#F7F4EE] px-4 py-2 text-sm font-medium hover:bg-[#00749C] transition-colors"
               >
-                Get SEO Pro — $79/yr
+                Install Core free
               </a>
             </nav>
           </div>
@@ -107,20 +106,20 @@ export default function Editorial() {
               </p>
               <div className="flex flex-col sm:flex-row gap-3 mb-6">
                 <a
-                  href="#plugins"
+                  href={WORDPRESS_ORG_CORE_URL}
                   className="bg-[#00749C] text-white px-7 py-3.5 font-medium text-center hover:bg-[#005d7e] transition-colors"
                 >
-                  Meet the suite
+                  Install Core free →
                 </a>
                 <a
-                  href="#pricing"
+                  href="/downloads/aisuite-seo.zip"
                   className="border border-[#1B1712]/30 px-7 py-3.5 font-medium text-center hover:border-[#1B1712] transition-colors"
                 >
-                  See pricing →
+                  Download SEO free ↓
                 </a>
               </div>
               <p className="text-sm text-[#1B1712]/70">
-                30-day refunds, no questions · GPL-licensed · Revision saved before every write
+                Core and SEO are free · No credit card · GPL-licensed
               </p>
             </div>
 
@@ -302,7 +301,7 @@ export default function Editorial() {
             </h2>
             <div className="grid md:grid-cols-3 gap-10">
               {[
-                ['01', 'Download & upload the zips', 'Plugins → Add New → Upload Plugin. Core first, then the SEO module — it installs like any other plugin. No composer, no node, no build step.'],
+                ['01', 'Install Core, then add SEO', 'Find FounderPostAI Core under Plugins → Add Plugin, then upload the free SEO module. Both install like ordinary WordPress plugins.'],
                 ['02', 'Connect once', 'Managed credits work out of the box. Prefer BYOK? Your provider key is posted straight to the gateway — never written to WordPress.'],
                 ['03', 'Review, then apply', 'Suggestions land in a review queue. Approve what you like; a WordPress revision is saved before every write, so anything can be rolled back.'],
               ].map(([n, t, d]) => (
@@ -346,8 +345,8 @@ export default function Editorial() {
                 <li>✓ Block-aware internal link insertion</li>
                 <li>✓ BYOK — unlimited actions on your key</li>
               </ul>
-              <a href="#plugins" className="mt-auto block text-center border border-[#1B1712]/30 px-6 py-3 font-medium hover:border-[#1B1712] transition-colors">
-                Choose the free plugins
+              <a href={WORDPRESS_ORG_CORE_URL} className="mt-auto block text-center border border-[#1B1712]/30 px-6 py-3 font-medium hover:border-[#1B1712] transition-colors">
+                Install Core free
               </a>
             </div>
 
@@ -464,7 +463,6 @@ export default function Editorial() {
               <Link href="/ai-suite" className="hover:text-[#00749C]">Product facts</Link>
               <Link href="/privacy" className="hover:text-[#00749C]">Privacy</Link>
               <Link href="/terms" className="hover:text-[#00749C]">Terms</Link>
-              <Link href="/login" className="hover:text-[#00749C]">Account</Link>
             </div>
             <p>© {new Date().getFullYear()} FounderPostAI · GPL-licensed code, human-written support</p>
           </div>
