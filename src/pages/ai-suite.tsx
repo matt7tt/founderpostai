@@ -1,3 +1,4 @@
+import SiteFooter from '../components/SiteFooter';
 import Link from 'next/link';
 import AiSuiteStructuredData from '../components/AiSuiteStructuredData';
 import SeoHead from '../components/SeoHead';
@@ -9,7 +10,8 @@ import {
   AI_SUITE_REQUIREMENTS,
   AI_SUITE_TITLE,
 } from '../lib/products';
-import { WORDPRESS_ORG_STATUS_NOTICE } from '../lib/site';
+import { SITE_LAST_MODIFIED, WORDPRESS_ORG_STATUS_NOTICE } from '../lib/site';
+import { formatContentDate } from '../lib/content-dates';
 
 const serif = "Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif";
 const mono = "ui-monospace, 'SF Mono', Menlo, Consolas, monospace";
@@ -96,7 +98,7 @@ export default function AiSuite() {
                 </p>
                 <p className="mt-6 text-sm text-[#1B1712]/60">
                   Product details checked against the current packaged releases on{' '}
-                  <time dateTime="2026-08-03">August 3, 2026</time>.
+                  <time dateTime={SITE_LAST_MODIFIED}>{formatContentDate(SITE_LAST_MODIFIED)}</time>.
                 </p>
               </div>
             </header>
@@ -471,23 +473,7 @@ export default function AiSuite() {
           </article>
         </main>
 
-        <footer className="border-t border-[#1B1712]/15 bg-white">
-          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-5 px-6 py-10 text-sm text-[#1B1712]/70 md:flex-row">
-            <Link href="/" className="font-bold text-[#1B1712]" style={{ fontFamily: serif }}>
-              FounderPostAI
-            </Link>
-            <nav aria-label="Footer navigation" className="flex flex-wrap justify-center gap-5">
-              <Link href="/">Home</Link>
-              <a href="#workflow">SEO workflow</a>
-              <a href="#installation">Installation</a>
-              <Link href="/resources">Resources</Link>
-              <Link href="/privacy">Privacy</Link>
-              <Link href="/terms">Terms</Link>
-              <a href="/llms.txt">LLM reference</a>
-            </nav>
-            <p>© {new Date().getFullYear()} FounderPostAI</p>
-          </div>
-        </footer>
+        <SiteFooter />
       </div>
     </>
   );

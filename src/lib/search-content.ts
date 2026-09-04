@@ -1,3 +1,5 @@
+import type { ContentDates } from './content-dates';
+
 export type SearchPageKind = 'feature' | 'integration' | 'guide' | 'comparison';
 
 export interface SearchContentSection {
@@ -27,7 +29,7 @@ export interface SearchContentSource {
   href: string;
 }
 
-export interface SearchPage {
+export interface SearchPage extends ContentDates {
   slug: string;
   path: string;
   kind: SearchPageKind;
@@ -51,6 +53,8 @@ export interface SearchPage {
 export const SEARCH_PAGES: SearchPage[] = [
   {
     slug: 'ai-meta-description-generator-wordpress',
+    publishedAt: '2026-07-30',
+    updatedAt: '2026-09-04',
     path: '/ai-meta-description-generator-wordpress',
     kind: 'feature',
     navLabel: 'AI meta descriptions',
@@ -129,7 +133,7 @@ export const SEARCH_PAGES: SearchPage[] = [
       {
         question: 'Can I use it with Yoast or Rank Math?',
         answer:
-          'Yes. AI Suite supplies an approved value through the supported plugin’s frontend filters instead of printing duplicate metadata.',
+          'Yes. AI Suite saves approved values into the supported plugin’s native metadata fields and leaves frontend rendering to that plugin instead of printing duplicate metadata.',
       },
       {
         question: 'Does the free plugin generate descriptions in bulk?',
@@ -140,6 +144,8 @@ export const SEARCH_PAGES: SearchPage[] = [
   },
   {
     slug: 'ai-seo-title-generator-wordpress',
+    publishedAt: '2026-07-30',
+    updatedAt: '2026-09-04',
     path: '/ai-seo-title-generator-wordpress',
     kind: 'feature',
     navLabel: 'AI SEO titles',
@@ -179,9 +185,9 @@ export const SEARCH_PAGES: SearchPage[] = [
         body:
           'AI Suite detects four common SEO plugins and lets the active plugin keep control of title output. When none is active, it can use WordPress title filters directly.',
         bullets: [
-          'Yoast SEO filter integration',
-          'Rank Math frontend title integration',
-          'All in One SEO and SEOPress filter integrations',
+          'Yoast SEO native metadata adapter',
+          'Rank Math native metadata adapter',
+          'All in One SEO and SEOPress native metadata adapters',
         ],
       },
     ],
@@ -229,12 +235,14 @@ export const SEARCH_PAGES: SearchPage[] = [
   },
   {
     slug: 'wordpress-internal-linking-plugin',
+    publishedAt: '2026-07-30',
+    updatedAt: '2026-09-04',
     path: '/wordpress-internal-linking-plugin',
     kind: 'feature',
     navLabel: 'Internal linking plugin',
     title: 'Safe WordPress Internal Linking Plugin | FounderPostAI',
     description:
-      'Find and review contextual WordPress internal-link suggestions constrained to real published URLs and exact anchor text already present in the source page.',
+      'See how FounderPostAI adds internal links in WordPress: a before-and-after example, setup steps, protected content, review, and undo. Start with the free SEO module.',
     eyebrow: 'Constrained WordPress internal links',
     h1: 'A WordPress internal linking plugin designed not to invent links',
     directAnswer:
@@ -266,7 +274,7 @@ export const SEARCH_PAGES: SearchPage[] = [
       {
         title: 'Insert through WordPress-aware safeguards',
         body:
-          'The inserter understands block content and parsed HTML. It avoids structural or executable areas where a text replacement could damage formatting or behavior.',
+          'In the Block Editor, insertion is limited to paragraph and list-item blocks, including eligible blocks nested inside groups or columns. In Classic Editor content, the inserter walks ordinary HTML text nodes. It leaves unsupported blocks and protected markup alone.',
         bullets: [
           'Skips headings, code, preformatted text, and shortcodes',
           'Avoids block comments and existing anchor elements',
@@ -276,20 +284,20 @@ export const SEARCH_PAGES: SearchPage[] = [
     ],
     steps: [
       {
-        title: 'Analyze a source page',
-        body: 'AI Suite collects the live text and a list of eligible published destinations.',
+        title: 'Install Core, connect, and add SEO',
+        body: 'Install FounderPostAI – AI Suite Core from WordPress.org, connect it under AI Suite → Connection, then upload and activate the free SEO module. Choose a published source post and make sure the destination is also published on the same site.',
       },
       {
-        title: 'Review the proposed relationship',
-        body: 'Check the destination, exact anchor phrase, and whether the link helps a reader.',
+        title: 'Analyze one representative post',
+        body: 'Choose “Optimize with AI Suite” from a post or page row, then open AI Suite → SEO to review the result. Check the destination, exact anchor phrase, and the suggested reason. A valid URL is not enough: the destination should genuinely expand on the source paragraph.',
       },
       {
-        title: 'Revalidate at application time',
-        body: 'WordPress confirms the target and source phrase still exist before any insertion.',
+        title: 'Apply, then inspect the live paragraph',
+        body: 'Approve the link suggestion only after review. The plugin rechecks the source and destination, saves a revision, and inserts an ordinary link. Open the published page and follow it to confirm the wording, destination, and layout are right.',
       },
       {
-        title: 'Write a recoverable change',
-        body: 'A revision is saved first, then the ordinary WordPress link is added to the content.',
+        title: 'Keep or undo before scaling up',
+        body: 'Use “Undo this change” on an applied suggestion if needed. Undo is blocked when newer edits would be overwritten; inspect WordPress revisions in that case. Once the sample is useful, repeat with the free ten-post analysis batches. Pro adds unattended scheduling and optional auto-apply.',
       },
     ],
     guardrails: [
@@ -312,12 +320,29 @@ export const SEARCH_PAGES: SearchPage[] = [
       {
         question: 'Does it find broken links or orphan pages?',
         answer:
-          'FounderPostAI currently focuses on generating and safely applying contextual suggestions. It does not claim the full reporting toolset of a dedicated link-audit product.',
+          'The SEO health dashboard includes local link counts and orphaned-content indicators. It is not a substitute for a dedicated broken-link crawler or the full reporting toolset of a specialist link-audit product.',
+      },
+      {
+        question: 'Why did the plugin leave my paragraph unchanged?',
+        answer:
+          'The anchor may be absent, split across HTML elements, already linked, or inside a protected block. The source may also have changed since analysis, or the destination may no longer be published. Check the review message and analyze the current post again; do not remove safeguards just to force a link.',
+      },
+      {
+        question: 'How much does the internal-linking workflow cost?',
+        answer:
+          'Core and the SEO module are free plugins, including manual review and repeatable ten-post analysis batches. AI processing uses the managed allowance or your configured Anthropic API billing; free plugin code does not mean unlimited free inference. The separately distributed Pro add-on contains unattended automation.',
+      },
+      {
+        question: 'Will it link every occurrence of a phrase?',
+        answer:
+          'No. Each suggested link is inserted at most once, at its first eligible text occurrence. Matching preserves the original casing and rejects partial-word matches. Review placement for reader usefulness rather than aiming for a particular link count.',
       },
     ],
   },
   {
     slug: 'yoast-ai-seo-automation',
+    publishedAt: '2026-07-30',
+    updatedAt: '2026-09-04',
     path: '/yoast-ai-seo-automation',
     kind: 'integration',
     navLabel: 'FounderPostAI with Yoast',
@@ -327,7 +352,7 @@ export const SEARCH_PAGES: SearchPage[] = [
     eyebrow: 'FounderPostAI + Yoast SEO',
     h1: 'Add review-first AI SEO automation alongside Yoast SEO',
     directAnswer:
-      'FounderPostAI can analyze WordPress content and supply approved title and description values through Yoast’s public frontend filters. Yoast remains the active SEO plugin, so AI Suite does not print a competing canonical tag or duplicate metadata block.',
+      'FounderPostAI can analyze WordPress content and save approved titles and descriptions into Yoast’s native metadata fields. Yoast remains the active SEO plugin, so AI Suite does not print a competing canonical tag or duplicate metadata block.',
     bestFor: 'Yoast users who want a separate AI review queue and constrained internal links',
     worksWith: 'Yoast SEO on singular WordPress posts and pages',
     outcome: 'AI-assisted metadata while Yoast keeps ownership of frontend SEO output',
@@ -335,9 +360,9 @@ export const SEARCH_PAGES: SearchPage[] = [
       {
         title: 'Keep Yoast in charge of the page head',
         body:
-          'Running two SEO plugins can create duplicate tags when both try to own frontend output. AI Suite detects Yoast and stays quiet in its own head-output path, passing approved values through Yoast filters instead.',
+          'Running two SEO plugins can create duplicate tags when both try to own frontend output. AI Suite detects Yoast and stays quiet in its own head-output path, saving approved values through its native metadata adapter instead.',
         bullets: [
-          'Uses the Yoast title and meta-description filter paths',
+          'Updates Yoast’s native title and meta-description fields',
           'Does not print a competing canonical URL',
           'Leaves Yoast’s other SEO features and schema behavior in place',
         ],
@@ -378,7 +403,7 @@ export const SEARCH_PAGES: SearchPage[] = [
       },
       {
         title: 'Let Yoast render the result',
-        body: 'Approved values flow through Yoast’s supported frontend filters.',
+        body: 'Approved values are saved into Yoast’s native metadata fields, keeping its editor and frontend output aligned.',
       },
     ],
     guardrails: [
@@ -401,12 +426,14 @@ export const SEARCH_PAGES: SearchPage[] = [
       {
         question: 'Will the two plugins output duplicate meta tags?',
         answer:
-          'AI Suite detects Yoast and does not use its standalone head-output path. Approved values are supplied through Yoast filters.',
+          'AI Suite detects Yoast and does not use its standalone head-output path. Approved values are saved into Yoast’s native metadata fields.',
       },
     ],
   },
   {
     slug: 'rank-math-ai-seo-automation',
+    publishedAt: '2026-07-30',
+    updatedAt: '2026-09-04',
     path: '/rank-math-ai-seo-automation',
     kind: 'integration',
     navLabel: 'FounderPostAI with Rank Math',
@@ -416,7 +443,7 @@ export const SEARCH_PAGES: SearchPage[] = [
     eyebrow: 'FounderPostAI + Rank Math',
     h1: 'Use safe AI SEO automation alongside Rank Math',
     directAnswer:
-      'FounderPostAI supplies approved title and description values through Rank Math’s frontend filters and suppresses its own standalone head output while Rank Math is active. That adds an AI review workflow without creating a second SEO stack.',
+      'FounderPostAI saves approved title and description values into Rank Math’s native metadata fields and suppresses its own standalone head output while Rank Math is active. That adds an AI review workflow without creating a second SEO stack.',
     bestFor: 'Rank Math sites that need editorial review, revisions, and bulk AI workflows',
     worksWith: 'Rank Math on singular WordPress posts and pages',
     outcome: 'Reviewable AI suggestions rendered through the existing Rank Math output path',
@@ -426,7 +453,7 @@ export const SEARCH_PAGES: SearchPage[] = [
         body:
           'AI Suite checks whether Rank Math is active before deciding how to output approved metadata. Rank Math continues to control the document head and the rest of its SEO configuration.',
         bullets: [
-          'Uses Rank Math frontend title and description filters',
+          'Updates Rank Math’s native title and description fields',
           'Does not add a second canonical tag',
           'Leaves Rank Math schema and sitemap settings untouched',
         ],
@@ -467,7 +494,7 @@ export const SEARCH_PAGES: SearchPage[] = [
       },
       {
         title: 'Render through Rank Math',
-        body: 'Approved metadata is exposed through Rank Math’s frontend filters.',
+        body: 'Approved metadata is saved in Rank Math’s native fields so its editor and frontend output stay aligned.',
       },
     ],
     guardrails: [
@@ -485,7 +512,7 @@ export const SEARCH_PAGES: SearchPage[] = [
       {
         question: 'Does this use Rank Math Content AI?',
         answer:
-          'No. FounderPostAI is a separate review and automation workflow. It integrates with Rank Math’s frontend metadata filters.',
+          'No. FounderPostAI is a separate review and automation workflow. It integrates with Rank Math’s native metadata fields.',
       },
       {
         question: 'Will it change Rank Math schema settings?',
@@ -496,6 +523,8 @@ export const SEARCH_PAGES: SearchPage[] = [
   },
   {
     slug: 'aioseo-ai-seo-automation',
+    publishedAt: '2026-07-30',
+    updatedAt: '2026-09-04',
     path: '/aioseo-ai-seo-automation',
     kind: 'integration',
     navLabel: 'FounderPostAI with AIOSEO',
@@ -515,7 +544,7 @@ export const SEARCH_PAGES: SearchPage[] = [
         body:
           'FounderPostAI is not positioned as a migration away from AIOSEO. It detects the active plugin and limits its integration to the approved title and description values.',
         bullets: [
-          'Uses AIOSEO title and description filters',
+          'Updates AIOSEO’s native post model',
           'Avoids a duplicate canonical or metadata block',
           'Does not change AIOSEO sitemaps, schema, or redirects',
         ],
@@ -574,7 +603,7 @@ export const SEARCH_PAGES: SearchPage[] = [
       {
         question: 'Does it create duplicate meta descriptions?',
         answer:
-          'AI Suite detects AIOSEO and supplies the approved description through its filter instead of printing a second description tag.',
+          'AI Suite detects AIOSEO and saves the approved description into its native post model instead of printing a second description tag.',
       },
       {
         question: 'Can the free plugin process more than one page?',
@@ -585,6 +614,8 @@ export const SEARCH_PAGES: SearchPage[] = [
   },
   {
     slug: 'safe-ai-internal-linking-wordpress',
+    publishedAt: '2026-07-30',
+    updatedAt: '2026-07-30',
     path: '/guides/safe-ai-internal-linking-wordpress',
     kind: 'guide',
     navLabel: 'Safe internal linking guide',
@@ -674,6 +705,8 @@ export const SEARCH_PAGES: SearchPage[] = [
   },
   {
     slug: 'bulk-update-wordpress-seo-metadata',
+    publishedAt: '2026-07-30',
+    updatedAt: '2026-07-30',
     path: '/guides/bulk-update-wordpress-seo-metadata',
     kind: 'guide',
     navLabel: 'Bulk metadata guide',
@@ -763,6 +796,8 @@ export const SEARCH_PAGES: SearchPage[] = [
   },
   {
     slug: 'founderpostai-vs-link-whisper',
+    publishedAt: '2026-07-30',
+    updatedAt: '2026-07-30',
     path: '/compare/founderpostai-vs-link-whisper',
     kind: 'comparison',
     navLabel: 'FounderPostAI vs Link Whisper',
@@ -871,6 +906,8 @@ export const SEARCH_PAGES: SearchPage[] = [
   },
   {
     slug: 'ai-seo-plugins-wordpress',
+    publishedAt: '2026-07-30',
+    updatedAt: '2026-07-30',
     path: '/compare/ai-seo-plugins-wordpress',
     kind: 'comparison',
     navLabel: 'AI SEO plugin checklist',

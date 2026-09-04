@@ -1,3 +1,4 @@
+import SiteFooter from '../components/SiteFooter';
 import Link from 'next/link';
 import SeoHead from '../components/SeoHead';
 import {
@@ -10,11 +11,11 @@ import {
 import {
   absoluteUrl,
   organizationStructuredData,
-  SITE_LAST_MODIFIED_ISO,
   SITE_URL,
   WORDPRESS_ORG_CORE_URL,
   websiteStructuredData,
 } from '../lib/site';
+import { RESOURCES_DATES } from '../lib/content-dates';
 
 const TITLE = 'WordPress AI SEO Resources and Guides | FounderPostAI';
 const DESCRIPTION =
@@ -63,8 +64,8 @@ export default function Resources() {
         name: TITLE,
         description: DESCRIPTION,
         inLanguage: 'en-US',
-        datePublished: SITE_LAST_MODIFIED_ISO,
-        dateModified: SITE_LAST_MODIFIED_ISO,
+        datePublished: RESOURCES_DATES.publishedAt,
+        dateModified: RESOURCES_DATES.updatedAt,
         isPartOf: {
           '@id': `${SITE_URL}/#website`,
         },
@@ -251,20 +252,7 @@ export default function Resources() {
           </section>
         </main>
 
-        <footer className="border-t border-[#1B1712]/15 bg-white">
-          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-5 px-6 py-10 text-sm text-[#1B1712]/70 md:flex-row">
-            <Link href="/" className="font-bold text-[#1B1712]" style={{ fontFamily: serif }}>
-              FounderPostAI
-            </Link>
-            <nav aria-label="Footer navigation" className="flex flex-wrap justify-center gap-5">
-              <Link href="/ai-suite">AI Suite</Link>
-              <Link href="/privacy">Privacy</Link>
-              <Link href="/terms">Terms</Link>
-              <a href="/llms.txt">LLM reference</a>
-            </nav>
-            <p>© {new Date().getFullYear()} FounderPostAI</p>
-          </div>
-        </footer>
+        <SiteFooter />
       </div>
     </>
   );

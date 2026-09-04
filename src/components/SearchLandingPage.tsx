@@ -1,3 +1,4 @@
+import SiteFooter from './SiteFooter';
 import Link from 'next/link';
 import { useEffect } from 'react';
 import { track } from '../lib/ab';
@@ -5,6 +6,8 @@ import { relatedSearchPages, type SearchPage } from '../lib/search-content';
 import { WORDPRESS_ORG_CORE_URL } from '../lib/site';
 import SearchPageStructuredData from './SearchPageStructuredData';
 import SeoHead from './SeoHead';
+import { formatContentDate } from '../lib/content-dates';
+import InternalLinkingExample from './InternalLinkingExample';
 
 const serif = "Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif";
 const mono = "ui-monospace, 'SF Mono', Menlo, Consolas, monospace";
@@ -114,11 +117,16 @@ export default function SearchLandingPage({ page }: { page: SearchPage }) {
                   </a>
                 </div>
                 <p className="mt-6 text-sm text-[#1B1712]/60">
-                  Written from the current product implementation and checked on{' '}
-                  <time dateTime="2026-07-30">July 30, 2026</time>.
+                  By <Link href="/about" className="underline underline-offset-4">FounderPostAI</Link>
+                  {' · '}Published <time dateTime={page.publishedAt}>{formatContentDate(page.publishedAt)}</time>
+                  {page.updatedAt !== page.publishedAt && (
+                    <>{' · '}Updated <time dateTime={page.updatedAt}>{formatContentDate(page.updatedAt)}</time></>
+                  )}
                 </p>
               </div>
             </header>
+
+            {page.slug === 'wordpress-internal-linking-plugin' && <InternalLinkingExample />}
 
             <section aria-labelledby="fit-heading" className="border-b border-[#1B1712]/15 bg-white">
               <div className="mx-auto max-w-5xl px-6 py-12">
@@ -411,21 +419,7 @@ export default function SearchLandingPage({ page }: { page: SearchPage }) {
           </article>
         </main>
 
-        <footer className="border-t border-[#1B1712]/15 bg-white">
-          <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-5 px-6 py-10 text-sm text-[#1B1712]/70 md:flex-row">
-            <Link href="/" className="font-bold text-[#1B1712]" style={{ fontFamily: serif }}>
-              FounderPostAI
-            </Link>
-            <nav aria-label="Footer navigation" className="flex flex-wrap justify-center gap-5">
-              <Link href="/ai-suite">AI Suite</Link>
-              <Link href="/resources">Resources</Link>
-              <Link href="/privacy">Privacy</Link>
-              <Link href="/terms">Terms</Link>
-              <a href="/llms.txt">LLM reference</a>
-            </nav>
-            <p>© {new Date().getFullYear()} FounderPostAI</p>
-          </div>
-        </footer>
+        <SiteFooter />
       </div>
     </>
   );

@@ -86,4 +86,18 @@ aisuite_assert( false !== strpos( $unicode['content'], '>CAFÉ</a>' ), 'the orig
 $missing = aisuite_insert( '<p>No matching words.</p>' );
 aisuite_assert( is_wp_error( $missing ), 'a missing anchor returns a no-change error' );
 
+// The worked example on /wordpress-internal-linking-plugin must match real output.
+$example_before = '<p>Before publishing, review your meta descriptions and check every destination.</p>';
+$example_after = '<p>Before publishing, review your <a href="https://example.com/meta-descriptions/">meta descriptions</a> and check every destination.</p>';
+$example_inserter = new FounderPostAI_AISuite_SEO_Link_Inserter();
+$example = $example_inserter->insert( $example_before, array( array(
+	'target_id' => 42,
+	'anchor' => 'meta descriptions',
+	'url' => 'https://example.com/meta-descriptions/',
+) ) );
+aisuite_assert( ! is_wp_error( $example ) && trim( $example['content'] ) === $example_after, 'public worked example matches actual link insertion' );
+
+$split = aisuite_insert( '<p>target <strong>phrase</strong></p>' );
+aisuite_assert( is_wp_error( $split ), 'phrases split across text nodes are left unchanged' );
+
 exit( $failures ? 1 : 0 );

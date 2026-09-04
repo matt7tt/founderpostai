@@ -21,6 +21,19 @@ The site shares one canonical URL, search metadata, social preview, and Software
 structured-data graph. Public indexable URLs are listed in `/sitemap.xml`; account and transaction
 routes send `noindex` directives.
 
+Guide publication and update dates live alongside each entry in `src/lib/search-content.ts`.
+Preserve `publishedAt` and advance `updatedAt` only for substantive content changes, not a deploy.
+Those dates drive visible bylines, structured data, and sitemap timestamps. Static information-page
+and resource-index dates live in `src/lib/content-dates.ts`.
+
+Run `npm run check` for lint, types, gateway tests, SEO schema tests, and a production build.
+With `npm start` running, `npm run check:seo` checks all public routes and canonical-host redirects.
+After deployment, repeat against production:
+
+```bash
+SEO_BASE_URL=https://founderpostai.com npm run check:seo
+```
+
 ## Payments
 
 Stripe Payment Links — no custom checkout code. Set:

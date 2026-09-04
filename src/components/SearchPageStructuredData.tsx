@@ -1,7 +1,6 @@
 import {
   absoluteUrl,
   organizationStructuredData,
-  SITE_LAST_MODIFIED_ISO,
   SITE_URL,
   websiteStructuredData,
 } from '../lib/site';
@@ -40,13 +39,13 @@ export default function SearchPageStructuredData({ page }: { page: SearchPage })
       name: page.title,
       description: page.description,
       inLanguage: 'en-US',
-      datePublished: SITE_LAST_MODIFIED_ISO,
-      dateModified: SITE_LAST_MODIFIED_ISO,
+      datePublished: page.publishedAt,
+      dateModified: page.updatedAt,
       isPartOf: {
         '@id': `${SITE_URL}/#website`,
       },
       about: {
-        '@id': `${SITE_URL}/ai-suite#ai-suite-seo`,
+        '@id': `${SITE_URL}/#ai-suite-seo`,
       },
       breadcrumb: {
         '@id': `${canonical}#breadcrumb`,
@@ -87,8 +86,8 @@ export default function SearchPageStructuredData({ page }: { page: SearchPage })
       '@id': `${canonical}#article`,
       headline: page.h1,
       description: page.description,
-      datePublished: SITE_LAST_MODIFIED_ISO,
-      dateModified: SITE_LAST_MODIFIED_ISO,
+      datePublished: page.publishedAt,
+      dateModified: page.updatedAt,
       mainEntityOfPage: {
         '@id': `${canonical}#webpage`,
       },

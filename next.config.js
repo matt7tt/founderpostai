@@ -8,12 +8,13 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: '/seo',
-        destination: '/ai-suite',
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.founderpostai.com' }],
+        destination: 'https://founderpostai.com/:path*',
         permanent: true,
       },
       {
-        source: '/about',
+        source: '/seo',
         destination: '/ai-suite',
         permanent: true,
       },

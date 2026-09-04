@@ -1,3 +1,4 @@
+import SiteFooter from '../components/SiteFooter';
 import Link from 'next/link';
 import { PAYMENT_LINKS, track } from '../lib/ab';
 import { AI_SEO_CAPABILITIES, HOME_FAQS } from '../lib/products';
@@ -452,21 +453,7 @@ export default function Editorial() {
         </main>
 
         {/* Footer */}
-        <footer className="border-t border-[#1B1712]/15">
-          <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-[#1B1712]/70">
-            <span className="font-bold text-[#1B1712]" style={{ fontFamily: serif }}>FounderPostAI</span>
-            <div className="flex gap-6">
-              <a href="#plugins" className="hover:text-[#00749C]">Plugins</a>
-              <a href="#pricing" className="hover:text-[#00749C]">Pricing</a>
-              <a href="#faq" className="hover:text-[#00749C]">FAQ</a>
-              <Link href="/resources" className="hover:text-[#00749C]">Resources</Link>
-              <Link href="/ai-suite" className="hover:text-[#00749C]">Product facts</Link>
-              <Link href="/privacy" className="hover:text-[#00749C]">Privacy</Link>
-              <Link href="/terms" className="hover:text-[#00749C]">Terms</Link>
-            </div>
-            <p>© {new Date().getFullYear()} FounderPostAI · GPL-licensed code, human-written support</p>
-          </div>
-        </footer>
+        <SiteFooter />
     </div>
   );
 }
