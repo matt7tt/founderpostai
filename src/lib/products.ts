@@ -1,6 +1,5 @@
 import {
   absoluteUrl,
-  SITE_LAST_MODIFIED_ISO,
   SITE_URL,
   SOCIAL_IMAGE_PATH,
   WORDPRESS_ORG_CORE_URL,
@@ -26,6 +25,7 @@ export const AI_SUITE_PRODUCTS = [
     name: 'FounderPostAI – AI Suite Core',
     shortName: 'AI Suite Core',
     version: '0.1.6',
+    updatedAt: '2026-09-03',
     price: 'Free',
     priceValue: '0',
     audience: 'Every AI Suite installation',
@@ -45,6 +45,7 @@ export const AI_SUITE_PRODUCTS = [
     name: 'FounderPostAI – AI Suite SEO',
     shortName: 'AI Suite SEO',
     version: '0.1.8',
+    updatedAt: '2026-09-04',
     price: 'Free',
     priceValue: '0',
     audience: 'Sites that want reviewable SEO suggestions',
@@ -65,6 +66,7 @@ export const AI_SUITE_PRODUCTS = [
     name: 'FounderPostAI – AI Suite SEO Pro',
     shortName: 'AI Suite SEO Pro',
     version: '1.0.5',
+    updatedAt: '2026-08-10',
     price: '$79 per year',
     priceValue: '79',
     audience: 'One WordPress site that needs automation',
@@ -79,6 +81,12 @@ export const AI_SUITE_PRODUCTS = [
     downloadPath: null,
   },
 ] as const;
+
+// Product facts follow actual product-record changes, not unrelated site deploys.
+export const AI_SUITE_LAST_MODIFIED = AI_SUITE_PRODUCTS.reduce<string>(
+  (latest, product) => product.updatedAt > latest ? product.updatedAt : latest,
+  ''
+);
 
 export const AI_SEO_CAPABILITIES = [
   {
@@ -227,7 +235,7 @@ export function softwareApplicationStructuredData() {
     softwareRequirements: AI_SUITE_REQUIREMENTS.php,
     softwareVersion: product.version,
     image: absoluteUrl(SOCIAL_IMAGE_PATH),
-    dateModified: SITE_LAST_MODIFIED_ISO,
+    dateModified: product.updatedAt,
     isAccessibleForFree: '0' === product.priceValue,
     license: 'https://www.gnu.org/licenses/old-licenses/gpl-2.0.html',
     featureList: product.features,

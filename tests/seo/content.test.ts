@@ -6,6 +6,7 @@ import SearchPageStructuredData from '../../src/components/SearchPageStructuredD
 import { formatContentDate, INFORMATION_PAGE_DATES, RESOURCES_DATES } from '../../src/lib/content-dates';
 import { SEARCH_PAGES } from '../../src/lib/search-content';
 import { SITE_URL } from '../../src/lib/site';
+import { AI_SUITE_LAST_MODIFIED, AI_SUITE_PRODUCTS, softwareApplicationStructuredData } from '../../src/lib/products';
 
 test('editorial dates are explicit, valid, ordered, and not future-dated', () => {
   const today = new Date().toISOString().slice(0, 10);
@@ -35,4 +36,14 @@ test('search page schema uses that page’s dates and the canonical product enti
     assert.equal(webpage.about['@id'], `${SITE_URL}/#ai-suite-seo`);
     assert.equal(webpage.url, `${SITE_URL}${page.path}`);
   }
+});
+
+test('product schema preserves separate release-record dates', () => {
+  const products = softwareApplicationStructuredData();
+  AI_SUITE_PRODUCTS.forEach((product, index) => {
+    assert.equal(products[index].dateModified, product.updatedAt);
+    assert.ok(product.updatedAt <= AI_SUITE_LAST_MODIFIED);
+  });
+  assert.equal(AI_SUITE_LAST_MODIFIED, '2026-09-04');
+  assert.equal(products[2].dateModified, '2026-08-10');
 });

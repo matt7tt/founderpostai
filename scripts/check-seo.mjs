@@ -29,6 +29,9 @@ for (const [, canonical, lastmod] of entries) {
   const page = graph.find(node => ['WebPage', 'AboutPage', 'ContactPage', 'CollectionPage'].includes(node['@type']));
   assert.ok(page, `${path} has page schema`);
   assert.equal(page.dateModified.slice(0, 10), lastmod, `${path} sitemap and schema dates agree`);
+  if (path === '/ai-suite') {
+    assert.ok(html.includes(`dateTime="${lastmod}"`), 'product facts date is visible');
+  }
   if (page.datePublished && path !== '/resources') {
     assert.ok(html.includes(`dateTime="${page.datePublished}"`), `${path} publication date is visible`);
     if (page.dateModified !== page.datePublished) {

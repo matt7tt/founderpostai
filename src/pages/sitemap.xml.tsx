@@ -2,10 +2,11 @@ import type { GetServerSideProps } from 'next';
 import { SEARCH_PAGES } from '../lib/search-content';
 import { SITE_LAST_MODIFIED, SITE_URL } from '../lib/site';
 import { INFORMATION_PAGE_DATES, RESOURCES_DATES } from '../lib/content-dates';
+import { AI_SUITE_LAST_MODIFIED } from '../lib/products';
 
 const urls = [
   { loc: `${SITE_URL}/`, lastmod: SITE_LAST_MODIFIED },
-  { loc: `${SITE_URL}/ai-suite`, lastmod: SITE_LAST_MODIFIED },
+  { loc: `${SITE_URL}/ai-suite`, lastmod: AI_SUITE_LAST_MODIFIED },
   { loc: `${SITE_URL}/resources`, lastmod: RESOURCES_DATES.updatedAt },
   { loc: `${SITE_URL}/about`, lastmod: INFORMATION_PAGE_DATES.updatedAt },
   { loc: `${SITE_URL}/contact`, lastmod: INFORMATION_PAGE_DATES.updatedAt },

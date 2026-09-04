@@ -25,6 +25,8 @@ Guide publication and update dates live alongside each entry in `src/lib/search-
 Preserve `publishedAt` and advance `updatedAt` only for substantive content changes, not a deploy.
 Those dates drive visible bylines, structured data, and sitemap timestamps. Static information-page
 and resource-index dates live in `src/lib/content-dates.ts`.
+Product-record update dates live beside each product in `src/lib/products.ts`; the product
+overview uses the most recent of those dates.
 
 Run `npm run check` for lint, types, gateway tests, SEO schema tests, and a production build.
 With `npm start` running, `npm run check:seo` checks all public routes and canonical-host redirects.

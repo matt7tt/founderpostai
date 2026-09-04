@@ -1,5 +1,6 @@
 import {
   AI_SUITE_DESCRIPTION,
+  AI_SUITE_LAST_MODIFIED,
   AI_SUITE_FAQS,
   AI_SUITE_URL,
   softwareApplicationStructuredData,
@@ -7,7 +8,6 @@ import {
 import {
   absoluteUrl,
   organizationStructuredData,
-  SITE_LAST_MODIFIED_ISO,
   SITE_NAME,
   SITE_URL,
   SOCIAL_IMAGE_PATH,
@@ -49,7 +49,7 @@ const structuredData = {
         width: 1200,
         height: 630,
       },
-      dateModified: SITE_LAST_MODIFIED_ISO,
+      dateModified: AI_SUITE_LAST_MODIFIED,
       publisher: {
         '@id': `${SITE_URL}/#organization`,
       },

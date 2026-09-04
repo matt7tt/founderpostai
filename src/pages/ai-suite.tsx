@@ -4,13 +4,14 @@ import AiSuiteStructuredData from '../components/AiSuiteStructuredData';
 import SeoHead from '../components/SeoHead';
 import {
   AI_SUITE_DESCRIPTION,
+  AI_SUITE_LAST_MODIFIED,
   AI_SUITE_FAQS,
   AI_SEO_CAPABILITIES,
   AI_SUITE_PRODUCTS,
   AI_SUITE_REQUIREMENTS,
   AI_SUITE_TITLE,
 } from '../lib/products';
-import { SITE_LAST_MODIFIED, WORDPRESS_ORG_STATUS_NOTICE } from '../lib/site';
+import { WORDPRESS_ORG_STATUS_NOTICE } from '../lib/site';
 import { formatContentDate } from '../lib/content-dates';
 
 const serif = "Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif";
@@ -98,7 +99,7 @@ export default function AiSuite() {
                 </p>
                 <p className="mt-6 text-sm text-[#1B1712]/60">
                   Product details checked against the current packaged releases on{' '}
-                  <time dateTime={SITE_LAST_MODIFIED}>{formatContentDate(SITE_LAST_MODIFIED)}</time>.
+                  <time dateTime={AI_SUITE_LAST_MODIFIED}>{formatContentDate(AI_SUITE_LAST_MODIFIED)}</time>.
                 </p>
               </div>
             </header>
