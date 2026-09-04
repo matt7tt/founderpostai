@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../auth/[...nextauth]';
-import stripe from '@/lib/stripe';
+import { authOptions } from '@/lib/auth';
+import { stripe } from '@/lib/stripe';
 import { getUserByEmail } from '@/lib/db';
 
 type ResponseData = {
@@ -57,6 +57,10 @@ export default async function handler(
         email: user.email,
       },
     });
+
+    if (!checkoutSession.url) {
+      return res.status(502).json({ message: 'Stripe did not return a checkout URL' });
+    }
 
     return res.status(200).json({ url: checkoutSession.url });
   } catch (error) {

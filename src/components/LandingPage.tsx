@@ -94,7 +94,7 @@ export default function LandingPage() {
               <div className="w-12 h-12 bg-linkedin text-white rounded-lg flex items-center justify-center mb-4 text-xl font-bold">🎯</div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">LinkedIn-Optimized</h3>
               <p className="text-gray-600 leading-relaxed">
-                Specifically built for LinkedIn's algorithm. Professional tone. Strategic emojis. Perfect formatting. Not generic ChatGPT.
+                Specifically built for LinkedIn&apos;s algorithm. Professional tone. Strategic emojis. Perfect formatting. Not generic ChatGPT.
               </p>
             </div>
 

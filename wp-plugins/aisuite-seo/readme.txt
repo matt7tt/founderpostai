@@ -5,7 +5,7 @@ Requires at least: 6.5
 Requires Plugins: founderpostai-ai-suite-core
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.1.7
+Stable tag: 0.1.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -103,6 +103,9 @@ Nothing is changed. Links are only inserted where the exact phrase appears as or
 No. Every feature and every line of functional code shipped in this plugin is available without a license check. A separately distributed add-on contains its own automation code for unattended whole-site runs, scheduling, and conservative auto-apply; it does not unlock dormant code in this plugin.
 
 == Changelog ==
+
+= 0.1.8 =
+* Stabilized Gutenberg sidebar refresh callbacks and analysis polling dependencies.
 
 = 0.1.7 =
 * Added a Gutenberg sidebar with live search previews, editable suggestions, field-specific refinement, apply, dismiss, and guarded undo.

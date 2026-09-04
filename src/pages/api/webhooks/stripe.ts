@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { stripe } from '@/lib/stripe';
-import { findUserByStripeCustomerId, updateUser, createSubscriptionEvent } from '@/lib/db';
+import { getUserByStripeCustomerId, updateUser, createSubscriptionEvent } from '@/lib/db';
 import Stripe from 'stripe';
 
 export const config = {
@@ -43,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object as Stripe.CheckoutSession;
+        const session = event.data.object as Stripe.Checkout.Session;
         const customerId = session.customer as string;
         const subscriptionId = session.subscription as string;
         const userId = session.metadata?.userId;
@@ -54,11 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             stripeCustomerId: customerId,
             stripeSubscriptionId: subscriptionId,
           });
-          createSubscriptionEvent({
-            userId,
-            eventType: 'subscription_created',
-            stripeSubscriptionId: subscriptionId,
-          });
+          createSubscriptionEvent(userId, 'subscription_created', subscriptionId);
         }
         break;
       }
@@ -66,15 +62,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
-        const user = findUserByStripeCustomerId(customerId);
+        const user = getUserByStripeCustomerId(customerId);
 
         if (user) {
           updateUser(user.id, { tier: 'free', stripeSubscriptionId: undefined });
-          createSubscriptionEvent({
-            userId: user.id,
-            eventType: 'subscription_cancelled',
-            stripeSubscriptionId: subscription.id,
-          });
+          createSubscriptionEvent(user.id, 'subscription_cancelled', subscription.id);
         }
         break;
       }
@@ -82,18 +74,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
-        const user = findUserByStripeCustomerId(customerId);
+        const user = getUserByStripeCustomerId(customerId);
 
         if (user) {
           const isActive = subscription.status === 'active';
           updateUser(user.id, {
             tier: isActive ? 'pro' : 'free',
           });
-          createSubscriptionEvent({
-            userId: user.id,
-            eventType: `subscription_${subscription.status}`,
-            stripeSubscriptionId: subscription.id,
-          });
+          createSubscriptionEvent(user.id, `subscription_${subscription.status}`, subscription.id);
         }
         break;
       }
@@ -101,13 +89,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
         const customerId = invoice.customer as string;
-        const user = findUserByStripeCustomerId(customerId);
+        const user = getUserByStripeCustomerId(customerId);
 
         if (user) {
-          createSubscriptionEvent({
-            userId: user.id,
-            eventType: 'payment_failed',
-          });
+          createSubscriptionEvent(user.id, 'payment_failed');
         }
         break;
       }

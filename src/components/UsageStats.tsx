@@ -85,7 +85,7 @@ export default function UsageStats({ refreshTrigger }: UsageStatsProps) {
           <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-blue-900 font-medium mb-2">Almost out of posts this month!</p>
             <p className="text-blue-800 text-sm mb-4">
-              Upgrade to Pro for 50 posts/month. That's {Math.round(50 / 2)} times more.
+              Upgrade to Pro for 50 posts/month. That&apos;s {Math.round(50 / 2)} times more.
             </p>
             <Link
               href="/api/stripe/create-checkout"

@@ -1,12 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from './auth/[...nextauth]';
-import { getUserByEmail, getMonthlyPostCount } from '@/lib/db';
-
-const TIER_LIMITS: Record<string, number> = {
-  free: 2,
-  pro: 50,
-};
+import { authOptions } from '@/lib/auth';
+import { getUserByEmail, getMonthlyPostCount, TIER_LIMITS } from '@/lib/db';
 
 export default async function handler(
   req: NextApiRequest,
@@ -28,7 +23,7 @@ export default async function handler(
     }
 
     const currentCount = getMonthlyPostCount(user.id);
-    const limit = TIER_LIMITS[user.tier] ?? 2;
+    const limit = TIER_LIMITS[user.tier];
 
     return res.status(200).json({
       tier: user.tier,

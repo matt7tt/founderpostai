@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import bcryptjs from 'bcryptjs';
-import { findUserByEmail, createUser } from '@/lib/db';
+import { getUserByEmail, createUser } from '@/lib/db';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -21,17 +21,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Password must be at least 8 characters' });
   }
 
-  const existing = findUserByEmail(email);
+  const normalizedEmail = email.toLowerCase().trim();
+  const existing = getUserByEmail(normalizedEmail);
   if (existing) {
     return res.status(409).json({ error: 'An account with this email already exists' });
   }
 
   const hashedPassword = await bcryptjs.hash(password, 12);
-  const user = createUser({
-    email: email.toLowerCase().trim(),
-    password: hashedPassword,
-    tier: 'free',
-  });
+  const user = createUser(normalizedEmail, hashedPassword);
 
   return res.status(201).json({ success: true, userId: user.id });
 }

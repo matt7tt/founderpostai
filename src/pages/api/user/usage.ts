@@ -1,18 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../auth/[...nextauth]';
-import { getUserByEmail, getMonthlyPostCount } from '@/lib/db';
+import { authOptions } from '@/lib/auth';
+import { getUserByEmail, getMonthlyPostCount, TIER_LIMITS } from '@/lib/db';
 
 type ResponseData = {
   tier?: string;
   posts_used?: number;
   posts_limit?: number;
   message?: string;
-};
-
-const POST_LIMITS: Record<string, number> = {
-  free: 2,
-  pro: 50,
 };
 
 export default async function handler(
@@ -35,7 +30,7 @@ export default async function handler(
     }
 
     const postsUsed = getMonthlyPostCount(user.id);
-    const limit = POST_LIMITS[user.tier] ?? 2;
+    const limit = TIER_LIMITS[user.tier];
 
     return res.status(200).json({
       tier: user.tier,

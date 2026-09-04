@@ -34,7 +34,7 @@ export default function UpgradePrompt({
       <div className="bg-white rounded-lg p-8 max-w-md">
         <h2 className="text-2xl font-bold mb-4">Upgrade to Pro</h2>
         <p className="text-gray-600 mb-6">
-          You've used {used} of {limit} posts this month. Get unlimited posts
+          You&apos;ve used {used} of {limit} posts this month. Get unlimited posts
           with Pro.
         </p>
 

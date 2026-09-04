@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from './[...nextauth]';
+import { authOptions } from '@/lib/auth';
 import { getUserByEmail } from '@/lib/db';
 
 export default async function handler(

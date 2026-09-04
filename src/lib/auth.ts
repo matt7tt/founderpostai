@@ -1,7 +1,7 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcryptjs from 'bcryptjs';
-import { findUserByEmail } from './db';
+import { getUserByEmail } from './db';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -16,7 +16,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Email and password are required');
         }
 
-        const user = findUserByEmail(credentials.email);
+        const user = getUserByEmail(credentials.email);
         if (!user) {
           throw new Error('Invalid email or password');
         }
@@ -56,5 +56,5 @@ export const authOptions: NextAuthOptions = {
     signIn: '/login',
     error: '/login',
   },
-  secret: process.env.NEXTAUTH_SECRET || 'fallback-secret-change-in-production',
+  secret: process.env.NEXTAUTH_SECRET,
 };

@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { generatePostVariations } from '@/lib/claude';
-import { findUserById, getMonthlyPostCount, createPost, TIER_LIMITS } from '@/lib/db';
+import { getUserById, getMonthlyPostCount, createPost, TIER_LIMITS } from '@/lib/db';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const user = findUserById(userId);
+  const user = getUserById(userId);
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
   }
@@ -60,14 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const variations = await generatePostVariations(topic.trim(), tone, postType, length);
 
     // Save first variation as the representative post
-    createPost({
-      userId,
-      content: variations[0],
-      topic: topic.trim(),
-      tone,
-      postType,
-      length,
-    });
+    createPost(userId, variations[0], topic.trim(), tone, postType, length);
 
     return res.status(200).json({ variations });
   } catch (error) {

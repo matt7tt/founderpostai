@@ -53,6 +53,8 @@ auth, and Stripe checkout are still present but are not linked from the plugin s
 
 ### 1. Install dependencies
 
+Use Node.js 20.9 or newer, then install dependencies:
+
 ```bash
 npm install
 ```
@@ -110,7 +112,7 @@ Add all environment variables in Vercel project settings.
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 (Pages Router)
+- **Framework**: Next.js 16 (Pages Router)
 - **Styling**: Tailwind CSS
 - **Auth**: NextAuth.js
 - **AI**: Anthropic Claude API

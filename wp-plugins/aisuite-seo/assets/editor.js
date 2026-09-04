@@ -6,6 +6,7 @@
 	}
 
 	var el = wp.element.createElement;
+	var useCallback = wp.element.useCallback;
 	var useEffect = wp.element.useEffect;
 	var useState = wp.element.useState;
 	var Fragment = wp.element.Fragment;
@@ -133,8 +134,9 @@
 		var editedPair = useState( {} );
 		var edited = editedPair[ 0 ];
 		var setEdited = editedPair[ 1 ];
+		var queued = Boolean( data && data.analysis && data.analysis.queued );
 
-		function load( quiet ) {
+		var load = useCallback( function ( quiet ) {
 			if ( ! quiet ) {
 				setLoading( true );
 			}
@@ -147,19 +149,19 @@
 			} ).finally( function () {
 				setLoading( false );
 			} );
-		}
+		}, [ postId, setData, setError, setLoading ] );
 
 		useEffect( function () {
 			load( false );
-		}, [ postId ] );
+		}, [ load ] );
 
 		useEffect( function () {
-			if ( ! data || ! data.analysis || ! data.analysis.queued ) {
+			if ( ! queued ) {
 				return undefined;
 			}
 			var timer = window.setInterval( function () { load( true ); }, pollMs );
 			return function () { window.clearInterval( timer ); };
-		}, [ data && data.analysis ? data.analysis.queued : false, postId ] );
+		}, [ queued, load ] );
 
 		function analyze( refined ) {
 			setActing( true );

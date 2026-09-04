@@ -33,6 +33,11 @@ export interface SubscriptionEvent {
   createdAt: string;
 }
 
+export const TIER_LIMITS: Record<User['tier'], number> = {
+  free: 2,
+  pro: 50,
+};
+
 // In-memory stores
 const users: Map<string, User> = new Map();
 const posts: Post[] = [];
@@ -84,6 +89,15 @@ export function updateUserByEmail(email: string, updates: Partial<User>): void {
       return;
     }
   }
+}
+
+export function updateUser(userId: string, updates: Partial<User>): User | undefined {
+  const user = users.get(userId);
+  if (!user) return undefined;
+
+  const updatedUser = { ...user, ...updates, id: user.id };
+  users.set(userId, updatedUser);
+  return updatedUser;
 }
 
 export function getUserByStripeCustomerId(customerId: string): User | undefined {

@@ -79,6 +79,10 @@ function apply_filters( $hook, $value ) {
 	return $value;
 }
 function get_post( $post_id ) {
+	if ( is_object( $post_id ) ) {
+		return $post_id;
+	}
+
 	return (object) array(
 		'ID'                => (int) $post_id,
 		'post_status'       => 'publish',

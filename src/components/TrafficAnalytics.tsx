@@ -12,24 +12,18 @@ function safePath(value: string): string {
 
 export default function TrafficAnalytics() {
   const router = useRouter();
+  const { asPath, isReady } = router;
 
   useEffect(() => {
-    const recordPageView = (url: string) => {
-      track('qualified_page_view', {
-        path: safePath(url),
-        referrer_host: document.referrer
-          ? new URL(document.referrer).hostname
-          : 'direct',
-      });
-    };
+    if (!isReady) return;
 
-    recordPageView(router.asPath);
-    router.events.on('routeChangeComplete', recordPageView);
-
-    return () => {
-      router.events.off('routeChangeComplete', recordPageView);
-    };
-  }, [router.events]);
+    track('qualified_page_view', {
+      path: safePath(asPath),
+      referrer_host: document.referrer
+        ? new URL(document.referrer).hostname
+        : 'direct',
+    });
+  }, [asPath, isReady]);
 
   useEffect(() => {
     const recordClick = (event: MouseEvent) => {

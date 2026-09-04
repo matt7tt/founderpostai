@@ -72,7 +72,7 @@ export default function PostGenerator({ onPostGenerated }: PostGeneratorProps) {
         <form onSubmit={handleGenerate} className="space-y-6">
           <div>
             <label className="block text-sm font-semibold text-gray-900 mb-2">
-              What's your post idea?
+              What&apos;s your post idea?
             </label>
             <textarea
               value={topic}
@@ -151,7 +151,13 @@ export default function PostGenerator({ onPostGenerated }: PostGeneratorProps) {
           <h3 className="text-2xl font-bold text-gray-900">Your Generated Posts</h3>
           <div className="grid gap-4">
             {posts.map((post, idx) => (
-              <PostCard key={idx} {...post} />
+              <PostCard
+                key={idx}
+                content={post.content}
+                label={`Variation ${idx + 1}`}
+                meta={`${post.tone} · ${post.type} · ${post.length}`}
+                onCopy={() => undefined}
+              />
             ))}
           </div>
         </div>

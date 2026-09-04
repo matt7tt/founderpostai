@@ -1,5 +1,5 @@
 import { useSession, signOut } from 'next-auth/react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import GeneratorForm from '@/components/GeneratorForm';
@@ -34,6 +34,31 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'generate' | 'history'>('generate');
   const [toast, setToast] = useState('');
 
+  const fetchStats = useCallback(async () => {
+    try {
+      const res = await fetch('/api/user/stats');
+      if (res.ok) {
+        const data = await res.json();
+        setStats(data);
+      }
+    } catch {}
+  }, []);
+
+  const fetchPosts = useCallback(async () => {
+    try {
+      const res = await fetch('/api/posts');
+      if (res.ok) {
+        const data = await res.json();
+        setPosts(data.posts || []);
+      }
+    } catch {}
+  }, []);
+
+  const showToast = useCallback((msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 4000);
+  }, []);
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
@@ -45,34 +70,14 @@ export default function DashboardPage() {
       fetchStats();
       fetchPosts();
     }
-  }, [session]);
+  }, [session, fetchPosts, fetchStats]);
 
   useEffect(() => {
     if (router.query.upgraded === 'true') {
       showToast('🎉 Welcome to Pro! Enjoy 50 posts per month.');
       fetchStats();
     }
-  }, [router.query.upgraded]);
-
-  const fetchStats = async () => {
-    try {
-      const res = await fetch('/api/user/stats');
-      if (res.ok) {
-        const data = await res.json();
-        setStats(data);
-      }
-    } catch {}
-  };
-
-  const fetchPosts = async () => {
-    try {
-      const res = await fetch('/api/posts');
-      if (res.ok) {
-        const data = await res.json();
-        setPosts(data.posts || []);
-      }
-    } catch {}
-  };
+  }, [router.query.upgraded, fetchStats, showToast]);
 
   const handleGenerate = async (topic: string, tone: string, postType: string, length: string) => {
     setIsGenerating(true);
@@ -129,11 +134,6 @@ export default function DashboardPage() {
     } catch {
       showToast('Failed to open billing portal.');
     }
-  };
-
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(''), 4000);
   };
 
   if (status === 'loading' || !session) {

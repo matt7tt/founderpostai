@@ -44,7 +44,7 @@ export const AI_SUITE_PRODUCTS = [
     id: 'ai-suite-seo',
     name: 'FounderPostAI – AI Suite SEO',
     shortName: 'AI Suite SEO',
-    version: '0.1.7',
+    version: '0.1.8',
     price: 'Free',
     priceValue: '0',
     audience: 'Sites that want reviewable SEO suggestions',

@@ -1,18 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../auth/[...nextauth]';
-import { getUserByEmail, createPost, getMonthlyPostCount } from '@/lib/db';
+import { authOptions } from '@/lib/auth';
+import { getUserByEmail, createPost, getMonthlyPostCount, TIER_LIMITS } from '@/lib/db';
 import { generatePostVariations } from '@/lib/claude';
 
 type ResponseData = {
   message?: string;
   posts?: string[];
   error?: string;
-};
-
-const POST_LIMITS: Record<string, number> = {
-  free: 2,
-  pro: 50,
 };
 
 export default async function handler(
@@ -41,7 +36,7 @@ export default async function handler(
     }
 
     const monthlyCount = getMonthlyPostCount(user.id);
-    const limit = POST_LIMITS[user.tier] ?? 2;
+    const limit = TIER_LIMITS[user.tier];
 
     if (monthlyCount >= limit) {
       return res.status(403).json({
@@ -49,12 +44,7 @@ export default async function handler(
       });
     }
 
-    const generatedPosts = await generatePostVariations({
-      topic,
-      tone,
-      postType,
-      length,
-    });
+    const generatedPosts = await generatePostVariations(topic, tone, postType, length);
 
     // Save each generated post to history
     generatedPosts.forEach((content) => {
