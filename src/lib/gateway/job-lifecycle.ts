@@ -56,10 +56,31 @@ export async function recoverStaleJob(job: Job, now = Date.now()): Promise<Job> 
 }
 
 export async function recoverSiteJobs(site: Site) {
-  const ids: string[] = await redis('ZRANGEBYSCORE', `processing:${site.site_id}`, '-inf', Date.now(), 'LIMIT', 0, 20);
-  for (const id of ids) {
-    const raw = await redis('GET', `job:${id}`);
-    if (raw) await recoverStaleJob(JSON.parse(raw));
-    else await redis('ZREM', `processing:${site.site_id}`, id);
-  }
+  const now = Date.now();
+  // One bounded round trip, even when many interrupted jobs await recovery.
+  await redis('EVAL', `
+    local ids = redis.call('ZRANGEBYSCORE', KEYS[1], '-inf', ARGV[1], 'LIMIT', 0, 20)
+    for _, id in ipairs(ids) do
+      local key = 'job:' .. id
+      local raw = redis.call('GET', key)
+      if not raw then
+        redis.call('ZREM', KEYS[1], id)
+      else
+        local job = cjson.decode(raw)
+        if job.site_id == ARGV[3] and job.status == 'processing' and job.created_at <= ARGV[2] then
+          if job.credit_reserved and job.credit_period == redis.call('GET', KEYS[3]) then redis.call('INCR', KEYS[2]) end
+          job.credit_reserved = false
+          job.status = 'failed'
+          job.credits_charged = 0
+          job.error = 'Processing was interrupted. Your reserved credit has been released; please run the analysis again.'
+          redis.call('SET', key, cjson.encode(job), 'EX', ${JOB_TTL})
+          local idem = 'idem:' .. job.site_id .. ':' .. job.idempotency_key
+          if redis.call('GET', idem) == cjson.encode(id) then redis.call('DEL', idem) end
+        end
+        if job.status ~= 'processing' then redis.call('ZREM', KEYS[1], id) end
+      end
+    end
+    return #ids
+  `, 3, `processing:${site.site_id}`, `credits:${site.site_id}`, `account-period:${site.site_id}`,
+  now, new Date(now - JOB_LEASE_MS).toISOString(), site.site_id);
 }

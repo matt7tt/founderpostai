@@ -24,8 +24,9 @@ test('atomic credit reservations, concurrency, terminal races and interrupted jo
     const reservations = await Promise.all(Array.from({ length: 10 }, (_, i) => createProcessingJob(job(i + 2), true)));
     assert.equal(reservations.filter(value => value === 'CREATED').length, 3);
     assert.equal(await redis('GET', 'credits:test_site'), '0');
-    await recoverSiteJobs({ site_id: 'test_site' } as any);
+    await Promise.all(Array.from({ length: 5 }, () => recoverSiteJobs({ site_id: 'test_site' } as any)));
     assert.equal(await redis('GET', 'credits:test_site'), '3', 'New submissions can reclaim stranded site credits');
+    assert.equal(await redis('ZCARD', 'processing:test_site'), 0, 'Concurrent balance recovery drains the processing index exactly once');
     const rollover = job(50);
     await createProcessingJob(rollover, true);
     await redis('SET', 'account-period:test_site', '2026-10');

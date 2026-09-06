@@ -11,7 +11,7 @@ Releases: free SEO 0.1.9, SEO Pro 1.0.6. Core stays at its WordPress.org release
 - Stripe's hosted billing sign-in supports customers who lost the checkout page. Cancellation is at the end of the paid period. The private purchase page also opens billing and releases site activations.
 - SEO's direct updater is available starting in 0.1.9. Existing 0.1.8 installations need one manual ZIP update to install that updater. Keep the standard `aisuite-seo` directory.
 - Health audits use 50-post background batches, derived database rows and link edges, and 50-row dashboard pagination. Content changes keep the previous complete snapshot visible. Low-traffic sites need a reliable WP-Cron runner.
-- Gateway jobs atomically reserve credits and persist their processing lease. Duplicate submissions do not double-charge. Polling or the next site submission recovers a lease older than two minutes and refunds a reservation once, without inflating a new month's allowance. Provider calls time out after 30 seconds; Redis calls after three seconds.
+- Gateway jobs atomically reserve credits and persist their processing lease. Duplicate submissions do not double-charge. Polling, balance refreshes, or the next site submission recover leases older than two minutes and refund each reservation once, without inflating a new month's allowance. Site-wide recovery handles at most 20 jobs in one Redis round trip. Provider calls time out after 30 seconds; Redis calls after three seconds.
 
 ## Verification
 
