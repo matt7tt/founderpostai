@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 class FounderPostAI_AISuite_SEO_Store {
 
-	const DB_VERSION  = '4';
+	const DB_VERSION  = '5';
 	const DB_OPTION   = 'founderpostai_aisuite_seo_db_version';
 	const CACHE_GROUP = 'founderpostai_aisuite_seo';
 
@@ -96,6 +96,9 @@ class FounderPostAI_AISuite_SEO_Store {
 		}
 
 		wp_cache_delete( 'founderpostai_aisuite_seo_table', self::CACHE_GROUP );
+		if ( class_exists( 'FounderPostAI_AISuite_SEO_Health_Audit' ) ) {
+			FounderPostAI_AISuite_SEO_Health_Audit::install();
+		}
 		update_option( self::DB_OPTION, self::DB_VERSION, false );
 	}
 
@@ -137,6 +140,9 @@ class FounderPostAI_AISuite_SEO_Store {
 		}
 
 		delete_option( self::DB_OPTION );
+		if ( class_exists( 'FounderPostAI_AISuite_SEO_Health_Audit' ) ) {
+			FounderPostAI_AISuite_SEO_Health_Audit::drop();
+		}
 		delete_option( 'aisuite_seo_db_version' );
 
 		if ( class_exists( 'FounderPostAI_AISuite_SEO_Site_Index' ) ) {
@@ -293,7 +299,7 @@ class FounderPostAI_AISuite_SEO_Store {
 	}
 
 	/** @return array<int,int> Pending suggestion counts keyed by post ID. */
-	public static function pending_counts_by_post() {
+	public static function pending_counts_by_post( $ids = null ) {
 		global $wpdb;
 
 		if ( ! self::table_exists() ) {
@@ -302,7 +308,9 @@ class FounderPostAI_AISuite_SEO_Store {
 
 		$table = self::table();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT post_id, COUNT(*) AS total FROM %i WHERE status = %s GROUP BY post_id', $table, 'pending' ) );
+		if ( is_array( $ids ) && empty( $ids ) ) { return array(); }
+		$where = is_array( $ids ) ? ' AND post_id IN (' . implode( ',', array_map( 'absint', $ids ) ) . ')' : '';
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT post_id, COUNT(*) AS total FROM %i WHERE status = %s {$where} GROUP BY post_id", $table, 'pending' ) );
 		$out  = array();
 
 		foreach ( (array) $rows as $row ) {

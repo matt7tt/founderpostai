@@ -3,10 +3,10 @@
  * Plugin Name:       FounderPostAI – AI Suite SEO Pro
  * Plugin URI:        https://founderpostai.com/seo
  * Description:       Adds site-wide bulk optimization, scheduled re-analysis, and auto-apply rules to AI Suite SEO.
- * Version:           1.0.5
+ * Version:           1.0.6
  * Requires at least: 6.5
  * Requires PHP:      7.4
- * Requires Plugins:  founderpostai-ai-suite-core, founderpostai-ai-suite-seo
+ * Requires Plugins:  founderpostai-ai-suite-core, aisuite-seo
  * Author:            FounderPostAI
  * Author URI:        https://founderpostai.com
  * License:           GPL-2.0-or-later
@@ -20,7 +20,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FOUNDERPOSTAI_AISUITE_SEO_PRO_VERSION', '1.0.5' );
+define( 'FOUNDERPOSTAI_AISUITE_SEO_PRO_VERSION', '1.0.6' );
 define( 'FOUNDERPOSTAI_AISUITE_SEO_PRO_FILE', __FILE__ );
 
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-updater.php';
@@ -156,6 +156,13 @@ class FounderPostAI_AISuite_SEO_Pro {
 		return (bool) preg_match( '/^AIS[PA]-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/', (string) $license );
 	}
 
+	public static function automation_allowed() {
+		if ( ! self::license_is_valid( self::license_key() ) ) {
+			return false;
+		}
+		return FounderPostAI_AISuite_SEO_Pro_Updater::entitled();
+	}
+
 	public function menu() {
 		add_submenu_page(
 			'aisuite',
@@ -220,7 +227,7 @@ class FounderPostAI_AISuite_SEO_Pro {
 							<th scope="row"><label for="aisuite-license"><?php esc_html_e( 'License key', 'aisuite-seo-pro' ); ?></label></th>
 							<td>
 								<input type="text" id="aisuite-license" name="license_key" class="regular-text" autocomplete="off" spellcheck="false" value="<?php echo esc_attr( self::license_key() ); ?>" placeholder="AISP-XXXX-XXXX-XXXX" />
-								<p class="description"><?php esc_html_e( 'From your purchase receipt page. Required for plugin updates.', 'aisuite-seo-pro' ); ?></p>
+								<p class="description"><?php esc_html_e( 'From your purchase page. Required for Pro automation and updates. Free SEO features remain available. Remove this key before moving your license to another site.', 'aisuite-seo-pro' ); ?></p>
 							</td>
 						</tr>
 					</table>
@@ -269,6 +276,7 @@ class FounderPostAI_AISuite_SEO_Pro {
 				update_option( self::LICENSE_OPTION, $license, false );
 				// The cached update response was fetched with the old key.
 				delete_transient( FounderPostAI_AISuite_SEO_Pro_Updater::TRANSIENT );
+				delete_transient( FounderPostAI_AISuite_SEO_Pro_Updater::GRACE );
 			}
 		}
 
@@ -288,6 +296,9 @@ class FounderPostAI_AISuite_SEO_Pro {
 		}
 
 		check_admin_referer( 'founderpostai_aisuite_seo_pro_bulk' );
+		if ( ! self::automation_allowed() ) {
+			wp_die( esc_html__( 'An active Pro license for this site is required. Check AI Suite → SEO Pro. Free SEO analysis is still available.', 'aisuite-seo-pro' ) );
+		}
 
 		$this->run_bulk_batch();
 
@@ -306,6 +317,9 @@ class FounderPostAI_AISuite_SEO_Pro {
 	}
 
 	protected function run_bulk_batch() {
+		if ( ! self::automation_allowed() ) {
+			return;
+		}
 		$outcome = $this->queue_batch( self::BATCH_SIZE, true );
 
 		if ( 'stop' === $outcome['blocked'] ) {
@@ -337,6 +351,9 @@ class FounderPostAI_AISuite_SEO_Pro {
 	 */
 	public function sweep() {
 		global $wpdb;
+		if ( ! $this->settings()['schedule_enabled'] || ! self::automation_allowed() ) {
+			return;
+		}
 
 		$limit     = (int) $this->settings()['daily_post_limit'];
 		$optimizer = new FounderPostAI_AISuite_SEO_Optimizer( false );
@@ -497,7 +514,7 @@ class FounderPostAI_AISuite_SEO_Pro {
 	 * Auto-apply gap fills only. Never overwrites something a human wrote.
 	 */
 	public function maybe_auto_apply( $result, $context ) {
-		if ( ! $this->settings()['auto_apply_empty'] ) {
+		if ( ! $this->settings()['auto_apply_empty'] || ! self::automation_allowed() ) {
 			return;
 		}
 

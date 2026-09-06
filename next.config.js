@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  outputFileTracingIncludes: {
+    '/api/downloads/seo-pro': ['./private/downloads/aisuite-seo-pro.zip'],
+  },
   env: {
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
   },
@@ -33,6 +36,7 @@ const nextConfig = {
         source: '/api/:path*',
         headers: noIndexHeaders,
       },
+      { source: '/thanks', headers: [{ key: 'Referrer-Policy', value: 'no-referrer' }, { key: 'Cache-Control', value: 'private, no-store' }] },
       {
         source: '/downloads/:path*',
         headers: [

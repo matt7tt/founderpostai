@@ -25,6 +25,8 @@ export interface Job {
   error?: string;
   credits_charged: number;
   created_at: string;
+  credit_reserved?: boolean;
+  credit_period?: string;
 }
 
 export const getSite = (id: string) => getJSON<Site>(`site:${id}`);

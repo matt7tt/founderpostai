@@ -1,9 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getJSON, redis } from '@/lib/gateway/redis';
+import { getJSON } from '@/lib/gateway/redis';
 import { randomId, outboundHeaders, decrypt } from '@/lib/gateway/crypto';
 import {
   authedSite,
-  saveJob,
   getJob,
   accountFor,
   ensureAccountPeriod,
@@ -12,6 +11,7 @@ import {
 } from '@/lib/gateway/store';
 import { validateSiteUrls } from '@/lib/gateway/url';
 import { recordUniqueFunnelEventSafely } from '@/lib/funnel';
+import { createProcessingJob, recoverSiteJobs, recoverStaleJob, settleJob } from '@/lib/gateway/job-lifecycle';
 
 export const config = { api: { bodyParser: false } };
 export const maxDuration = 60;
@@ -152,7 +152,7 @@ async function runAnalysis(payload: any, brand: any, apiKey: string): Promise<an
       max_tokens: 1024,
       messages: [{ role: 'user', content: buildPrompt(payload, brand) }],
     }),
-    signal: AbortSignal.timeout(45_000),
+    signal: AbortSignal.timeout(30_000),
   });
   if (!r.ok) {
     const e = await r.json().catch(() => ({}));
@@ -174,7 +174,7 @@ async function deliverCallback(site: Site, body: any) {
       method: 'POST',
       headers: outboundHeaders(site.site_secret, raw, site.site_id),
       body: raw,
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(4000),
     });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
@@ -188,10 +188,11 @@ async function deliverCallback(site: Site, body: any) {
 }
 
 async function duplicateJobResponse(jobId: string, site: Site, res: NextApiResponse) {
-  const job = await getJob(jobId);
+  let job = await getJob(jobId);
   if (!job || job.site_id !== site.site_id) {
     return res.status(202).json({ job_id: jobId, estimated_credits: 1, duplicate: true });
   }
+  job = await recoverStaleJob(job);
   return res.status(202).json({
     job_id: job.job_id,
     status: job.status,
@@ -276,68 +277,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   await ensureAccountPeriod(site);
 
+  await recoverSiteJobs(site);
   const jobId = randomId('job');
-  const claimed = await redis('SET', idemKey, JSON.stringify(jobId), 'NX', 'EX', 600);
-  if (!claimed) {
-    const concurrent = await getJSON<string>(idemKey);
-    if (concurrent) return duplicateJobResponse(concurrent, site, res);
-    return res.status(503).json({ error: 'Could not resolve the concurrent job. Please retry.' });
-  }
-
-  let creditReserved = false;
-  if (!anthropic.byok) {
-    const remaining = parseInt(await redis('DECR', `credits:${site.site_id}`), 10);
-    if (remaining < 0) {
-      await redis('INCR', `credits:${site.site_id}`);
-      await redis('DEL', idemKey);
-      return res.status(402).json({ error: 'Out of credits for this period. Upgrade or add your own provider key.' });
-    }
-    creditReserved = true;
-  }
-
-  const job: Job = {
-    job_id: jobId,
-    site_id: site.site_id,
-    type,
-    status: 'processing',
-    idempotency_key,
-    callback_url: site.callback_url,
-    credits_charged: 0,
+  let job: Job = {
+    job_id: jobId, site_id: site.site_id, type, status: 'processing',
+    idempotency_key, callback_url: site.callback_url, credits_charged: 0,
     created_at: new Date().toISOString(),
   };
-  try {
-    await saveJob(job);
-    await redis('EXPIRE', idemKey, 60 * 60 * 24 * 7);
-  } catch (error) {
-    if (creditReserved) await redis('INCR', `credits:${site.site_id}`);
-    await redis('DEL', idemKey);
-    throw error;
-  }
+  const claimed = await createProcessingJob(job, !anthropic.byok);
+  if (claimed === 'NO_CREDITS') return res.status(402).json({ error: 'Out of credits for this period. Upgrade or add your own provider key.' });
+  if (claimed !== 'CREATED') return duplicateJobResponse(JSON.parse(claimed), site, res);
 
-  // Process inline (MVP): fast enough for single posts, and the reconcile poll
-  // always finds a terminal state even if the callback is blocked.
+  // A bounded inline provider call; a durable lease makes interrupted requests recoverable.
   try {
     job.result = await runAnalysis(payload, brand_context, anthropic.key);
     job.status = 'completed';
     job.credits_charged = 1;
   } catch (e: any) {
-    if (creditReserved) {
-      await redis('INCR', `credits:${site.site_id}`);
-      creditReserved = false;
-    }
     job.status = 'failed';
     job.error = e.message || 'Analysis failed';
+    const retryable = e.status === 429 || e.status >= 500 || e.name === 'TimeoutError' || e.name === 'TypeError';
     try {
-      await saveJob(job);
+      job = await settleJob(job, retryable);
     } catch {
-      await redis('DEL', idemKey);
+      // Do not delete the durable reservation. Poll/retry will recover its expired lease.
       return res.status(503).json({ error: 'Could not persist the failed job. Please retry.' });
     }
 
     // Let the WordPress queue retry rate limits and provider outages. Keeping
     // the idempotency record would only return this failed job forever.
-    if (e.status === 429 || e.status >= 500 || e.name === 'TimeoutError') {
-      await redis('DEL', idemKey);
+    if (retryable) {
       return res.status(e.status === 429 ? 429 : 503).json({ error: job.error });
     }
 
@@ -365,38 +334,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    await saveJob(job);
+    job = await settleJob(job);
   } catch {
-    if (creditReserved) {
-      await redis('INCR', `credits:${site.site_id}`);
-    }
-    await redis('DEL', idemKey);
     return res.status(503).json({ error: 'Could not persist the completed job. Please retry.' });
   }
-  if (anthropic.byok) {
-    try {
-      await redis('INCR', `actions:${site.site_id}`);
-    } catch {
-      // The completed result is already durable. A usage-counter outage must
-      // not delete idempotency and cause the customer's model call to repeat.
-    }
-  }
-  await recordUniqueFunnelEventSafely('first_job_completed', site.site_id);
+  if (job.status === 'completed') await recordUniqueFunnelEventSafely('first_job_completed', site.site_id);
   const account = await accountFor(site);
   await deliverCallback(site, {
     idempotency_key,
     job_id: job.job_id,
     type,
-    status: 'completed',
+    status: job.status,
     credits_charged: job.credits_charged,
     result: job.result,
+    error: job.error,
     account,
   });
 
   return res.status(202).json({
     job_id: job.job_id,
-    status: 'completed',
+    status: job.status,
     result: job.result,
+    error: job.error,
     credits_charged: job.credits_charged,
     account,
     estimated_credits: 1,

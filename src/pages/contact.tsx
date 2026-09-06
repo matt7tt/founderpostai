@@ -30,6 +30,7 @@ export default function Contact() {
       </section>
       <section>
         <h2>Billing and data questions</h2>
+        {process.env.NEXT_PUBLIC_STRIPE_BILLING_PORTAL && <p><a href={process.env.NEXT_PUBLIC_STRIPE_BILLING_PORTAL}>Manage billing, download invoices, or cancel your subscription securely with Stripe</a>. Use the email address from checkout; Stripe sends a sign-in link.</p>}
         <p>For a purchase question, email from the address used at checkout and include the receipt reference if you have it. Do not send card details. The <Link href="/terms">terms</Link> cover subscriptions and refunds.</p>
         <p>For questions about personal data or a deletion request, use the same support address and describe the request. See the <Link href="/privacy">privacy policy</Link> for what the service collects and why.</p>
       </section>

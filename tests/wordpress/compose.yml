@@ -1,0 +1,47 @@
+services:
+  database:
+    image: mariadb:lts
+    environment:
+      MARIADB_ROOT_PASSWORD: isolated-test-only
+      MARIADB_DATABASE: wordpress
+    healthcheck:
+      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    tmpfs: /var/lib/mysql
+  wordpress:
+    image: ${WORDPRESS_TEST_IMAGE:-wordpress:php8.3-apache}
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      WORDPRESS_DB_HOST: database
+      WORDPRESS_DB_USER: root
+      WORDPRESS_DB_PASSWORD: isolated-test-only
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_CONFIG_EXTRA: "define('DISABLE_WP_CRON', true); define('WP_DEBUG', true);"
+    ports: ['127.0.0.1:8892:80']
+    volumes:
+      - wordpress:/var/www/html
+      - ../../wp-plugins/aisuite-core:/var/www/html/wp-content/plugins/founderpostai-ai-suite-core:ro
+      - ../../wp-plugins/aisuite-seo:/var/www/html/wp-content/plugins/aisuite-seo:ro
+      - ../../wp-plugins/aisuite-seo-pro:/var/www/html/wp-content/plugins/aisuite-seo-pro:ro
+      - ./:/tests:ro
+  cli:
+    image: ${WORDPRESS_CLI_TEST_IMAGE:-wordpress:cli}
+    user: '33:33'
+    depends_on: [wordpress]
+    environment:
+      WORDPRESS_DB_HOST: database
+      WORDPRESS_DB_USER: root
+      WORDPRESS_DB_PASSWORD: isolated-test-only
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - wordpress:/var/www/html
+      - ../../wp-plugins/aisuite-core:/var/www/html/wp-content/plugins/founderpostai-ai-suite-core:ro
+      - ../../wp-plugins/aisuite-seo:/var/www/html/wp-content/plugins/aisuite-seo:ro
+      - ../../wp-plugins/aisuite-seo-pro:/var/www/html/wp-content/plugins/aisuite-seo-pro:ro
+      - ./:/tests:ro
+volumes:
+  wordpress:

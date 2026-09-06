@@ -8,7 +8,9 @@ export async function redis(...args: (string | number)[]): Promise<any> {
     method: 'POST',
     headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(args),
+    signal: AbortSignal.timeout(3000),
   });
+  if (!r.ok) throw new Error(`Redis HTTP ${r.status}`);
   const d = await r.json();
   if (d.error) throw new Error(`Redis: ${d.error}`);
   return d.result;

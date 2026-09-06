@@ -2,6 +2,8 @@ import Stripe from 'stripe';
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16',
+  timeout: 8000,
+  maxNetworkRetries: 1,
 });
 
 // The legacy LinkedIn subscription has its own price, separate from SEO Pro.

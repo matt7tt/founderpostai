@@ -5,7 +5,7 @@ Requires at least: 6.5
 Requires Plugins: founderpostai-ai-suite-core
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.1.8
+Stable tag: 0.1.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -103,6 +103,11 @@ Nothing is changed. Links are only inserted where the exact phrase appears as or
 No. Every feature and every line of functional code shipped in this plugin is available without a license check. A separately distributed add-on contains its own automation code for unattended whole-site runs, scheduling, and conservative auto-apply; it does not unlock dormant code in this plugin.
 
 == Changelog ==
+
+= 0.1.9 =
+* Added public, license-free updates for direct-download installations.
+* Health audits now run in resumable 50-post background batches and display paginated completed snapshots.
+* Preserved distinct plain-permalink URLs in internal-link counts.
 
 = 0.1.8 =
 * Stabilized Gutenberg sidebar refresh callbacks and analysis polling dependencies.

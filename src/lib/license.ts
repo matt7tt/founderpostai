@@ -24,8 +24,8 @@ export function generateLicenseKey(plan: 'pro' | 'agency', subscriptionId = ''):
 // Live Stripe price IDs → plan. Missing configuration fails closed in the
 // license endpoint instead of silently accepting a price from another account.
 export const PRICE_TO_PLAN: Record<string, 'pro' | 'agency'> = {};
-if (process.env.STRIPE_PRICE_PRO) PRICE_TO_PLAN[process.env.STRIPE_PRICE_PRO] = 'pro';
-if (process.env.STRIPE_PRICE_AGENCY) PRICE_TO_PLAN[process.env.STRIPE_PRICE_AGENCY] = 'agency';
+if (process.env.STRIPE_PRICE_PRO?.trim()) PRICE_TO_PLAN[process.env.STRIPE_PRICE_PRO.trim()] = 'pro';
+if (process.env.STRIPE_PRICE_AGENCY?.trim()) PRICE_TO_PLAN[process.env.STRIPE_PRICE_AGENCY.trim()] = 'agency';
 
 export const PLAN_LABELS: Record<string, string> = {
   pro: 'AI Suite SEO Pro',

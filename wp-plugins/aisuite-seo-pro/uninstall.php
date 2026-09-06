@@ -15,6 +15,7 @@ delete_option( 'aisuite_seo_pro_license' );
 delete_option( 'aisuite_seo_pro_sweep_cursor' );
 
 delete_transient( 'founderpostai_aisuite_seo_pro_update' );
+delete_transient( 'founderpostai_aisuite_seo_pro_entitlement' );
 delete_transient( 'aisuite_seo_pro_update' );
 
 wp_clear_scheduled_hook( 'founderpostai_aisuite_seo_pro_sweep' );

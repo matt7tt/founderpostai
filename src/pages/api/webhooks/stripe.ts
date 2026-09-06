@@ -2,6 +2,9 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { stripe } from '@/lib/stripe';
 import { getUserByStripeCustomerId, updateUser, createSubscriptionEvent } from '@/lib/db';
 import Stripe from 'stripe';
+import { fulfillPluginCheckout, PurchaseError, stripeId, syncPluginSubscription } from '@/lib/plugin-purchases';
+
+export const maxDuration = 60;
 
 export const config = {
   api: {
@@ -12,7 +15,12 @@ export const config = {
 async function getRawBody(req: NextApiRequest): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
-    req.on('data', (chunk: Buffer) => chunks.push(chunk));
+    let size = 0;
+    req.on('data', (chunk: Buffer) => {
+      size += chunk.length;
+      if (size > 1024 * 1024) { reject(new Error('Webhook body too large')); return; }
+      chunks.push(chunk);
+    });
     req.on('end', () => resolve(Buffer.concat(chunks)));
     req.on('error', reject);
   });
@@ -35,15 +43,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const rawBody = await getRawBody(req);
     event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
-  } catch (err) {
-    console.error('Webhook signature verification failed:', err);
+  } catch {
+    console.warn('Webhook signature verification failed');
     return res.status(400).json({ error: 'Invalid signature' });
   }
 
   try {
     switch (event.type) {
-      case 'checkout.session.completed': {
+      case 'checkout.session.completed':
+      case 'checkout.session.async_payment_succeeded': {
         const session = event.data.object as Stripe.Checkout.Session;
+        try {
+          await fulfillPluginCheckout(session.id);
+        } catch (error) {
+          // Other products and payments still settling are not fulfillment failures.
+          if (!(error instanceof PurchaseError && [400, 402].includes(error.status))) throw error;
+        }
         const customerId = session.customer as string;
         const subscriptionId = session.subscription as string;
         const userId = session.metadata?.userId;
@@ -61,6 +76,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
+        await syncPluginSubscription(subscription.id);
         const customerId = subscription.customer as string;
         const user = getUserByStripeCustomerId(customerId);
 
@@ -71,8 +87,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         break;
       }
 
+      case 'customer.subscription.created':
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
+        await syncPluginSubscription(subscription.id);
         const customerId = subscription.customer as string;
         const user = getUserByStripeCustomerId(customerId);
 
@@ -86,21 +104,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         break;
       }
 
+      case 'invoice.paid':
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
+        if (stripeId(invoice.subscription)) await syncPluginSubscription(stripeId(invoice.subscription));
         const customerId = invoice.customer as string;
         const user = getUserByStripeCustomerId(customerId);
 
         if (user) {
-          createSubscriptionEvent(user.id, 'payment_failed');
+          createSubscriptionEvent(user.id, event.type === 'invoice.paid' ? 'payment_received' : 'payment_failed');
         }
         break;
       }
     }
 
     return res.status(200).json({ received: true });
-  } catch (error) {
-    console.error('Webhook handler error:', error);
+  } catch (error: any) {
+    console.error('Webhook handler failed', { type: event.type, code: error?.code || 'unavailable' });
     return res.status(500).json({ error: 'Webhook handler failed' });
   }
 }

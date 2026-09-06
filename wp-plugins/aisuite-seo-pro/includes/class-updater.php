@@ -12,6 +12,8 @@ defined( 'ABSPATH' ) || exit;
 class FounderPostAI_AISuite_SEO_Pro_Updater {
 
 	const TRANSIENT = 'founderpostai_aisuite_seo_pro_update';
+	const GRACE = 'founderpostai_aisuite_seo_pro_entitlement';
+	protected static $instance;
 
 	protected $file;
 	protected $version;
@@ -19,6 +21,7 @@ class FounderPostAI_AISuite_SEO_Pro_Updater {
 	protected $basename;
 
 	public function __construct( $file, $version ) {
+		self::$instance = $this;
 		$this->file     = $file;
 		$this->version  = $version;
 		$this->basename = plugin_basename( $file );
@@ -27,6 +30,18 @@ class FounderPostAI_AISuite_SEO_Pro_Updater {
 		add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'inject_update' ) );
 		add_filter( 'plugins_api', array( $this, 'plugin_info' ), 20, 3 );
 		add_action( 'admin_notices', array( $this, 'license_notice' ) );
+	}
+
+	public static function entitled() {
+		if ( ! self::$instance ) {
+			return false;
+		}
+		$remote = self::$instance->remote();
+		if ( is_array( $remote ) && array_key_exists( 'active', $remote ) ) {
+			return true === $remote['active'];
+		}
+		// Only a previously verified key gets a 48-hour outage grace period.
+		return get_transient( self::GRACE ) === hash( 'sha256', FounderPostAI_AISuite_SEO_Pro::license_key() );
 	}
 
 	/**
@@ -71,12 +86,19 @@ class FounderPostAI_AISuite_SEO_Pro_Updater {
 		);
 
 		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
-			set_transient( self::TRANSIENT, array(), HOUR_IN_SECONDS );
+			set_transient( self::TRANSIENT, array(), 5 * MINUTE_IN_SECONDS );
 			return false;
 		}
 
 		$data = json_decode( wp_remote_retrieve_body( $response ), true );
 		$data = is_array( $data ) ? $data : array();
+		if ( isset( $data['active'] ) && is_bool( $data['active'] ) ) {
+			if ( $data['active'] ) {
+				set_transient( self::GRACE, hash( 'sha256', FounderPostAI_AISuite_SEO_Pro::license_key() ), 48 * HOUR_IN_SECONDS );
+			} else {
+				delete_transient( self::GRACE );
+			}
+		}
 
 		if ( isset( $data['version'] ) && ! is_scalar( $data['version'] ) ) {
 			$data = array();
@@ -185,7 +207,7 @@ class FounderPostAI_AISuite_SEO_Pro_Updater {
 		if ( is_array( $remote ) && array_key_exists( 'package', $remote ) && empty( $remote['package'] ) ) {
 			printf(
 				'<div class="notice notice-warning"><p>%s</p></div>',
-				esc_html__( 'This AI Suite SEO Pro license is not active, so plugin updates are unavailable.', 'aisuite-seo-pro' )
+				esc_html( ! empty( $remote['reason'] ) ? $remote['reason'] : __( 'This license is inactive. Pro automation and updates are unavailable; free SEO features continue to work.', 'aisuite-seo-pro' ) )
 			);
 		}
 	}

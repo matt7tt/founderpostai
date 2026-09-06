@@ -1,0 +1,97 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { Readable } from 'node:stream';
+import { isolatedRedis } from '../helpers/isolated-redis';
+
+test('purchase fulfillment, signed downloads, billing authorization, webhooks and seats', async () => {
+  process.env.STRIPE_SECRET_KEY = 'sk_test_isolated';
+  process.env.STRIPE_PRICE_PRO = 'price_test_pro';
+  process.env.STRIPE_PRICE_AGENCY = 'price_test_agency';
+  process.env.GATEWAY_KMS_KEY = 'a'.repeat(64);
+  process.env.STRIPE_WEBHOOK_SECRET = 'whsec_isolated';
+  const close = await isolatedRedis();
+  try {
+    const { stripe } = await import('../../src/lib/stripe');
+    const purchases = await import('../../src/lib/plugin-purchases');
+    const tokens = await import('../../src/lib/download-token');
+    const { redis, getJSON } = await import('../../src/lib/gateway/redis');
+    let subscription: any = { id: 'sub_test1', customer: 'cus_test1', status: 'active', metadata: {}, items: { data: [{ price: { id: 'price_test_pro' } }] } };
+    let checkout: any = { id: 'cs_test_one', status: 'complete', payment_status: 'paid', subscription: subscription.id, line_items: { data: [{ price: { id: 'price_test_pro' } }] } };
+    stripe.subscriptions.retrieve = (async () => structuredClone(subscription)) as any;
+    stripe.subscriptions.update = (async (_id: string, params: any) => { subscription.metadata = { ...subscription.metadata, ...params.metadata }; return structuredClone(subscription); }) as any;
+    stripe.checkout.sessions.retrieve = (async () => structuredClone(checkout)) as any;
+    const receipts = await Promise.all(Array.from({ length: 8 }, () => purchases.fulfillPluginCheckout(checkout.id)));
+    assert.equal(new Set(receipts.map(item => item.licenseKey)).size, 1);
+    const key = receipts[0].licenseKey;
+    assert.equal((await getJSON<any>(`license:${key}`)).subscription_id, subscription.id);
+    const claims = await Promise.all(['https://one.example', 'https://two.example'].map(url => purchases.licenseForSite(key, url)));
+    assert.equal(claims.filter(claim => claim.active).length, 1, 'Only one concurrent site can claim Pro');
+    const owner = await redis('GET', `license-seat:${key}`);
+    assert.equal((await purchases.licenseForSite(key, `http://${owner}/`)).active, true, 'HTTPS migration keeps its seat');
+    assert.notEqual(purchases.canonicalLicenseSite('https://example.com/one/'), purchases.canonicalLicenseSite('https://example.com/two/'));
+    const token = tokens.createDownloadToken(subscription.id, 60, 1000);
+    assert.equal(tokens.verifyDownloadToken(token, 2000), subscription.id);
+    assert.equal(tokens.verifyDownloadToken(token, 61000), null);
+    assert.equal(tokens.verifyDownloadToken(`${token}x`, 2000), null);
+    assert.equal(tokens.verifyDownloadToken(token.split('.')[0] + '.forged', 2000), null);
+    subscription.status = 'canceled';
+    assert.equal((await purchases.licenseForSite(key, `https://${owner}`)).active, false);
+    assert.equal((await purchases.fulfillPluginCheckout(checkout.id)).licenseKey, key, 'Canceled customers can still recover key and billing');
+    checkout.payment_status = 'unpaid';
+    await assert.rejects(purchases.fulfillPluginCheckout(checkout.id), { status: 402 });
+    checkout.payment_status = 'paid';
+    checkout.line_items.data[0].price.id = 'price_other';
+    await assert.rejects(purchases.fulfillPluginCheckout(checkout.id), { status: 400 });
+    checkout.line_items.data[0].price.id = 'price_test_agency';
+    subscription = { ...subscription, id: 'sub_agency', status: 'active', metadata: {}, items: { data: [{ price: { id: 'price_test_agency' } }] } };
+    checkout.subscription = subscription.id;
+    const agency = await purchases.fulfillPluginCheckout(checkout.id);
+    assert.equal((await purchases.licenseForSite(agency.licenseKey, 'https://one.example')).active, true);
+    assert.equal((await purchases.licenseForSite(agency.licenseKey, 'https://two.example')).active, true);
+
+    const response = () => ({ code: 200, body: null as any, headers: {} as any, setHeader(name: string, value: string) { this.headers[name] = value; }, status(code: number) { this.code = code; return this; }, json(body: any) { this.body = body; return this; }, send(body: any) { this.body = body; return this; }, end() { return this; } });
+    const { default: download } = await import('../../src/pages/api/downloads/seo-pro');
+    const deniedDownload = response();
+    await download({ method: 'GET', query: { token: 'forged' } } as any, deniedDownload as any);
+    assert.equal(deniedDownload.code, 403);
+    const authorizedDownload = response();
+    await download({ method: 'GET', query: { token: tokens.createDownloadToken(subscription.id) } } as any, authorizedDownload as any);
+    assert.equal(authorizedDownload.code, 200);
+    assert.equal(authorizedDownload.body.subarray(0, 2).toString(), 'PK', 'Authorized delivery returns actual ZIP bytes');
+    assert.equal(authorizedDownload.headers['Content-Type'], 'application/zip');
+    subscription.status = 'canceled';
+    const canceledDownload = response();
+    await download({ method: 'GET', query: { token: tokens.createDownloadToken(subscription.id) } } as any, canceledDownload as any);
+    assert.equal(canceledDownload.code, 403, 'Canceling revokes even an unexpired download token');
+    subscription.status = 'active';
+    const { default: licenseHandler } = await import('../../src/pages/api/license');
+    const invalid = response();
+    await licenseHandler({ method: 'GET', query: { session_id: ['cs_a', 'cs_b'] } } as any, invalid as any);
+    assert.equal(invalid.code, 400);
+    assert.match(invalid.headers['Cache-Control'], /no-store/);
+    let portalCustomer = '';
+    stripe.billingPortal.sessions.create = (async (params: any) => { portalCustomer = params.customer; return { url: 'https://billing.stripe.com/test' }; }) as any;
+    const { default: manage } = await import('../../src/pages/api/purchase/manage');
+    const billing = response();
+    await manage({ method: 'POST', body: { action: 'billing', session_id: checkout.id, customer: 'cus_attacker' } } as any, billing as any);
+    assert.equal(billing.code, 200);
+    assert.equal(portalCustomer, 'cus_test1');
+    await manage({ method: 'POST', body: { action: 'release_site', session_id: checkout.id } } as any, response() as any);
+
+    subscription = { ...subscription, id: 'sub_webhook', metadata: {} };
+    checkout.subscription = subscription.id;
+    const { default: webhook } = await import('../../src/pages/api/webhooks/stripe');
+    const payload = JSON.stringify({ id: 'evt_test', type: 'checkout.session.completed', data: { object: { id: checkout.id } } });
+    const signature = stripe.webhooks.generateTestHeaderString({ payload, secret: process.env.STRIPE_WEBHOOK_SECRET! });
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const req = Object.assign(Readable.from([Buffer.from(payload)]), { method: 'POST', headers: { 'stripe-signature': signature } });
+      const res = response();
+      await webhook(req as any, res as any);
+      assert.equal(res.code, 200);
+    }
+    assert.ok(subscription.metadata.license_key, 'Webhook alone fulfills without a success page');
+    const tampered = response();
+    await webhook(Object.assign(Readable.from([Buffer.from(payload + ' ')]), { method: 'POST', headers: { 'stripe-signature': signature } }) as any, tampered as any);
+    assert.equal(tampered.code, 400);
+  } finally { await close(); }
+});

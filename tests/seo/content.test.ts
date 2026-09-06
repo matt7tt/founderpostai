@@ -44,6 +44,7 @@ test('product schema preserves separate release-record dates', () => {
     assert.equal(products[index].dateModified, product.updatedAt);
     assert.ok(product.updatedAt <= AI_SUITE_LAST_MODIFIED);
   });
-  assert.equal(AI_SUITE_LAST_MODIFIED, '2026-09-04');
-  assert.equal(products[2].dateModified, '2026-08-10');
+  assert.equal(AI_SUITE_LAST_MODIFIED, '2026-09-06');
+  assert.equal(products[0].dateModified, '2026-09-03');
+  assert.equal(products[2].dateModified, '2026-09-06');
 });

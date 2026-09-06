@@ -61,7 +61,7 @@ class FounderPostAI_AISuite_SEO_Health_Screen {
 	}
 
 	public static function invalidate() {
-		delete_transient( self::CACHE_KEY );
+		FounderPostAI_AISuite_SEO_Health_Audit::invalidate();
 	}
 
 	public function handle_refresh() {
@@ -102,11 +102,10 @@ class FounderPostAI_AISuite_SEO_Health_Screen {
 			$filter = 'all';
 		}
 
-		$rows        = array_values( array_filter( $snapshot['rows'], array( $this, 'filter_' . $filter ) ) );
-		$total       = count( $rows );
+		$total       = $snapshot['summary'][ 'all' === $filter ? 'total' : $filter ];
 		$total_pages = max( 1, (int) ceil( $total / self::PER_PAGE ) );
 		$page        = min( $page, $total_pages );
-		$rows        = array_slice( $rows, ( $page - 1 ) * self::PER_PAGE, self::PER_PAGE );
+		$rows        = FounderPostAI_AISuite_SEO_Health_Audit::page( $snapshot, $filter, $page );
 		$summary     = $snapshot['summary'];
 		/* translators: 1: number of fully optimized posts, 2: total published posts */
 		$coverage_detail = sprintf( __( '%1$d of %2$d current', 'founderpostai-ai-suite-seo' ), $summary['optimized'], $summary['total'] );
@@ -115,8 +114,8 @@ class FounderPostAI_AISuite_SEO_Health_Screen {
 			<h1><?php esc_html_e( 'SEO health', 'founderpostai-ai-suite-seo' ); ?></h1>
 			<a class="page-title-action" href="<?php echo esc_url( admin_url( 'admin.php?page=' . FounderPostAI_AISuite_SEO_Review_Screen::SLUG ) ); ?>"><?php esc_html_e( 'Review suggestions', 'founderpostai-ai-suite-seo' ); ?></a>
 
-			<?php if ( 'refreshed' === $message ) : ?>
-				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'The site-wide SEO audit is up to date.', 'founderpostai-ai-suite-seo' ); ?></p></div>
+			<?php if ( ! empty( $snapshot['building'] ) || 'refreshed' === $message ) : ?>
+				<div class="notice notice-info"><p><?php esc_html_e( 'The audit is rebuilding in background batches. The last complete results remain visible. Reload later; on low-traffic sites, configure a real WP-Cron runner.', 'founderpostai-ai-suite-seo' ); ?></p></div>
 			<?php elseif ( 'indexing' === $message ) : ?>
 				<div class="notice notice-info is-dismissible"><p><?php esc_html_e( 'The local content index is rebuilding in bounded background batches.', 'founderpostai-ai-suite-seo' ); ?></p></div>
 			<?php endif; ?>
@@ -156,7 +155,7 @@ class FounderPostAI_AISuite_SEO_Health_Screen {
 					printf(
 						/* translators: %s: audit date and time */
 						esc_html__( 'Last scanned %s', 'founderpostai-ai-suite-seo' ),
-						esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $snapshot['generated_at'] ) )
+						$snapshot['generated_at'] ? esc_html( date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $snapshot['generated_at'] ) ) : esc_html__( 'not yet complete', 'founderpostai-ai-suite-seo' )
 					);
 					?>
 				</span>
@@ -231,7 +230,7 @@ class FounderPostAI_AISuite_SEO_Health_Screen {
 		$summary = $snapshot['summary'];
 		$counts  = array(
 			'all'       => $summary['total'],
-			'action'    => count( array_filter( $snapshot['rows'], array( $this, 'filter_action' ) ) ),
+			'action'    => $summary['action'],
 			'missing'   => $summary['missing'],
 			'stale'     => $summary['stale'],
 			'errors'    => $summary['errors'],
@@ -362,112 +361,26 @@ class FounderPostAI_AISuite_SEO_Health_Screen {
 		return $row['optimized'];
 	}
 
-	/** Build a complete audit snapshot, cached until content changes. */
+	/** Reads the last complete snapshot; never scans content in an admin request. */
 	public static function audit( $force = false ) {
-		if ( ! $force ) {
-			$cached = get_transient( self::CACHE_KEY );
-			if ( is_array( $cached ) && isset( $cached['rows'], $cached['summary'] ) ) {
-				return $cached;
-			}
-		}
-
-		$post_types = get_post_types( array( 'public' => true ), 'names' );
-		$post_types = array_values( array_diff( (array) $post_types, array( 'attachment' ) ) );
-		if ( empty( $post_types ) ) {
-			$post_types = array( 'post', 'page' );
-		}
-		$posts      = get_posts(
-			array(
-				'post_type'        => $post_types,
-				'post_status'      => 'publish',
-				'posts_per_page'   => -1,
-				'orderby'          => 'modified',
-				'order'            => 'DESC',
-					'suppress_filters' => false,
-			)
-		);
-		$ids        = wp_list_pluck( $posts, 'ID' );
-		$metadata   = FounderPostAI_AISuite_SEO_Meta_Adapter::read_many( $ids );
-		$pending    = FounderPostAI_AISuite_SEO_Store::pending_counts_by_post();
-		$url_map    = array();
-		$incoming   = array_fill_keys( $ids, 0 );
-		$outgoing   = array_fill_keys( $ids, 0 );
-
-		foreach ( $posts as $post ) {
-			$url_map[ self::normalize_url( get_permalink( $post ) ) ] = (int) $post->ID;
-		}
-
-		foreach ( $posts as $post ) {
-			preg_match_all( '/<a\s[^>]*href\s*=\s*(["\'])(.*?)\1/isu', (string) $post->post_content, $matches );
-			$targets = array();
-
-			foreach ( isset( $matches[2] ) ? $matches[2] : array() as $href ) {
-				$key = self::normalize_url( html_entity_decode( $href, ENT_QUOTES, 'UTF-8' ) );
-				if ( isset( $url_map[ $key ] ) && (int) $url_map[ $key ] !== (int) $post->ID ) {
-					$targets[ $url_map[ $key ] ] = true;
-				}
-			}
-
-			$outgoing[ $post->ID ] = count( $targets );
-			foreach ( array_keys( $targets ) as $target_id ) {
-				++$incoming[ $target_id ];
-			}
-		}
-
-		$rows = array();
-		foreach ( $posts as $post ) {
-			$post_id      = (int) $post->ID;
-			$title        = isset( $metadata[ $post_id ]['title'] ) ? trim( $metadata[ $post_id ]['title'] ) : '';
-			$description  = isset( $metadata[ $post_id ]['description'] ) ? trim( $metadata[ $post_id ]['description'] ) : '';
-			$analyzed     = (int) get_post_meta( $post_id, FounderPostAI_AISuite_SEO_Optimizer::META_ANALYZED, true );
-			$error        = (string) get_post_meta( $post_id, FounderPostAI_AISuite_SEO_Optimizer::META_ERROR, true );
-			$current_meta = isset( $metadata[ $post_id ] ) ? $metadata[ $post_id ] : null;
-			$stale        = ! FounderPostAI_AISuite_SEO_Optimizer::is_current( $post, $current_meta );
-			$missing_t    = '' === $title;
-			$missing_d    = '' === $description;
-			$orphaned     = empty( $incoming[ $post_id ] );
-
-			$rows[] = array(
-				'id'                  => $post_id,
-				'title_length'        => self::length( $title ),
-				'description_length'  => self::length( $description ),
-				'missing_title'       => $missing_t,
-				'missing_description' => $missing_d,
-				'analyzed'            => $analyzed,
-				'stale'               => $stale,
-				'queued'              => FounderPostAI_AISuite_SEO_Optimizer::is_queued( $post_id ),
-				'error'               => $error,
-				'incoming'            => isset( $incoming[ $post_id ] ) ? $incoming[ $post_id ] : 0,
-				'outgoing'            => isset( $outgoing[ $post_id ] ) ? $outgoing[ $post_id ] : 0,
-				'orphaned'            => $orphaned,
-				'pending'             => isset( $pending[ $post_id ] ) ? $pending[ $post_id ] : 0,
-				'optimized'           => ! $missing_t && ! $missing_d && ! $stale && ! $error,
-			);
-		}
-
-		$total     = count( $rows );
-		$optimized = count( array_filter( $rows, array( __CLASS__, 'row_optimized' ) ) );
-		$snapshot  = array(
-			'generated_at' => time(),
-			'provider'     => FounderPostAI_AISuite_SEO_Meta_Adapter::provider(),
-			'rows'         => $rows,
-			'summary'      => array(
-				'total'     => $total,
-				'optimized' => $optimized,
-				'coverage'  => $total ? (int) round( $optimized / $total * 100 ) : 100,
-				'missing'   => count( array_filter( $rows, array( __CLASS__, 'row_missing' ) ) ),
-				'stale'     => count( array_filter( $rows, array( __CLASS__, 'row_stale' ) ) ),
-				'errors'    => count( array_filter( $rows, array( __CLASS__, 'row_error' ) ) ),
-				'orphaned'  => count( array_filter( $rows, array( __CLASS__, 'row_orphaned' ) ) ),
-				'pending'   => array_sum( $pending ),
-			),
-		);
-
-		set_transient( self::CACHE_KEY, $snapshot, 6 * HOUR_IN_SECONDS );
-
-		return $snapshot;
+		return FounderPostAI_AISuite_SEO_Health_Audit::snapshot( $force );
 	}
 
+	public static function build_row( $post, $metadata, $pending ) {
+		$id = (int) $post->ID;
+		$title = trim( isset( $metadata['title'] ) ? $metadata['title'] : '' );
+		$description = trim( isset( $metadata['description'] ) ? $metadata['description'] : '' );
+		$error = (string) get_post_meta( $id, FounderPostAI_AISuite_SEO_Optimizer::META_ERROR, true );
+		$stale = ! FounderPostAI_AISuite_SEO_Optimizer::is_current( $post, $metadata );
+		return array(
+			'id' => $id, 'title_length' => self::length( $title ), 'description_length' => self::length( $description ),
+			'missing_title' => '' === $title, 'missing_description' => '' === $description,
+			'analyzed' => (int) get_post_meta( $id, FounderPostAI_AISuite_SEO_Optimizer::META_ANALYZED, true ),
+			'stale' => $stale, 'queued' => FounderPostAI_AISuite_SEO_Optimizer::is_queued( $id ),
+			'error' => $error, 'incoming' => 0, 'outgoing' => 0, 'orphaned' => true,
+			'pending' => (int) $pending, 'optimized' => '' !== $title && '' !== $description && ! $stale && ! $error,
+		);
+	}
 	public static function row_optimized( $row ) {
 		return $row['optimized'];
 	}
@@ -488,7 +401,7 @@ class FounderPostAI_AISuite_SEO_Health_Screen {
 		return $row['orphaned'];
 	}
 
-	protected static function normalize_url( $url ) {
+	public static function normalize_url( $url ) {
 		if ( ! is_string( $url ) || '' === trim( $url ) || '#' === substr( trim( $url ), 0, 1 ) ) {
 			return '';
 		}
@@ -505,7 +418,9 @@ class FounderPostAI_AISuite_SEO_Health_Screen {
 		}
 
 		$path = isset( $parts['path'] ) ? rawurldecode( $parts['path'] ) : '/';
-		return '/' === $path ? '/' : untrailingslashit( $path );
+		$path = '/' === $path ? '/' : untrailingslashit( $path );
+		// Preserve plain-permalink IDs: /?p=1 and /?p=2 are different pages.
+		return $path . ( empty( $parts['query'] ) ? '' : '?' . $parts['query'] );
 	}
 
 	protected static function length( $value ) {

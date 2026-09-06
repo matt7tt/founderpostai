@@ -9,7 +9,7 @@ const urls = [
   { loc: `${SITE_URL}/ai-suite`, lastmod: AI_SUITE_LAST_MODIFIED },
   { loc: `${SITE_URL}/resources`, lastmod: RESOURCES_DATES.updatedAt },
   { loc: `${SITE_URL}/about`, lastmod: INFORMATION_PAGE_DATES.updatedAt },
-  { loc: `${SITE_URL}/contact`, lastmod: INFORMATION_PAGE_DATES.updatedAt },
+  { loc: `${SITE_URL}/contact`, lastmod: '2026-09-06' },
   ...SEARCH_PAGES.map((page) => ({
     loc: `${SITE_URL}${page.path}`,
     lastmod: page.updatedAt,

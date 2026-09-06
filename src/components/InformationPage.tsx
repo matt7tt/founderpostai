@@ -16,6 +16,7 @@ interface InformationPageProps {
 
 export default function InformationPage({ path, title, description, eyebrow, heading, children }: InformationPageProps) {
   const url = absoluteUrl(path);
+  const updatedAt = path === '/contact' ? '2026-09-06' : INFORMATION_PAGE_DATES.updatedAt;
   const jsonLd = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -29,7 +30,7 @@ export default function InformationPage({ path, title, description, eyebrow, hea
         description,
         inLanguage: 'en-US',
         datePublished: INFORMATION_PAGE_DATES.publishedAt,
-        dateModified: INFORMATION_PAGE_DATES.updatedAt,
+        dateModified: updatedAt,
         isPartOf: { '@id': `${SITE_URL}/#website` },
         about: { '@id': `${SITE_URL}/#organization` },
         publisher: { '@id': `${SITE_URL}/#organization` },
@@ -67,6 +68,7 @@ export default function InformationPage({ path, title, description, eyebrow, hea
           </div>
           <p className="mt-12 border-t border-[#1B1712]/15 pt-6 text-sm text-[#1B1712]/60">
             Published <time dateTime={INFORMATION_PAGE_DATES.publishedAt}>{formatContentDate(INFORMATION_PAGE_DATES.publishedAt)}</time>
+            {updatedAt !== INFORMATION_PAGE_DATES.publishedAt && <> · Updated <time dateTime={updatedAt}>{formatContentDate(updatedAt)}</time></>}
           </p>
         </main>
         <SiteFooter />

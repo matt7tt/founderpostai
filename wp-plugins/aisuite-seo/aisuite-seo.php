@@ -3,7 +3,7 @@
  * Plugin Name:       FounderPostAI – AI Suite SEO
  * Plugin URI:        https://founderpostai.com/ai-suite
  * Description:       Writes titles, meta descriptions, and internal links for your posts, then shows you the exact change before anything goes live.
- * Version:           0.1.8
+ * Version:           0.1.9
  * Requires at least: 6.5
  * Requires PHP:      7.4
  * Requires Plugins:  founderpostai-ai-suite-core
@@ -12,16 +12,19 @@
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       founderpostai-ai-suite-seo
+ * Update URI:        https://founderpostai.com/aisuite-seo
  */
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'FOUNDERPOSTAI_AISUITE_SEO_VERSION', '0.1.8' );
+define( 'FOUNDERPOSTAI_AISUITE_SEO_VERSION', '0.1.9' );
 define( 'FOUNDERPOSTAI_AISUITE_SEO_FILE', __FILE__ );
 define( 'FOUNDERPOSTAI_AISUITE_SEO_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FOUNDERPOSTAI_AISUITE_SEO_URL', plugin_dir_url( __FILE__ ) );
 
 require_once FOUNDERPOSTAI_AISUITE_SEO_DIR . 'includes/class-site-index.php';
+require_once FOUNDERPOSTAI_AISUITE_SEO_DIR . 'includes/class-updater.php';
+new FounderPostAI_AISuite_SEO_Updater();
 require_once FOUNDERPOSTAI_AISUITE_SEO_DIR . 'includes/class-store.php';
 require_once FOUNDERPOSTAI_AISUITE_SEO_DIR . 'includes/class-link-inserter.php';
 require_once FOUNDERPOSTAI_AISUITE_SEO_DIR . 'includes/class-link-candidates.php';
@@ -30,6 +33,8 @@ require_once FOUNDERPOSTAI_AISUITE_SEO_DIR . 'includes/class-optimizer.php';
 require_once FOUNDERPOSTAI_AISUITE_SEO_DIR . 'includes/class-meta-output.php';
 require_once FOUNDERPOSTAI_AISUITE_SEO_DIR . 'includes/class-review-screen.php';
 require_once FOUNDERPOSTAI_AISUITE_SEO_DIR . 'includes/class-health-screen.php';
+require_once FOUNDERPOSTAI_AISUITE_SEO_DIR . 'includes/class-health-audit.php';
+new FounderPostAI_AISuite_SEO_Health_Audit();
 require_once FOUNDERPOSTAI_AISUITE_SEO_DIR . 'includes/class-editor-sidebar.php';
 require_once FOUNDERPOSTAI_AISUITE_SEO_DIR . 'includes/class-search-console-screen.php';
 
@@ -38,6 +43,7 @@ register_deactivation_hook(
 	__FILE__,
 	function () {
 		wp_clear_scheduled_hook( FounderPostAI_AISuite_SEO_Site_Index::HOOK );
+		wp_clear_scheduled_hook( FounderPostAI_AISuite_SEO_Health_Audit::HOOK );
 	}
 );
 

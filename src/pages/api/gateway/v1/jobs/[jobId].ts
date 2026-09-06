@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getJob, authedSite, accountFor } from '@/lib/gateway/store';
+import { recoverStaleJob } from '@/lib/gateway/job-lifecycle';
 
 export const config = { api: { bodyParser: false } };
 
@@ -9,10 +10,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const site = await authedSite(req, res, '');
   if (!site) return;
 
-  const job = await getJob(req.query.jobId as string);
+  let job = await getJob(req.query.jobId as string);
   if (!job || job.site_id !== site.site_id) {
     return res.status(404).json({ error: 'Job not found' });
   }
+  job = await recoverStaleJob(job);
 
   return res.status(200).json({
     idempotency_key: job.idempotency_key,
