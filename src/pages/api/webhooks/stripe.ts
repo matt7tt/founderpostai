@@ -3,6 +3,7 @@ import { stripe } from '@/lib/stripe';
 import { getUserByStripeCustomerId, updateUser, createSubscriptionEvent } from '@/lib/db';
 import Stripe from 'stripe';
 import { fulfillPluginCheckout, PurchaseError, stripeId, syncPluginSubscription } from '@/lib/plugin-purchases';
+import { deliverEmail } from '@/lib/transactional-email';
 
 export const maxDuration = 60;
 
@@ -54,7 +55,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       case 'checkout.session.async_payment_succeeded': {
         const session = event.data.object as Stripe.Checkout.Session;
         try {
-          await fulfillPluginCheckout(session.id);
+          const purchase = await fulfillPluginCheckout(session.id);
+          if (purchase.emailId && await deliverEmail(purchase.emailId) !== 'sent') {
+            // License is already usable. Ask Stripe to retry only the durable email work.
+            throw new Error('Purchase email remains queued');
+          }
         } catch (error) {
           // Other products and payments still settling are not fulfillment failures.
           if (!(error instanceof PurchaseError && [400, 402].includes(error.status))) throw error;

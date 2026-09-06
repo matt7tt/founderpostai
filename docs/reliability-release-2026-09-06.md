@@ -25,6 +25,6 @@ Run `npm run package:plugins` after PHP edits. `scripts/configure-plugin-billing
 
 ## Remaining external verification
 
-- Transactional license-delivery and email-only license recovery need a configured email service and verified sender. Billing email sign-in is provided by Stripe, but is not a substitute for license-delivery email. Lost-license requests currently go to support with a receipt.
+- Resend delivery and email-only recovery are implemented in the follow-up described in `transactional-email.md`. Sending requires the owner's sender-domain verification; Stripe's billing sign-in remains independent.
 - No real customer payment or cancellation is part of the automated tests. Complete a Stripe test-mode end-to-end checkout when test credentials are available before claiming live purchase verification.
 - Genuine product screenshots/demos and measured field Core Web Vitals remain separate SEO work; this release does not invent customer proof or claim a performance score.

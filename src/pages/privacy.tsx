@@ -18,7 +18,7 @@ export default function Privacy() {
         title="Privacy Policy | FounderPostAI"
         description={description}
         breadcrumbLabel="Privacy policy"
-        dateModified="2026-09-03T12:00:00+01:00"
+        dateModified="2026-09-06"
       />
       <div style={{ fontFamily: "'Inter', sans-serif", maxWidth: '680px', margin: '0 auto', padding: '64px 24px', color: '#0a0a0a', lineHeight: 1.7 }}>
         <nav aria-label="Breadcrumb" style={{ marginBottom: '32px', fontSize: '14px' }}>
@@ -33,6 +33,15 @@ export default function Privacy() {
         <p>
           <strong>When you buy:</strong> your email address and payment details, processed by
           Stripe. We never see your card number.
+        </p>
+        <p>
+          <strong>Purchase and recovery emails:</strong> Resend processes your checkout email
+          address and transactional message contents, including your license and private purchase
+          link, to deliver purchase confirmations and requested recovery emails. Our recovery lookup
+          uses a keyed hash of your checkout address and encrypted receipt references. Pending email
+          payloads are encrypted, removed when Resend accepts a message, and expire after 30 days
+          without a successful retry. Delivery markers are retained to prevent duplicate messages.
+          Purchase references remain available for license and billing recovery.
         </p>
         <p>
           <strong>When you connect a site:</strong> your site URL, admin email, WordPress version,
@@ -81,7 +90,7 @@ export default function Privacy() {
 
         <h2>Third parties</h2>
         <p>
-          Stripe (payments), Anthropic (inference, with training opted out), Google (optional
+          Stripe (payments), Resend (transactional purchase and recovery emails), Anthropic (inference, with training opted out), Google (optional
           read-only Search Console data), Vercel (hosting and analytics), and Upstash (durable
           gateway, OAuth token, feedback, and anonymous aggregate analytics storage).
         </p>

@@ -3,6 +3,7 @@ import { stripe } from './stripe';
 import { generateLicenseKey, PRICE_TO_PLAN } from './license';
 import { getJSON, redis, setJSON } from './gateway/redis';
 import { recordUniqueFunnelEventSafely } from './funnel';
+import { preparePurchaseEmail } from './purchase-email';
 
 export const LICENSE_PATTERN = /^AIS[PA]-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/;
 export type PluginPlan = 'pro' | 'agency';
@@ -56,7 +57,12 @@ export async function fulfillPluginCheckout(sessionId: string) {
   const purchase = await syncPluginSubscription(stripeId(session.subscription));
   if (!purchase) throw new PurchaseError(400, 'The subscription product could not be verified.');
   await recordUniqueFunnelEventSafely('purchase_completed', purchase.subscription.id);
-  return { ...purchase, session };
+  const emailId = await preparePurchaseEmail({
+    sessionId: session.id, subscriptionId: purchase.subscription.id,
+    email: session.customer_details?.email || session.customer_email || '',
+    licenseKey: purchase.licenseKey, plan: purchase.plan,
+  });
+  return { ...purchase, session, emailId };
 }
 
 export function canonicalLicenseSite(siteUrl: string): string {

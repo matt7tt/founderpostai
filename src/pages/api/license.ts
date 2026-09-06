@@ -3,6 +3,7 @@ import { PLAN_LABELS } from '@/lib/license';
 import { fulfillPluginCheckout, PurchaseError, subscriptionActive } from '@/lib/plugin-purchases';
 import { proDownloadUrl } from '@/lib/download-token';
 import { redis } from '@/lib/gateway/redis';
+import { deliverEmail } from '@/lib/transactional-email';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   res.setHeader('Cache-Control', 'private, no-store');
@@ -12,9 +13,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const purchase = await fulfillPluginCheckout(req.query.session_id);
     const active = subscriptionActive(purchase.subscription);
+    const emailDelivery = purchase.emailId ? await deliverEmail(purchase.emailId).catch(() => 'queued') : 'unavailable';
     return res.status(200).json({
       plan: purchase.plan, planLabel: PLAN_LABELS[purchase.plan], licenseKey: purchase.licenseKey,
       active, downloadUrl: active ? proDownloadUrl(purchase.subscription.id) : null,
+      emailDelivery,
       licensedSite: purchase.plan === 'pro' ? await redis('GET', `license-seat:${purchase.licenseKey}`) : null,
     });
   } catch (error: any) {

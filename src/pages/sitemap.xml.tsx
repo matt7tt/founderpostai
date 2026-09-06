@@ -14,7 +14,7 @@ const urls = [
     loc: `${SITE_URL}${page.path}`,
     lastmod: page.updatedAt,
   })),
-  { loc: `${SITE_URL}/privacy`, lastmod: SITE_LAST_MODIFIED },
+  { loc: `${SITE_URL}/privacy`, lastmod: '2026-09-06' },
   { loc: `${SITE_URL}/terms`, lastmod: '2026-07-29' },
 ];
 

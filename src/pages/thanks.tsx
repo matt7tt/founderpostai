@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import SeoHead from '../components/SeoHead';
+import LicenseRecovery from '../components/LicenseRecovery';
 import { WORDPRESS_ORG_CORE_URL } from '../lib/site';
 
 const card: React.CSSProperties = {
@@ -29,6 +30,7 @@ interface LicenseData {
   active: boolean;
   downloadUrl: string | null;
   licensedSite: string | null;
+  emailDelivery: 'sent' | 'queued' | 'unavailable';
 }
 
 export default function Thanks() {
@@ -174,6 +176,7 @@ export default function Thanks() {
               {copied ? 'Copied ✓' : 'Copy key'}
             </button>
             <p>{license.active ? 'Subscription active' : 'Subscription inactive — manage billing to renew.'}</p>
+            <p className="text-sm">{license.emailDelivery === 'sent' ? 'Your license email has been accepted for delivery to your checkout address.' : license.emailDelivery === 'queued' ? 'Your license email is queued for delivery. You can use your key and downloads now.' : 'Keep this private purchase page for access to your license.'}</p>
             <button disabled={busy} onClick={() => manage('billing')}>Manage billing / cancel subscription</button>
             {license.licensedSite && <p>Active site: {license.licensedSite}<br /><button disabled={busy} onClick={() => manage('release_site')}>Release site for a move</button></p>}
           </div>
@@ -183,6 +186,7 @@ export default function Thanks() {
             <p>{licenseError}</p>
             <button onClick={() => setAttempt(value => value + 1)}>Retry lookup</button>{' · '}<Link href="/contact">Contact support</Link>
             {process.env.NEXT_PUBLIC_STRIPE_BILLING_PORTAL && <p><a href={process.env.NEXT_PUBLIC_STRIPE_BILLING_PORTAL}>Manage billing with your checkout email</a></p>}
+            <LicenseRecovery />
           </div>
         )}
         {actionError && <p role="alert">{actionError}</p>}
